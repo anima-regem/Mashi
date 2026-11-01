@@ -14,3 +14,4 @@ jobs:
       - run: uv run --no-sync ruff check mashi scripts tests
       - run: uv run --no-sync pytest -q
       - run: node --check mashi/static/app.js
+      - run: node --check mashi/static/capture.js

@@ -51,3 +51,41 @@ class VectorInput(BaseModel):
         if not math.isfinite(value):
             raise ValueError("Metrics must be finite")
         return value
+
+
+class PreparationOptions(BaseModel):
+    corners: list[tuple[float, float]] | None = Field(default=None, min_length=4, max_length=4)
+    rotation: float = Field(default=0, ge=-180, le=180, allow_inf_nan=False)
+    illumination: float = Field(default=0, ge=0, le=1, allow_inf_nan=False)
+    mode: Literal["keep", "global", "adaptive"] = "keep"
+    threshold: int = Field(default=180, ge=1, le=254)
+    adaptive_window: int = Field(default=51, ge=5, le=151)
+    adaptive_bias: int = Field(default=11, ge=-50, le=50)
+
+    @field_validator("adaptive_window")
+    @classmethod
+    def odd_window(cls, value):
+        if value % 2 == 0:
+            raise ValueError("Adaptive neighborhood must be odd")
+        return value
+
+
+class PreparationInput(PreparationOptions):
+    revision: int = Field(ge=1)
+
+
+class ProjectNameInput(BaseModel):
+    revision: int = Field(ge=1)
+    name: str = Field(min_length=1, max_length=80)
+
+    @field_validator("name")
+    @classmethod
+    def readable_name(cls, value):
+        value = value.strip()
+        if not value or any(ord(c) < 32 for c in value):
+            raise ValueError("Choose a nonempty page name without control characters")
+        return value
+
+
+class RevisionInput(BaseModel):
+    revision: int = Field(ge=1)

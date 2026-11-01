@@ -7,6 +7,7 @@
     <title>Mashi · Malayalam handwriting studio</title>
     <link rel="stylesheet" href="/static/style.css" />
     <script src="/static/app.js" defer></script>
+    <script src="/static/capture.js" defer></script>
   </head>
   <body>
     <header>
@@ -52,6 +53,7 @@
         <div id="recent"></div>
       </section>
       <section id="workspace" hidden>
+        <p id="capture-notice" class="hint" hidden></p>
         <p id="fixture-note" class="hint" hidden>
           Synthetic practice page. These shapes are test input, not handwriting.
           Normal handwriting export excludes them.
@@ -59,6 +61,15 @@
         <div class="workspace-bar">
           <div>
             <h2>Your page</h2>
+            <form id="page-name-form" class="name-form">
+              <label class="sr-only" for="page-name">Page name</label
+              ><input
+                id="page-name"
+                maxlength="80"
+                placeholder="Name this page"
+                required
+              /><button>Save name</button>
+            </form>
             <p id="page-meta"></p>
           </div>
           <div class="actions">
@@ -66,6 +77,92 @@
             ><button id="ocr">Suggest words with OCR</button>
           </div>
         </div>
+        <details id="photo-prep" class="photo-prep">
+          <summary>Prepare photo · page corners, rotation & lighting</summary>
+          <p class="hint">
+            Start from the preserved oriented source. Drag the four page corners
+            or enter their coordinates. Preview changes before applying.
+            Applying replaces active crop proposals; restore brings the previous
+            page and crops back.
+          </p>
+          <div class="prep-grid">
+            <div>
+              <h3>Source photo</h3>
+              <canvas
+                id="prep-source"
+                aria-label="Source photo with adjustable page corners"
+              ></canvas
+              ><label class="check"
+                ><input id="prep-perspective" type="checkbox" /> Correct
+                perspective using the four corners</label
+              ><button id="prep-detect">Suggest page boundary</button>
+              <div id="prep-corners" class="prep-corners"></div>
+            </div>
+            <div>
+              <h3>Preparation preview</h3>
+              <img id="prep-preview" alt="Preview of prepared page" />
+              <p id="prep-preview-note" class="hint">
+                Open preparation to load a preview.
+              </p>
+              <div class="prep-controls">
+                <label
+                  >Rotation · counterclockwise degrees<input
+                    id="prep-rotation"
+                    type="number"
+                    min="-180"
+                    max="180"
+                    step="0.1"
+                    value="0" /></label
+                ><label
+                  >Reduce uneven lighting<input
+                    id="prep-light"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value="0" /></label
+                ><label
+                  >Ink separation<select id="prep-mode">
+                    <option value="keep">Keep photo colors</option>
+                    <option value="global">Fixed threshold</option>
+                    <option value="adaptive">Adaptive threshold</option>
+                  </select></label
+                ><label
+                  >Fixed threshold<input
+                    id="prep-threshold"
+                    type="number"
+                    value="180"
+                    min="1"
+                    max="254" /></label
+                ><label
+                  >Adaptive neighborhood<input
+                    id="prep-window"
+                    type="number"
+                    value="51"
+                    min="5"
+                    max="151"
+                    step="2" /></label
+                ><label
+                  >Adaptive bias<input
+                    id="prep-bias"
+                    type="number"
+                    value="11"
+                    min="-50"
+                    max="50"
+                /></label>
+              </div>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="prep-preview-button">Update preview</button
+            ><button id="prep-apply" class="primary">
+              Apply preparation & review new crops</button
+            ><button id="prep-restore">
+              Restore previous preparation & crops
+            </button>
+          </div>
+          <p id="prep-feedback" class="hint" role="status"></p>
+        </details>
         <div class="studio">
           <div class="page-panel">
             <div class="canvas-bar">

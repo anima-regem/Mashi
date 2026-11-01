@@ -29,6 +29,12 @@ Without uv, create a Python 3.12 virtual environment and `python -m pip install 
 
 Edits and original image bytes stay in `.mashi/` in the working directory (gitignored). Restarting preserves projects. Set `MASHI_DATA_DIR` to choose another directory. Back up this directory to preserve originals, canonical pages, SQLite project history and traced outlines. Exports contain metadata, not the original photos; they are not complete project backups. To remove local data, stop Mashi and delete its data directory.
 
+### Prepare a photographed page
+
+Open **Prepare photo** to drag or enter four paper corners, correct perspective, rotate, reduce uneven lighting and preview fixed/adaptive thresholding. Boundary suggestions need visual review. Every adjustment regenerates from the preserved oriented source. Applying creates fresh unconfirmed crop proposals; **Restore previous preparation & crops** returns the exact previous image, labels and outlines. Geometry has forward/inverse transforms and every new crop records source/original polygons. Photometric cleanup is reversible by regenerating from preserved pixels, not by inverting thresholded pixels. Up to 20 earlier preparation states are retained.
+
+Name a page using **Save name**. The last saved page reopens on reload; the local page chooser shows up to 50 named pages. Each upload is still one separate page/project. Multi-page font assembly and variant selection remain on the roadmap.
+
 ### Optional Malayalam OCR
 
 Install [Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html), then explicitly fetch the pinned official [`mal` data](https://github.com/tesseract-ocr/tessdata_fast/blob/87416418657359cb625c412a48b6e1d6d41c29bd/mal.traineddata) from the repository root:
@@ -52,7 +58,7 @@ The local integration check recognized മലയാളം, മഷി and കേ�
 - One codepoint maps to a cmap entry. A multi-codepoint observation is an unencoded glyph unless all of its component codepoints were also captured separately; then a small, self-contained `akhn` substitution is built for `mlym`/`mlm2`/DFLT.
 - The tested conjunct is `ക്ക` with separately captured `ക` and `്`. Atomic chillu `ൻ` is also tested. These tests use synthetic outlines and verify plumbing, not handwriting recognition or typographic quality.
 - No complete contextual substitution system, mark anchors, vowel positioning/reordering, traditional conjunct inventory, or joiner-sensitive shaping is implemented. Combining-mark widths are zero, but positioning still needs design. Whole-word labels are useful records, not a promise that a font can shape them.
-- Initial baseline and scale are estimates. Outlines need visual review. Fixed thresholding needs clean, light paper; deskew, perspective correction and robust shadow removal are future work.
+- Initial baseline and scale are estimates. Outlines need visual review. Perspective/rotation and lighting/adaptive preparation are available, but need review; their synthetic fixture checks do not establish robustness on real handwriting photographs.
 - Duplicate confirmed labels must be resolved to one variant before export. Alternate forms and multi-page font assembly are future work.
 
 ## Engineering and research
@@ -60,6 +66,8 @@ The local integration check recognized മലയാളം, മഷി and കേ�
 Built with Python/FastAPI, SQLite, Pillow/OpenCV, VTracer **0.6.12**, ufoLib2, fontTools and fontmake. A small plain-JavaScript UI keeps installation simple and avoids external assets, analytics, CDNs and cloud fallback.
 
 The workflow has three distinct stages: **capture** proposes image regions and OCR labels for human correction; **completion** is separate experimental research with explicit generated provenance; **font building** turns confirmed observed outlines into a dependency-checked font subset. Completion is not silently mixed into capture or export.
+
+Extensive completion research now lives in **[Mashi-ML](https://github.com/anima-regem/Mashi-ML)**. Its [application integration contract](https://github.com/anima-regem/Mashi-ML/blob/main/docs/APP_INTEGRATION.md) and [audit](https://github.com/anima-regem/Mashi-ML/blob/main/reports/AUDIT.md) describe the experimental interface and limitations. Weights are not bundled here; no unrestricted generated-font licence is implied. See [Mashi's current roadmap](docs/ROADMAP.md) for implemented, prototype and missing product workflows.
 
 We studied actual sources from Swathanthra Malayalam Computing and Santhosh Thottingal: [Chilanka](https://github.com/smc/Chilanka), [Manjari](https://github.com/santhoshtr/Manjari), and [Rachana](https://github.com/smc/Rachana). The findings separate editable source strokes, closed outlines, Unicode mapping, GSUB, GPOS and compilation. No reference font outlines or feature files are copied into generated fonts.
 

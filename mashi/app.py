@@ -1,6 +1,8 @@
 import os
 import secrets
 import time
+import io
+from copy import deepcopy
 from pathlib import Path
 from urllib.parse import urlsplit
 from typing import Literal
@@ -14,7 +16,19 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from . import ocr
 from .exporting import export_bundle
 from .imaging import MAX_BYTES, decode, propose_regions, validate_box
-from .models import MergeInput, RegionEdit, RegionInput, SplitInput, TraceInput, VectorInput
+from .models import (
+    MergeInput,
+    RegionEdit,
+    RegionInput,
+    SplitInput,
+    TraceInput,
+    VectorInput,
+    PreparationInput,
+    PreparationOptions,
+    ProjectNameInput,
+    RevisionInput,
+)
+from .preparation import prepare, source_polygons, suggest_corners
 from .predictors import coverage
 from .store import Store, new_region, uid
 from .tracing import svg, trace, validate_paths
@@ -110,6 +124,32 @@ def create_app(root=None, *, testing=False):
     def input_provenance(doc):
         return "synthetic-fixture" if doc.get("source_kind") == "synthetic-fixture" else "observed"
 
+    def make_region(doc, box, **kwargs):
+        kwargs.setdefault("provenance", input_provenance(doc))
+        item = new_region(box, **kwargs)
+        item.update(source_polygons(box, doc["image"]))
+        return item
+
+    def image_path(doc, source=False):
+        return store.asset(
+            doc["id"], doc.get("source_asset" if source else "image_asset", "page.png")
+        )
+
+    def check_revision(doc, revision):
+        if doc["revision"] != revision:
+            raise HTTPException(
+                409, "Page changed in another window; reload before applying changes"
+            )
+
+    def proposals_for(doc, image):
+        try:
+            boxes = propose_regions(image)
+            doc.pop("capture_notice", None)
+            return boxes
+        except ValueError as error:
+            doc["capture_notice"] = str(error) + ". Prepare the photo or draw crops manually."
+            return []
+
     def event(doc, operation, ids):
         doc["history"].append(
             {
@@ -128,7 +168,15 @@ def create_app(root=None, *, testing=False):
 
     @app.get("/api/projects")
     def projects():
-        return [{"id": p["id"], "created": p["created"], "image": p["image"]} for p in store.list()]
+        return [
+            {
+                "id": p["id"],
+                "created": p["created"],
+                "image": p["image"],
+                "name": p.get("name", "Untitled page"),
+            }
+            for p in store.list()
+        ]
 
     @app.post("/api/projects")
     async def upload(
@@ -147,17 +195,15 @@ def create_app(root=None, *, testing=False):
             "revision": 1,
             "created": time.time(),
             "source_kind": source,
+            "name": "Practice page" if source == "synthetic-fixture" else "Untitled page",
             "image": metadata,
-            "regions": [
-                new_region(
-                    box,
-                    source="connected-ink-proposal",
-                    provenance="synthetic-fixture" if source == "synthetic-fixture" else "observed",
-                )
-                for box in propose_regions(image)
-            ],
+            "regions": [],
             "history": [{"operation": "upload", "at": time.time()}],
         }
+        doc["regions"] = [
+            make_region(doc, box, source="connected-ink-proposal")
+            for box in proposals_for(doc, image)
+        ]
         store.asset(doc["id"], "original.bin").write_bytes(data)
         store.asset(doc["id"], "page.png").write_bytes(canonical)
         store.create(doc)
@@ -169,8 +215,87 @@ def create_app(root=None, *, testing=False):
 
     @app.get("/api/projects/{project_id}/image")
     def image(project_id: str):
-        project(project_id)
-        return FileResponse(store.asset(project_id, "page.png"), media_type="image/png")
+        return FileResponse(image_path(project(project_id)), media_type="image/png")
+
+    @app.get("/api/projects/{project_id}/source-image")
+    def source_image(project_id: str):
+        return FileResponse(image_path(project(project_id), source=True), media_type="image/png")
+
+    @app.put("/api/projects/{project_id}/name")
+    def name_project(project_id: str, data: ProjectNameInput):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        doc["name"] = data.name
+        return event(doc, "rename", [])
+
+    @app.post("/api/projects/{project_id}/preparation/suggest")
+    def suggest_preparation(project_id: str):
+        with Image.open(image_path(project(project_id), source=True)) as source:
+            return suggest_corners(source.convert("RGB"))
+
+    @app.post("/api/projects/{project_id}/preparation/preview")
+    def preview_preparation(project_id: str, data: PreparationOptions):
+        with Image.open(image_path(project(project_id), source=True)) as source:
+            result, _, metadata = prepare(source, data)
+        result.thumbnail((1000, 1000))
+        encoded = io.BytesIO()
+        result.save(encoded, "PNG")
+        return Response(
+            encoded.getvalue(),
+            media_type="image/png",
+            headers={
+                "X-Prepared-Width": str(metadata["width"]),
+                "X-Prepared-Height": str(metadata["height"]),
+            },
+        )
+
+    @app.post("/api/projects/{project_id}/preparation")
+    def apply_preparation(project_id: str, data: PreparationInput):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        if len(doc.get("preparation_history", [])) >= 20:
+            raise ValueError(
+                "This page has 20 preparation states. Restore a previous state or start another page."
+            )
+        doc.setdefault("source_asset", doc.get("image_asset", "page.png"))
+        doc.setdefault("source_image", deepcopy(doc["image"]))
+        options = PreparationOptions(**data.model_dump(exclude={"revision"}))
+        with Image.open(image_path(doc, source=True)) as source:
+            result, encoded, metadata = prepare(source, options)
+        snapshot = {
+            key: deepcopy(doc.get(key))
+            for key in ["image", "regions", "image_asset", "preparation", "capture_notice"]
+        }
+        proposals = proposals_for(doc, result)
+        doc.setdefault("preparation_history", []).append(snapshot)
+        doc["image_asset"] = "prepared-" + uid() + ".png"
+        store.asset(doc["id"], doc["image_asset"]).write_bytes(encoded)
+        doc["image"] = {
+            **deepcopy(doc["source_image"]),
+            **metadata,
+            "source_canonical_sha256": doc["source_image"]["canonical_sha256"],
+            "preparation_revision": doc["revision"] + 1,
+        }
+        doc["image"]["transforms"].append({"operation": "page_preparation", **metadata})
+        doc["preparation"] = options.model_dump()
+        doc["regions"] = [
+            make_region(doc, box, source="prepared-ink-proposal") for box in proposals
+        ]
+        return event(doc, "prepare-page-resegment-unconfirmed", [])
+
+    @app.post("/api/projects/{project_id}/preparation/restore")
+    def restore_preparation(project_id: str, data: RevisionInput):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        if not doc.get("preparation_history"):
+            raise ValueError("No earlier preparation state to restore")
+        snapshot = doc["preparation_history"].pop()
+        for key, value in snapshot.items():
+            if value is None:
+                doc.pop(key, None)
+            else:
+                doc[key] = value
+        return event(doc, "restore-preparation-and-crops", [])
 
     @app.post("/api/projects/{project_id}/regions")
     def add_region(project_id: str, data: RegionInput):
@@ -180,7 +305,7 @@ def create_app(root=None, *, testing=False):
         validate_box(data.box, doc["image"]["width"], doc["image"]["height"])
         if data.confirmed and not data.label:
             raise ValueError("Assign a label before confirming")
-        item = new_region(data.box, label=data.label, provenance=input_provenance(doc))
+        item = make_region(doc, data.box, label=data.label)
         item["confirmed"] = data.confirmed
         doc["regions"].append(item)
         return event(doc, "add", [item["id"]])
@@ -205,6 +330,7 @@ def create_app(root=None, *, testing=False):
                 "revision": item["revision"] + 1,
             }
         )
+        item.update(source_polygons(data.box, doc["image"]))
         return event(doc, "edit", [region_id])
 
     @app.post("/api/projects/{project_id}/regions/{region_id}/split")
@@ -221,10 +347,7 @@ def create_app(root=None, *, testing=False):
             raise ValueError("Split position must be strictly inside the crop")
         item["active"] = False
         item["revision"] += 1
-        children = [
-            new_region(b, parents=[region_id], source="split", provenance=input_provenance(doc))
-            for b in boxes
-        ]
+        children = [make_region(doc, b, parents=[region_id], source="split") for b in boxes]
         doc["regions"].extend(children)
         return event(doc, "split", [region_id] + [c["id"] for c in children])
 
@@ -243,7 +366,8 @@ def create_app(root=None, *, testing=False):
             raise ValueError("Choose distinct crops and their revisions")
         items = [region(doc, rid, rev) for rid, rev in zip(data.ids, data.revisions)]
         boxes = [r["box"] for r in items]
-        merged = new_region(
+        merged = make_region(
+            doc,
             [
                 min(b[0] for b in boxes),
                 min(b[1] for b in boxes),
@@ -265,11 +389,12 @@ def create_app(root=None, *, testing=False):
         doc = project(project_id)
         if len(doc["regions"]) >= 4000:
             raise ValueError("Too many regions; use another project")
-        suggestions = ocr.recognize(store.asset(project_id, "page.png"))
+        suggestions = ocr.recognize(image_path(doc))
         for suggestion in suggestions:
             validate_box(suggestion["box"], doc["image"]["width"], doc["image"]["height"])
             doc["regions"].append(
-                new_region(
+                make_region(
+                    doc,
                     suggestion["box"],
                     suggestion=suggestion,
                     source="ocr-word",
@@ -286,7 +411,7 @@ def create_app(root=None, *, testing=False):
             doc["history"].append(
                 {"operation": "before-retrace", "snapshot": dict(item), "at": time.time()}
             )
-        with Image.open(store.asset(project_id, "page.png")) as page:
+        with Image.open(image_path(doc)) as page:
             item["vector"] = trace(page.crop(item["box"]), data.threshold)
         item["revision"] += 1
         return event(doc, "trace", [region_id])

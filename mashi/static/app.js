@@ -6,6 +6,23 @@ let token = "",
   pageImage = null,
   busy = false;
 const checked = new Set();
+function remember(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+function recall(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key));
+  } catch {
+    return null;
+  }
+}
+function forget(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}
 function message(text, error = false) {
   $("status").textContent = text;
   $("status").classList.toggle("error", error);
@@ -60,9 +77,9 @@ async function update(path, options, text) {
 async function recent() {
   const entries = await (await api("/api/projects")).json();
   $("recent").replaceChildren();
-  entries.slice(0, 6).forEach((p, i) => {
+  entries.slice(0, 50).forEach((p) => {
     const button = document.createElement("button");
-    button.textContent = `Open page ${entries.length - i} · ${p.image.width} × ${p.image.height}`;
+    button.textContent = `${p.name || "Untitled page"} · ${p.image.width} × ${p.image.height}`;
     button.onclick = () => work(() => openProject(p.id));
     $("recent").append(button);
   });
@@ -79,6 +96,8 @@ async function openProject(id) {
   $("workspace").hidden = false;
   render();
   await renderCoverage();
+  remember("mashi:last-project", id);
+  window.MashiCapture?.load().catch((e) => message(e.message, true));
   message(
     "Page ready. Review crop boxes and confirm each exact Malayalam sequence.",
   );
@@ -138,6 +157,9 @@ function render() {
   $("page-meta").textContent =
     `${project.image.width} × ${project.image.height} px · EXIF oriented · revision ${project.revision}`;
   $("count").textContent = `${active.length} crops`;
+  $("capture-notice").textContent = project.capture_notice || "";
+  $("capture-notice").hidden = !project.capture_notice;
+  $("page-name").value = project.name || "Untitled page";
   $("regions").replaceChildren();
   active.forEach((r, i) => {
     const row = document.createElement("div");
@@ -292,10 +314,24 @@ $("new-page").onclick = () =>
   work(async () => {
     $("workspace").hidden = true;
     $("start").hidden = false;
+    forget("mashi:last-project");
     selected = null;
     await recent();
     message("Choose another photograph, or reopen a saved local page.");
   });
+$("page-name-form").onsubmit = (event) => {
+  event.preventDefault();
+  work(async () => {
+    await update(
+      `${url()}/name`,
+      {
+        method: "PUT",
+        json: { name: $("page-name").value, revision: project.revision },
+      },
+      "Page name saved.",
+    );
+  });
+};
 $("label").oninput = showCodepoints;
 $("region-form").onsubmit = (event) => {
   event.preventDefault();
@@ -551,4 +587,16 @@ work(async () => {
   $("ocr").title = session.ocr.reason;
   await recent();
   message(`Ready locally. ${session.ocr.reason}`);
+  const saved = recall("mashi:last-project");
+  if (typeof saved === "string" && /^[a-f0-9]{32}$/.test(saved)) {
+    try {
+      await openProject(saved);
+      message(
+        "Your last saved page was reopened. All saved crops and outlines are local.",
+      );
+    } catch {
+      forget("mashi:last-project");
+      message(`Ready locally. ${session.ocr.reason}`);
+    }
+  }
 });
