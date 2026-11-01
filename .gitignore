@@ -16,3 +16,5 @@ dist/
 *.pt
 *.pth
 .DS_Store
+.uv-cache/
+build-desktop.log
