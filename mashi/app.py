@@ -484,6 +484,16 @@ def create_app(root=None, *, testing=False):
         check_revision(doc, data.revision)
         if not doc.get("preparation_history"):
             raise ValueError("No earlier preparation state to restore")
+        doc["history"].append(
+            {
+                "operation": "before-restore-preparation",
+                "at": time.time(),
+                "page_snapshot": {
+                    key: deepcopy(doc.get(key))
+                    for key in ["image", "regions", "image_asset", "preparation", "capture_notice"]
+                },
+            }
+        )
         snapshot = doc["preparation_history"].pop()
         for key, value in snapshot.items():
             if value is None:

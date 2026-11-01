@@ -345,7 +345,10 @@ def validate_project(project, staged, asset_hashes):
         history(page.get("history", []))
         if page.get("preparation") is not None:
             PreparationOptions(**page["preparation"])
-        for old in page.get("preparation_history", []):
+        saved_pages = page.get("preparation_history", []) + [
+            entry["page_snapshot"] for entry in page.get("history", []) if "page_snapshot" in entry
+        ]
+        for old in saved_pages:
             if (
                 not isinstance(old, dict)
                 or not isinstance(old.get("image"), dict)
@@ -385,7 +388,7 @@ def validate_project(project, staged, asset_hashes):
             if "source_manifest_sha256" not in terms or not row.get("raster_asset"):
                 raise ValueError("Generated source/raster provenance is incomplete")
             history(row.get("history", []))
-        image_states = [page] + [s for s in page.get("preparation_history", []) if s.get("image")]
+        image_states = [page] + saved_pages
         dimensions = [(s["image"]["width"], s["image"]["height"]) for s in image_states]
         if page.get("source_image"):
             dimensions.append((page["source_image"]["width"], page["source_image"]["height"]))

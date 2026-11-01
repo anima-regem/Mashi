@@ -604,3 +604,43 @@ def test_import_streams_inflate_calls_and_rejects_complex_or_duplicate_json(clie
     ]:
         assert client.post("/api/projects/import", content=invalid_json(data)).status_code == 400
     assert len(client.app.state.store.list()) == 2
+
+
+def test_restoring_preparation_retains_source_state_for_stale_generated_backup(ml_client):
+    first = ready(ml_client)
+    base = f"/api/projects/{first['id']}"
+    prepared = ml_client.post(
+        base + "/preparation", json={"revision": first["revision"], "rotation": 7}
+    ).json()
+    prepared = confirm(ml_client, prepared, "ക")
+    generated = ml_client.post(
+        base + "/completion/generate",
+        json=generation(ml_client, prepared, base, prepared["regions"][0]),
+    ).json()
+    assert generated.get("completion_suggestions"), generated
+    restored = ml_client.post(
+        base + "/preparation/restore", json={"revision": generated["revision"]}
+    ).json()
+    backup = ml_client.post(base + "/backup", json={"revision": restored["revision"]})
+    assert backup.status_code == 200, backup.text
+    imported = ml_client.post("/api/projects/import", content=backup.content)
+    assert imported.status_code == 200, imported.text
+    doc = imported.json()
+    assert doc["image"] == first["image"]
+    assert doc["completion_suggestions"] == generated["completion_suggestions"]
+    assert (
+        doc["completion_suggestions"][0]["generation"]["image_sha256"]
+        != doc["image"]["canonical_sha256"]
+    )
+    candidate = doc["completion_suggestions"][0]
+    accepted = ml_client.post(
+        f"/api/projects/{doc['id']}/completion/suggestions/{candidate['id']}/review",
+        json={
+            "revision": doc["revision"],
+            "suggestion_revision": candidate["revision"],
+            "state": "accepted",
+        },
+    )
+    assert accepted.status_code == 400 and "stale-reference" in accepted.text
+    with zipfile.ZipFile(io.BytesIO(backup.content)) as archive:
+        assert archive.read("assets/" + generated["image_asset"])
