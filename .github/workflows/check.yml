@@ -15,3 +15,5 @@ jobs:
       - run: uv run --no-sync pytest -q
       - run: node --check mashi/static/app.js
       - run: node --check mashi/static/capture.js
+      - run: node --check mashi/static/outline.js
+      - run: node --test tests/outline-geometry.test.cjs

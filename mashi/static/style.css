@@ -819,3 +819,150 @@ footer {
     max-height: 320px;
   }
 }
+
+.outline-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 15px 0 10px;
+}
+.outline-toolbar button {
+  font-size: 11px;
+  padding: 8px 11px;
+}
+.outline-toolbar label {
+  font-size: 10px;
+  margin-left: 5px;
+}
+.visual-editor {
+  height: 360px;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+  touch-action: none;
+}
+.visual-editor svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  outline-offset: -3px;
+}
+.outline-anchor {
+  fill: white;
+  stroke: #6452a3;
+  stroke-width: 1.4;
+  cursor: move;
+  vector-effect: non-scaling-stroke;
+}
+.outline-control {
+  fill: #daf0e8;
+  stroke: #316657;
+  stroke-width: 1.2;
+  cursor: move;
+  vector-effect: non-scaling-stroke;
+}
+.outline-anchor.selected,
+.outline-control.selected {
+  fill: #6452a3;
+  stroke: #2b263d;
+}
+.outline-anchor:focus,
+.outline-control:focus {
+  stroke: #b03560;
+  stroke-width: 3;
+  outline: none;
+}
+.outline-control-line {
+  stroke: #91aaa1;
+  pointer-events: none;
+}
+.outline-guide {
+  stroke: #b75175;
+  cursor: ns-resize;
+}
+.outline-advance {
+  stroke: #3b827b;
+  cursor: ew-resize;
+}
+.outline-compare {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+}
+.outline-compare > label:last-child {
+  max-width: 160px;
+}
+.outline-compare input[type="range"] {
+  display: block;
+}
+.point-form {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  margin: 10px 0;
+}
+.point-form label {
+  font-size: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.point-form input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+.point-form button {
+  font-size: 10px;
+  padding: 10px;
+}
+.vector-section {
+  grid-template-columns: minmax(0, 1.5fr) minmax(230px, 1fr);
+}
+#outline-contour {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  font-size: 11px;
+}
+@media (max-width: 730px) {
+  .vector-section {
+    grid-template-columns: 1fr;
+  }
+  .visual-editor {
+    height: 340px;
+  }
+  .outline-compare {
+    gap: 10px;
+  }
+  .outline-toolbar {
+    gap: 5px;
+  }
+}
+
+.field > select {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+}
+#recent button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+#crop-draft-note:empty {
+  display: none;
+}
+.region-form .actions {
+  flex-wrap: wrap;
+}
+
+.outline-draft-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}

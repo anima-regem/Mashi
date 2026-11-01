@@ -9,7 +9,10 @@ const checked = new Set();
 function remember(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+    return true;
+  } catch {
+    return false;
+  }
 }
 function recall(key) {
   try {
@@ -53,21 +56,65 @@ async function api(path, options = {}) {
 async function work(callback) {
   if (busy) return;
   busy = true;
-  document.querySelectorAll("button").forEach((b) => (b.disabled = true));
+  document
+    .querySelectorAll("button,input,textarea,select")
+    .forEach((b) => (b.disabled = true));
   try {
     await callback();
   } catch (error) {
     message(error.message, true);
   } finally {
     busy = false;
-    document.querySelectorAll("button").forEach((b) => (b.disabled = false));
+    document
+      .querySelectorAll("button,input,textarea,select")
+      .forEach((b) => (b.disabled = false));
+    $("prep-restore").disabled = !project?.preparation_history?.length;
+    window.MashiOutline?.refreshControls();
+    $("restore-state").disabled = !$("saved-history").value;
   }
 }
 const url = () => `/api/projects/${project.id}`;
 const current = () =>
   project?.regions.find((r) => r.id === selected && r.active);
+const cropDraftKey = () => `mashi:crop-draft:${project.id}:${selected}`;
+function saveCropDraft() {
+  const r = current();
+  if (!r) return;
+  remember(cropDraftKey(), {
+    revision: r.revision,
+    image: project.image.canonical_sha256,
+    label: $("label").value,
+    box: ["x0", "y0", "x1", "y1"].map((k) => Number($(k).value)),
+    confirmed: $("confirmed").checked,
+  });
+  $("crop-draft-note").textContent =
+    "Unsaved crop changes are stored in this browser. Save to apply them to the project.";
+}
+async function loadSavedHistory(r) {
+  const id = project.id;
+  $("saved-history").replaceChildren();
+  $("restore-state").disabled = true;
+  try {
+    const entries = await (
+      await api(`${url()}/regions/${r.id}/history`)
+    ).json();
+    if (project.id !== id || selected !== r.id) return;
+    entries.forEach((e) => {
+      const option = document.createElement("option");
+      option.value = e.index;
+      option.textContent = `Revision ${e.revision} · ${e.has_outline ? "with outline" : "crop/label"} · ${new Date(e.at * 1000).toLocaleString()}`;
+      $("saved-history").append(option);
+    });
+    $("restore-state").disabled = busy || !entries.length;
+  } catch (e) {
+    $("crop-draft-note").textContent = e.message;
+  }
+}
 async function update(path, options, text) {
   project = await (await api(path, options)).json();
+  if (path.endsWith("/vector")) window.MashiOutline?.saved();
+  if (options.method === "PUT" && /\/regions\/[a-f0-9]{32}$/.test(path))
+    forget(cropDraftKey());
   if (!current())
     selected = project.regions.filter((r) => r.active).at(-1)?.id || null;
   render();
@@ -200,6 +247,22 @@ function render() {
   ["x0", "y0", "x1", "y1"].forEach((key, i) => ($(key).value = r.box[i]));
   $("label").value = r.label;
   $("confirmed").checked = r.confirmed;
+  const draft = recall(cropDraftKey());
+  $("crop-draft-note").textContent = "";
+  if (
+    draft?.revision === r.revision &&
+    draft.image === project.image.canonical_sha256
+  ) {
+    $("label").value = draft.label;
+    $("confirmed").checked = draft.confirmed === true;
+    if (Array.isArray(draft.box) && draft.box.length === 4)
+      ["x0", "y0", "x1", "y1"].forEach((k, i) => ($(k).value = draft.box[i]));
+    $("crop-draft-note").textContent =
+      "Recovered unsaved crop draft. Review and save to apply.";
+  } else if (draft)
+    $("crop-draft-note").textContent =
+      "Older crop draft was not applied: the saved revision/image changed. Download it for review or discard it.";
+  loadSavedHistory(r);
   showCodepoints();
   $("split-position").value = Math.floor((r.box[0] + r.box[2]) / 2);
   $("suggestion").textContent = r.suggestion
@@ -252,7 +315,8 @@ function render() {
     baseline.setAttribute("stroke-width", Math.max(v.height / 200, 0.3));
     baseline.setAttribute("stroke-dasharray", "3 2");
     svg.append(baseline);
-    $("vector-preview").replaceChildren(svg);
+    if (window.MashiOutline) window.MashiOutline.load(r, project, pageImage);
+    else $("vector-preview").replaceChildren(svg);
     $("svg-download").href = `${url()}/regions/${r.id}/svg`;
     $("svg-download").download = "mashi-glyph.svg";
   }
@@ -332,7 +396,48 @@ $("page-name-form").onsubmit = (event) => {
     );
   });
 };
-$("label").oninput = showCodepoints;
+$("label").oninput = () => {
+  showCodepoints();
+  saveCropDraft();
+};
+["x0", "y0", "x1", "y1"].forEach((k) => ($(k).oninput = saveCropDraft));
+$("confirmed").onchange = saveCropDraft;
+$("crop-draft-discard").onclick = () => {
+  forget(cropDraftKey());
+  render();
+};
+$("crop-draft-download").onclick = () => {
+  const draft = recall(cropDraftKey());
+  if (!draft) {
+    message("No local crop draft to download.");
+    return;
+  }
+  const uri = URL.createObjectURL(
+    new Blob([JSON.stringify(draft, null, 2)], { type: "application/json" }),
+  );
+  const a = document.createElement("a");
+  a.href = uri;
+  a.download = "Mashi-crop-draft.json";
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(uri), 10000);
+};
+$("restore-state").onclick = () =>
+  work(async () => {
+    const r = current();
+    await update(
+      `${url()}/regions/${r.id}/restore`,
+      {
+        method: "POST",
+        json: {
+          revision: r.revision,
+          history_index: Number($("saved-history").value),
+        },
+      },
+      "Earlier crop, label and outline restored. The replaced state remains in saved history.",
+    );
+  });
 $("region-form").onsubmit = (event) => {
   event.preventDefault();
   work(async () => {

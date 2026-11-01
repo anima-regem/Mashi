@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="/static/style.css" />
     <script src="/static/app.js" defer></script>
     <script src="/static/capture.js" defer></script>
+    <script src="/static/outline-geometry.js" defer></script>
+    <script src="/static/outline.js" defer></script>
   </head>
   <body>
     <header>
@@ -235,6 +237,22 @@
                   maxlength="32"
               /></label>
               <output id="codepoints" class="codepoints"></output>
+              <p id="crop-draft-note" class="hint" role="status"></p>
+              <div class="actions">
+                <button
+                  id="crop-draft-download"
+                  class="text-button"
+                  type="button"
+                >
+                  Download local crop draft</button
+                ><button
+                  id="crop-draft-discard"
+                  class="text-button"
+                  type="button"
+                >
+                  Discard local crop draft
+                </button>
+              </div>
               <div class="coords">
                 <label
                   >Left<input id="x0" type="number" required min="0" /></label
@@ -266,6 +284,20 @@
               <button id="discard" type="button" class="text-button">
                 Discard this crop
               </button>
+              <details>
+                <summary>Saved crop & outline history</summary>
+                <label class="field"
+                  >Earlier saved state<select
+                    id="saved-history"
+                  ></select></label
+                ><button id="restore-state" type="button">
+                  Restore selected saved state
+                </button>
+                <p class="hint">
+                  Restores this crop's earlier label, geometry and metrics from
+                  the same prepared image. Current state is kept in history.
+                </p>
+              </details>
               <div class="trace-controls">
                 <label
                   >Ink threshold <output id="threshold-value">180</output
@@ -290,8 +322,87 @@
               Closed contours from your selected pixels. Adjust the baseline and
               spacing before export.
             </p>
-            <div id="vector-preview" class="vector-preview"></div>
-            <a id="svg-download" class="text-button">Download this SVG ↗</a>
+            <div
+              class="outline-toolbar"
+              role="toolbar"
+              aria-label="Outline editing tools"
+            >
+              <button id="outline-undo" type="button">Undo</button
+              ><button id="outline-redo" type="button">Redo</button
+              ><button
+                id="outline-zoom-in"
+                type="button"
+                aria-label="Zoom in outline"
+              >
+                ＋</button
+              ><button
+                id="outline-zoom-out"
+                type="button"
+                aria-label="Zoom out outline"
+              >
+                −</button
+              ><button id="outline-fit" type="button">Fit</button
+              ><label
+                ><input id="outline-pan" type="checkbox" /> Pan view</label
+              >
+            </div>
+            <label class="field"
+              >Editable contour<select id="outline-contour"></select
+            ></label>
+            <div id="vector-preview" class="vector-preview visual-editor"></div>
+            <div class="outline-compare">
+              <label class="check"
+                ><input id="outline-overlay" type="checkbox" checked /> Compare
+                source ink</label
+              ><label
+                >Photo opacity<input
+                  id="outline-opacity"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="0.3"
+              /></label>
+            </div>
+            <form id="point-form" class="point-form" hidden>
+              <label
+                >Selected point X<input
+                  id="point-x"
+                  type="number"
+                  step="any"
+                  required /></label
+              ><label
+                >Selected point Y<input
+                  id="point-y"
+                  type="number"
+                  step="any"
+                  required /></label
+              ><button type="submit">Move point</button>
+            </form>
+            <p id="outline-status" class="hint" role="status"></p>
+            <p class="hint">
+              Drag nodes or Bézier handles. Arrow keys move a focused point;
+              Shift moves 10 pixels, Alt moves 0.1. Undo/redo affects the
+              current editing session. Baseline and advance guides can be
+              dragged.
+            </p>
+            <div class="outline-draft-actions">
+              <button
+                id="outline-download-draft"
+                class="text-button"
+                type="button"
+              >
+                Download local outline draft
+              </button>
+              <button
+                id="outline-discard-draft"
+                class="text-button"
+                type="button"
+              >
+                Discard local outline draft
+              </button>
+              <a id="svg-download" class="text-button">Download this SVG ↗</a>
+            </div>
           </div>
           <form id="vector-form">
             <div class="metrics">
@@ -320,7 +431,7 @@
               /></label>
             </div>
             <details>
-              <summary>Edit SVG paths</summary>
+              <summary>Advanced · SVG path geometry</summary>
               <p class="hint">
                 One closed SVG path per JSON string. Geometry only; M/L/C/Q/Z
                 commands. This edits the traced outline without changing the
@@ -333,6 +444,9 @@
                   spellcheck="false"
                 ></textarea>
               </label>
+              <button id="outline-apply-paths" type="button">
+                Preview advanced geometry
+              </button>
             </details>
             <button class="primary" type="submit">
               Save outline & metrics

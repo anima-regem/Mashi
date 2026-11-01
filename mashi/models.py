@@ -89,3 +89,7 @@ class ProjectNameInput(BaseModel):
 
 class RevisionInput(BaseModel):
     revision: int = Field(ge=1)
+
+
+class RegionRestoreInput(RevisionInput):
+    history_index: int = Field(ge=0)

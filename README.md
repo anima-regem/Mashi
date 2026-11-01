@@ -35,6 +35,12 @@ Open **Prepare photo** to drag or enter four paper corners, correct perspective,
 
 Name a page using **Save name**. The last saved page reopens on reload; the local page chooser shows up to 50 named pages. Each upload is still one separate page/project. Multi-page font assembly and variant selection remain on the roadmap.
 
+### Edit and recover an outline
+
+The visual workbench lets you select a contour, drag nodes and Bézier controls, zoom/pan, compare source ink and adjust baseline/advance guides. Focus a point and use arrows (Shift: 10 pixels; Alt: 0.1). Undo/redo keeps up to 50 edits in the current loaded outline session. Save commits geometry and metrics; raw SVG paths remain under Advanced.
+
+Unsaved crop forms and outline drafts stay in this browser's local storage and recover only when their region revision and image hash match. Older drafts are retained for download/review and never overwrite a newer saved state automatically. Browser drafts are not included in a `.mashi/` backup; save them or download their JSON. **Saved crop & outline history** restores an earlier saved state from the same image/provenance, preserving the state it replaces. Whole-project undo (including reversing split/merge/discard) remains future work.
+
 ### Optional Malayalam OCR
 
 Install [Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html), then explicitly fetch the pinned official [`mal` data](https://github.com/tesseract-ocr/tessdata_fast/blob/87416418657359cb625c412a48b6e1d6d41c29bd/mal.traineddata) from the repository root:

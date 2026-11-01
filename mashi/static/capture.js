@@ -241,4 +241,5 @@
     drag = null;
   };
   window.MashiCapture = { load };
+  window.addEventListener("resize",()=>{if(source&&$("photo-prep").open)draw();});
 })();

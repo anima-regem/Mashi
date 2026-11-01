@@ -27,6 +27,7 @@ from .models import (
     PreparationOptions,
     ProjectNameInput,
     RevisionInput,
+    RegionRestoreInput,
 )
 from .preparation import prepare, source_polygons, suggest_corners
 from .predictors import coverage
@@ -446,6 +447,50 @@ def create_app(root=None, *, testing=False):
                 else 'attachment; filename="mashi-glyph.svg"'
             },
         )
+
+    def restorable(doc, region_id):
+        return [
+            (index, entry)
+            for index, entry in enumerate(doc["history"])
+            if entry.get("snapshot", {}).get("id") == region_id
+            and entry["snapshot"].get("image_revision", 0)
+            == doc["image"].get("preparation_revision", 0)
+            and entry["snapshot"].get("provenance") == input_provenance(doc)
+        ]
+
+    @app.get("/api/projects/{project_id}/regions/{region_id}/history")
+    def region_history(project_id: str, region_id: str):
+        doc = project(project_id)
+        region(doc, region_id)
+        return [
+            {
+                "index": i,
+                "operation": e["operation"],
+                "at": e["at"],
+                "revision": e["snapshot"]["revision"],
+                "has_outline": bool(e["snapshot"].get("vector")),
+            }
+            for i, e in reversed(restorable(doc, region_id))
+        ]
+
+    @app.post("/api/projects/{project_id}/regions/{region_id}/restore")
+    def restore_region(project_id: str, region_id: str, data: RegionRestoreInput):
+        doc = project(project_id)
+        item = region(doc, region_id, data.revision)
+        snapshots = dict(restorable(doc, region_id))
+        if data.history_index not in snapshots:
+            raise ValueError("That saved state does not belong to this crop, image or provenance")
+        restored = deepcopy(snapshots[data.history_index]["snapshot"])
+        validate_box(restored["box"], doc["image"]["width"], doc["image"]["height"])
+        if restored.get("vector"):
+            validate_paths(restored["vector"]["paths"])
+        doc["history"].append(
+            {"operation": "before-restore", "snapshot": deepcopy(item), "at": time.time()}
+        )
+        restored.update({"revision": item["revision"] + 1, "active": True})
+        restored.update(source_polygons(restored["box"], doc["image"]))
+        doc["regions"][doc["regions"].index(item)] = restored
+        return event(doc, "restore-saved-crop-outline", [region_id])
 
     @app.get("/api/projects/{project_id}/coverage")
     def get_coverage(project_id: str):
