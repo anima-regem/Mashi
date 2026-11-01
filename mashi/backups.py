@@ -25,7 +25,7 @@ from .imaging import MAX_BYTES, MAX_PIXELS, validate_box
 from .models import RegionInput, TypographyInput, PreparationOptions
 from .font_metrics import TypographyOptions
 from .projects import MAX_PAGES, MAX_DOCUMENT, document, schema, view
-from .tracing import validate_paths
+from .tracing import validate_paths, initial_metrics
 from .ml_service import LICENSE_ROOT
 
 MAX_ARCHIVE = 256 * 1024 * 1024
@@ -194,7 +194,30 @@ def export_backup(store, project_id):
         payload = store.raw_text(project_id).encode()
         project = json_data(payload)
         schema(project)
-        return _build(store, project, payload)
+        data = _build(store, project, payload)
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            manifest = json_data(read_member(archive, "manifest.json", MAX_DOCUMENT))
+        try:
+            validate_project(
+                project,
+                store.asset(project_id, "original.bin").parent,
+                {asset["name"]: asset["sha256"] for asset in manifest["assets"]},
+            )
+        except (
+            ValueError,
+            TypeError,
+            KeyError,
+            AttributeError,
+            IndexError,
+            OverflowError,
+            OSError,
+            Image.DecompressionBombError,
+            Image.DecompressionBombWarning,
+        ) as error:
+            raise ValueError(
+                f"Project backup could not be validated: {error}. Your saved project is unchanged."
+            ) from error
+        return data
 
 
 def migration_backup(store, project, exact_payload):
@@ -443,13 +466,18 @@ def validate_project(project, staged, asset_hashes):
                     for key in ["baseline", "scale", "advance", "width", "height"]:
                         if key not in node or type(node[key]) not in {float, int}:
                             raise ValueError("Invalid saved vector metrics")
-                    if (
-                        not 0.01 < node["scale"] <= 100
-                        or abs(node["baseline"]) > 100000
-                        or not 0 <= node["advance"] <= 5000
-                        or not 0 < node["width"] <= MAX_PIXELS
-                        or not 0 < node["height"] <= MAX_PIXELS
-                    ):
+                    if not 0 < node["width"] <= MAX_PIXELS or not 0 < node["height"] <= MAX_PIXELS:
+                        raise ValueError("Saved vector canvas is out of range")
+                    estimated = initial_metrics(node["width"], node["height"])
+                    initial_trace = node["edited"] is False and all(
+                        node[key] == value for key, value in estimated.items()
+                    )
+                    editable = (
+                        0.01 < node["scale"] <= 100
+                        and abs(node["baseline"]) <= 100000
+                        and 0 <= node["advance"] <= 5000
+                    )
+                    if not (editable or initial_trace):
                         raise ValueError("Saved vector metrics are out of range")
                 if "label" in node:
                     if not isinstance(node["label"], str) or len(node["label"]) > 32:

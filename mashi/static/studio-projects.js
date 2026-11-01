@@ -38,17 +38,22 @@
     });
     $("project-page").value = project.page_id;
     $("current-page-name").value = project.page_name;
-    const groups = project.sample_groups || [];
+    const groups = (project.sample_groups || []).map(group => {
+      const matched = group.choice && group.samples.find(sample => ["page_id", "region_id", "revision", "vector_sha256"].every(key => sample[key] === group.choice[key]));
+      const needsChoice = group.needs_choice || group.samples.length > 1 || !!group.choice && !matched;
+      return {...group, needsChoice, sample:matched || (!needsChoice && group.samples.length === 1 ? group.samples[0] : null)};
+    });
     $("font-samples").hidden = !groups.length;
-    const unresolved = groups.filter(group => group.needs_choice && !group.choice).length;
-    $("font-samples-summary").textContent = `Font samples · ${groups.length} sequence${groups.length === 1 ? "" : "s"}${unresolved ? ` · ${unresolved} need${unresolved === 1 ? "s" : ""} a choice` : ""}`;
+    const unresolved = groups.filter(group => group.needsChoice && !group.sample).length;
+    $("font-samples-summary").textContent = `Font samples · ${groups.length} sequence${groups.length === 1 ? "" : "s"}${unresolved ? ` · ${unresolved} need${unresolved === 1 ? "s" : ""} review` : ""}`;
     $("font-sample-list").replaceChildren();
     groups.forEach(group => {
       const row = node("div", "", $("font-sample-list")); row.className = "font-sample-row";
       const label = node("span", group.label, row); label.lang = "ml"; label.className = "sample-label";
-      let sample = group.choice ? group.samples.find(s => s.page_id === group.choice.page_id && s.region_id === group.choice.region_id && s.revision === group.choice.revision) : group.needs_choice ? null : group.samples[0];
+      const sample = group.sample;
       const description = s => `${s.page_name} · ${s.kind === "generated" ? "generated form" : "crop " + s.number}${s.provenance === "synthetic-fixture" ? " · synthetic" : ""}`;
-      if (group.needs_choice || group.samples.length > 1) {
+      if (!group.samples.length) node("p", "Capture and trace a sample for this sequence.", row);
+      else if (group.needsChoice) {
         const select = node("select", "", row);
         select.setAttribute("aria-label", `Sample to use for ${group.label}`);
         node("option", "Choose a sample…", select).value = "";
@@ -61,8 +66,8 @@
             await update(`${url()}/samples/select`, {method:"PUT", json:{revision:project.revision, label:group.label, page_id:chosen.page_id, region_id:chosen.region_id, sample_revision:chosen.revision}}, `Sample chosen for ${group.label}. Rebuild the proof to review it.`);
           });
         };
-        if (group.reason) node("small", "Sample changed. Choose again.", row);
-      } else node("span", description(sample), row);
+        if (!sample && (group.reason || group.choice)) node("small", "Sample changed or unavailable. Choose again.", row);
+      } else if (sample) node("span", description(sample), row);
       const view = node("button", "View sample", row);
       view.disabled = !sample; view.hidden = !sample;
       view.onclick = () => work(() => showSample(sample));

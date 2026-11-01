@@ -7,10 +7,12 @@ import json
 import plistlib
 import stat
 import struct
+from uuid import uuid4
 import zipfile
 
 from fastapi.testclient import TestClient
 from fontTools.ttLib import TTFont
+from PIL import Image, ImageDraw
 import pytest
 
 from mashi.app import create_app
@@ -184,7 +186,8 @@ def test_variants_share_one_resolver_and_selected_edits_never_substitute(client)
         )
 
     assert preflight(doc).json()["coverage"]["variant_conflicts"] == ["ക"]
-    assert client.post(base + "/export/ufo?include_fixture=true").status_code == 400
+    rejected = client.post(base + "/export/ufo?include_fixture=true")
+    assert rejected.status_code == 400
     picked = choose(client, doc, b["id"], b["regions"][0])
     assert picked.status_code == 200, picked.text
     selected = picked.json()
@@ -644,3 +647,146 @@ def test_restoring_preparation_retains_source_state_for_stale_generated_backup(m
     assert accepted.status_code == 400 and "stale-reference" in accepted.text
     with zipfile.ZipFile(io.BytesIO(backup.content)) as archive:
         assert archive.read("assets/" + generated["image_asset"])
+
+
+@pytest.mark.parametrize("stale", ["region", "revision", "hash", "no-eligible-sample"])
+def test_imported_stale_choices_roundtrip_and_require_explicit_reselection(client, stale):
+    original = ready(client)
+    row = original["regions"][0]
+    picked = choose(client, original, original["page_id"], row).json()
+    source_before = client.app.state.store.raw_text(original["id"])
+    payload = client.post(
+        f"/api/projects/{original['id']}/backup", json={"revision": picked["revision"]}
+    ).content
+    stored_choice = None
+
+    def change(entries):
+        nonlocal stored_choice
+        raw = json.loads(entries["project.json"])
+        choice = raw["sample_choices"]["ക"]
+        if stale == "region":
+            choice["region_id"] = uuid4().hex
+        elif stale == "revision":
+            choice["revision"] += 1
+        elif stale == "hash":
+            choice["vector_sha256"] = "f" * 64
+        else:
+            raw["pages"][0]["regions"][0]["active"] = False
+        stored_choice = deepcopy(choice)
+        data = json.dumps(raw).encode()
+        entries["project.json"] = data
+        manifest = json.loads(entries["manifest.json"])
+        manifest["project_sha256"] = hashlib.sha256(data).hexdigest()
+        entries["manifest.json"] = json.dumps(manifest).encode()
+
+    imported = client.post("/api/projects/import", content=rewrite_backup(payload, change))
+    assert imported.status_code == 200, imported.text
+    doc = imported.json()
+    group = next(g for g in doc["sample_groups"] if g["label"] == "ക")
+    assert group["choice"] == stored_choice and group["needs_choice"] and group["stale_choice"]
+    assert bool(group["samples"]) == (stale != "no-eligible-sample")
+    base = f"/api/projects/{doc['id']}"
+    before = client.app.state.store.raw_text(doc["id"])
+    assert not client.post(
+        base + "/proof/preflight?include_fixture=true",
+        json={"revision": doc["revision"], "text": "ക"},
+    ).json()["coverage"]["supported"]
+    assert client.post(base + "/export/ufo?include_fixture=true").status_code == 400
+    assert client.app.state.store.raw_text(doc["id"]) == before
+    backup = client.post(base + "/backup", json={"revision": doc["revision"]})
+    restored = client.post("/api/projects/import", content=backup.content)
+    assert restored.status_code == 200, restored.text
+    doc = restored.json()
+    assert doc["sample_choices"]["ക"] == stored_choice
+    if stale == "no-eligible-sample":
+        base = f"/api/projects/{doc['id']}"
+        doc = client.post(
+            base + "/regions",
+            json={
+                "project_revision": doc["revision"],
+                "box": row["box"],
+                "label": "ക",
+                "confirmed": True,
+            },
+        ).json()
+        new = doc["regions"][-1]
+        doc = client.post(
+            base + f"/regions/{new['id']}/trace", json={"revision": new["revision"]}
+        ).json()
+        row = doc["regions"][-1]
+        assert doc["sample_groups"][0]["needs_choice"]
+    selected = choose(client, doc, doc["page_id"], row)
+    assert selected.status_code == 200, selected.text
+    doc = selected.json()
+    assert not doc["sample_groups"][0]["stale_choice"]
+    result = client.post(f"/api/projects/{doc['id']}/export/ufo?include_fixture=true")
+    assert result.status_code == 200, result.text
+    assert client.app.state.store.raw_text(original["id"]) == source_before
+
+
+def test_wide_unfinished_trace_and_corrected_trace_history_roundtrip(client):
+    image = Image.new("RGB", (900, 100), "white")
+    ImageDraw.Draw(image).rounded_rectangle((10, 10, 890, 90), radius=30, outline="black", width=10)
+    doc = client.post("/api/projects?source=synthetic-fixture", content=png(image)).json()
+    base = f"/api/projects/{doc['id']}"
+    doc = client.post(
+        base + "/regions",
+        json={
+            "project_revision": doc["revision"],
+            "box": [0, 0, 900, 100],
+            "label": "ക",
+            "confirmed": True,
+        },
+    ).json()
+    row = doc["regions"][-1]
+    doc = client.post(
+        base + f"/regions/{row['id']}/trace", json={"revision": row["revision"]}
+    ).json()
+    row = doc["regions"][-1]
+    assert row["vector"]["advance"] == 6400
+    rejected = client.post(base + "/export/ufo?include_fixture=true")
+    assert rejected.status_code == 400 and "5,000" in rejected.text
+    for corrected in [False, True]:
+        if corrected:
+            v = row["vector"]
+            doc = client.put(
+                base + f"/regions/{row['id']}/vector",
+                json={
+                    "revision": row["revision"],
+                    "paths": v["paths"],
+                    "baseline": v["baseline"],
+                    "scale": v["scale"],
+                    "advance": 5000,
+                },
+            ).json()
+            row = doc["regions"][-1]
+        backup = client.post(base + "/backup", json={"revision": doc["revision"]})
+        assert backup.status_code == 200, backup.text
+        restored = client.post("/api/projects/import", content=backup.content)
+        assert restored.status_code == 200, restored.text
+        copy = restored.json()
+        assert copy["regions"] == doc["regions"] and copy["history"] == doc["history"]
+        assert copy["regions"][-1]["vector"]["advance"] == (5000 if corrected else 6400)
+        if corrected:
+            assert any(
+                (e.get("snapshot", {}).get("vector") or {}).get("advance") == 6400
+                for e in copy["history"]
+            )
+            exported = client.post(base + "/export/ufo?include_fixture=true")
+            assert exported.status_code == 200, exported.text
+
+
+def test_backup_rejects_truly_unsupported_saved_metrics_before_download(client):
+    doc = ready(client)
+    store = client.app.state.store
+    raw = json.loads(store.raw_text(doc["id"]))
+    for edited in [False, True]:
+        raw["pages"][0]["regions"][0]["vector"].update(advance=1234567, edited=edited)
+        exact = json.dumps(raw)
+        with store.connect() as db:
+            db.execute("UPDATE projects SET doc=? WHERE id=?", (exact, doc["id"]))
+        result = client.post(
+            f"/api/projects/{doc['id']}/backup", json={"revision": doc["revision"]}
+        )
+        assert result.status_code == 400 and "could not be validated" in result.text
+        assert store.raw_text(doc["id"]) == exact

@@ -40,6 +40,16 @@ def validate_paths(paths):
             raise ValueError("Invalid SVG path geometry") from error
 
 
+def initial_metrics(width, height):
+    """Trace estimates, also recognized losslessly in editable project archives."""
+    scale = round(min(10, 700 / height), 6)
+    return {
+        "baseline": round(height * 0.85, 3),
+        "scale": scale,
+        "advance": round(width * scale + 100),
+    }
+
+
 def trace(image, threshold):
     mask = ink_mask(image, threshold)
     if not np.any(mask):
@@ -77,14 +87,11 @@ def trace(image, threshold):
         parse_path(element.attrib["d"], TransformPen(pen, (1, 0, 0, 1, dx, dy)))
         paths.append(pen.getCommands())
     validate_paths(paths)
-    scale = round(min(10, 700 / image.height), 6)
     return {
         "paths": paths,
         "width": image.width,
         "height": image.height,
-        "baseline": round(image.height * 0.85, 3),
-        "scale": scale,
-        "advance": round(image.width * scale + 100),
+        **initial_metrics(image.width, image.height),
         "threshold": threshold,
         "tracer": "vtracer-0.6.12",
         "transform": "x_font = x_crop*scale+50; y_font = (baseline-y_crop)*scale",

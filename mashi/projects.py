@@ -144,16 +144,29 @@ def sample_groups(project):
         )
     choices = project.get("sample_choices", {})
     required = project.get("selection_required", {})
-    return [
-        {
-            "label": label,
-            "samples": entries,
-            "choice": choices.get(label),
-            "needs_choice": label in required or len(entries) > 1,
-            "reason": required.get(label),
-        }
-        for label, entries in sorted(groups.items())
-    ]
+    result = []
+    keys = ("page_id", "region_id", "revision", "vector_sha256")
+    for label in sorted(groups.keys() | choices.keys() | required.keys()):
+        entries, choice = groups[label], choices.get(label)
+        stale = choice is not None and not any(
+            choice == {key: entry[key] for key in keys} for entry in entries
+        )
+        result.append(
+            {
+                "label": label,
+                "samples": entries,
+                "choice": choice,
+                "stale_choice": stale,
+                "needs_choice": label in required or len(entries) > 1 or stale,
+                "reason": required.get(label)
+                or (
+                    "The selected sample changed or is unavailable. Choose a current form."
+                    if stale
+                    else None
+                ),
+            }
+        )
+    return result
 
 
 def view(raw, page_id=None, *, require_page=False, migration_pending=False):
