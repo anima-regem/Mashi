@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "checks": [
+    "occupied preferred port falls back without touching its listener",
+    "duplicate launch rejected by OS lock",
+    "bundled HTML, JavaScript and CSS served from unrelated cwd",
+    "OCR without language data and absent ML model reported unavailable",
+    "synthetic PNG uploaded, labelled and vector traced",
+    "offline UFO export from bundled runtime",
+    "offline TTF export from bundled runtime",
+    "graceful close releases only the app server",
+    "reopen reuses port and preserves the saved project",
+    "forced crash leaves no orphan server",
+    "post-crash launch releases lock and preserves the saved project"
+  ],
+  "packaged": true,
+  "ocr": {
+    "available": false,
+    "reason": "Tesseract could not be started."
+  },
+  "data": "temporary synthetic data only",
+  "date_utc": "2026-11-01",
+  "base_commit": "6cc11660669d12f8e9799a272a32fa528b93b376",
+  "local_host": {
+    "architecture": "arm64",
+    "macos": "27.2",
+    "python": "3.12.13"
+  },
+  "source_checks": {
+    "python_tests_passed": 121,
+    "node_tests_passed": 4,
+    "ruff": "passed",
+    "javascript_syntax": "passed"
+  },
+  "native_ui_checks": [
+    "Cocoa/WebKit studio rendered",
+    "synthetic practice page labelled and traced",
+    "native Save dialog wrote a synthetic TTF ZIP; shaping_validation passed",
+    "saved project and outline reopened",
+    "native Desktop diagnostics alert reported OCR and ML unavailable",
+    "native photo picker opened and cancelled",
+    "Mashi Quit drained the owned API server and exited with status 0"
+  ],
+  "local_artifact": {
+    "name": "Mashi.app",
+    "size_kib": 159040,
+    "file_manifest_sha256": "a5718f6abd71cbd070e1017b69a760bf952aea9d1f1ceeb36ea1b3576fcaad58",
+    "signature_verification": "codesign --verify --deep --strict passed; ad-hoc local signature only",
+    "published_binary": false
+  },
+  "limits": [
+    "No Developer ID signing or notarization",
+    "No clean-machine, minimum macOS or Intel qualification yet",
+    "No bundled OCR executable/language data or ML weights",
+    "Binary dependency licence review remains before redistribution",
+    "Hosted CI results must be checked on the PR exact commit"
+  ]
+}
