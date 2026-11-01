@@ -4,7 +4,7 @@ Executed on 2026-11-01 on macOS arm64 with Python 3.12.13. The dependency set is
 
 ## Automated checks
 
-`uv run --no-sync pytest -q`: **9 passed**. These verify:
+`uv run --no-sync pytest -q`: **11 passed**. These verify:
 
 - JPEG EXIF orientation, asymmetric pixel orientation and both image hashes;
 - corrected half-open crop bounds, stale revision rejection, split/merge ancestry and discarded parent state;
@@ -16,6 +16,7 @@ Executed on 2026-11-01 on macOS arm64 with Python 3.12.13. The dependency set is
 - exclusion of generated and unconfirmed forms and reporting of unencoded sequence dependencies;
 - HarfBuzz substitution of `ക്ക`, direct atomic chillu `ൻ`, and disclosure of missing GPOS mark anchors;
 - rejected invalid Hosts/Origins/tokens, oversized requests, unsafe SVG markup, open/nonfinite contours and out-of-page crops.
+- real model fitting, style inference, checkpoint reload without pickle, and counter-preserving research normalization.
 
 The geometry fixtures are synthetic; test labels are assigned to exercise Unicode and font plumbing. These results do not measure Malayalam handwriting OCR accuracy, style fidelity or complete shaping quality.
 
@@ -38,4 +39,4 @@ Local screenshots are in `output/browser/` (gitignored); they contain only synth
 
 ## Explicit limits
 
-Tesseract and `mal` are not installed on this Mac, so an actual Malayalam OCR inference was **not** run. The adapter's word-suggestion handling and unavailable-capability path were exercised; recognition accuracy is unknown. No model training, benchmark corpus or missing-letter generation was performed. Full Malayalam shaping, anchors and typographic quality remain unverified and incomplete. The GitHub workflow runs the same automated checks on Linux; its result is recorded by GitHub separately from these local checks.
+Tesseract and `mal` are not installed on this Mac, so an actual Malayalam OCR inference was **not** run. The adapter's word-suggestion handling and unavailable-capability path were exercised; recognition accuracy is unknown. A small rendered-font completion model was trained and evaluated separately: see [COMPLETION.md](COMPLETION.md) and the recorded experiment assets. It has no measured real-handwriting accuracy and is not enabled in the studio. Full Malayalam shaping, anchors and typographic quality remain unverified and incomplete. The GitHub workflow runs the same automated checks on Linux; its result is recorded by GitHub separately from these local checks.

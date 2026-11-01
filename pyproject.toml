@@ -32,3 +32,6 @@ line-length = 100
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { file = "mashi/**/*.py" }, { file = "mashi/static/*" }]

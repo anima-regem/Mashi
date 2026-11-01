@@ -2,7 +2,7 @@
 
 A local-first, open-source Malayalam handwriting-to-font studio. Photograph a page, correct the crops and labels, preserve the actual ink as closed vector outlines, and export editable font sources.
 
-**This is an experimental first skeleton.** It builds a real SVG/UFO/TTF subset, not a complete Malayalam text font. No missing-letter completion model has been trained or bundled. See [coverage and limitations](#font-coverage).
+**This is an experimental first skeleton.** It builds a real SVG/UFO/TTF subset, not a complete Malayalam text font. A small CPU completion research model has been trained and evaluated separately; it is not enabled in the studio and no checkpoint is bundled. See [the experiment](docs/COMPLETION.md) and [coverage and limitations](#font-coverage).
 
 ## Run locally
 
@@ -60,11 +60,11 @@ We studied actual sources from Swathanthra Malayalam Computing and Santhosh Thot
 
 ```sh
 uv run --no-sync pytest -q
-uv run --no-sync ruff check mashi tests
+uv run --no-sync ruff check mashi scripts tests
 node --check mashi/static/app.js
 ```
 
-Tests cover EXIF orientation/hashes, half-open crop bounds, revisions and split/merge ancestry, exact Malayalam/joiner persistence, OCR suggestion handling, counters and orientation, full image-to-TTF export, UFO reload, cmap/contours, selective HarfBuzz shaping, excluded generated forms, and local input protections.
+Tests cover EXIF orientation/hashes, half-open crop bounds, revisions and split/merge ancestry, exact Malayalam/joiner persistence, OCR suggestion handling, counters and orientation, full image-to-TTF export, UFO reload, cmap/contours, selective HarfBuzz shaping, excluded generated forms, local input protections, and completion-model fitting/checkpoint reload.
 
 ## Licensing
 

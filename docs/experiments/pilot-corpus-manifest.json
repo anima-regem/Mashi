@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "acquired": "2026-11-01",
+  "fonts": [
+    {
+      "family": "chilanka",
+      "file": "chilanka/Chilanka-Regular.ttf",
+      "split": "train",
+      "lineage_group": "smc-chilanka",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "license": "OFL-1.1",
+      "license_file": "chilanka/OFL.txt",
+      "assets": [
+        {
+          "path": "ofl/chilanka/Chilanka-Regular.ttf",
+          "blob_sha": "a69b0d9e312765843ff4f36d6864afff9efb3bde",
+          "sha256": "c6ce47d1a8d387310469c8e355351ff2bd4106030c2a45f1cef0c93215075ed7",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/chilanka/Chilanka-Regular.ttf"
+        },
+        {
+          "path": "ofl/chilanka/OFL.txt",
+          "blob_sha": "cc14f3e10402222d97f90e92a99e082300ee48ca",
+          "sha256": "f7516c3dde20383922ee27750d432cc2b95b4ba275204d374b7305ef95ed2d14",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/chilanka/OFL.txt"
+        },
+        {
+          "path": "ofl/chilanka/METADATA.pb",
+          "blob_sha": "bd2af7068eda27bc50d7a813f022bc73ebb9f115",
+          "sha256": "04ea606d56058daf74b99e154258b0045df7be580b773372d00d1b08539e35c4",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/chilanka/METADATA.pb"
+        },
+        {
+          "path": "ofl/chilanka/upstream_info.md",
+          "blob_sha": "b64c71a7649c081dacbad6e4e25ea9d9926e72cf",
+          "sha256": "b8fca54c2357aff64a43de8887b517bd39f0ca5b7e68cca7928c1f1557e6a551",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/chilanka/upstream_info.md"
+        }
+      ]
+    },
+    {
+      "family": "manjari",
+      "file": "manjari/Manjari-Regular.ttf",
+      "split": "train",
+      "lineage_group": "smc-manjari",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "license": "OFL-1.1",
+      "license_file": "manjari/OFL.txt",
+      "assets": [
+        {
+          "path": "ofl/manjari/Manjari-Regular.ttf",
+          "blob_sha": "f91af96ce1928cee89c07f28017a7978bdd7cb20",
+          "sha256": "16460924696bfea2a2f71b4201d8786867c6413b548ecbd22bc6bfe55be90f95",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/Manjari-Regular.ttf"
+        },
+        {
+          "path": "ofl/manjari/OFL.txt",
+          "blob_sha": "96219bf14f4c3a1b55b3037ed7c93f7d91ff84c4",
+          "sha256": "2e144823e28b854ff5e1d41db9a2180fdb1d8e44a71c2ae4fca5c4b2a5adde4c",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/OFL.txt"
+        },
+        {
+          "path": "ofl/manjari/METADATA.pb",
+          "blob_sha": "cfda3893c9b9964ec6e3b4a958936f958dc3171f",
+          "sha256": "d74e454215a47f514d4998353960798294e4d07605ae7e7b9cc1213ba41f35c4",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/METADATA.pb"
+        },
+        {
+          "path": "ofl/manjari/upstream_info.md",
+          "blob_sha": "b4afaf8c4aba91ccc404852a6ea94fdd20fdb74f",
+          "sha256": "26a25a3f721f19a85cd8147d557714d66612c1274f66c9a28daad63c3a8cc93f",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/upstream_info.md"
+        }
+      ]
+    },
+    {
+      "family": "gayathri",
+      "file": "gayathri/Gayathri-Regular.ttf",
+      "split": "train",
+      "lineage_group": "smc-gayathri",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "license": "OFL-1.1",
+      "license_file": "gayathri/OFL.txt",
+      "assets": [
+        {
+          "path": "ofl/gayathri/Gayathri-Regular.ttf",
+          "blob_sha": "6db5416b794aca8b8835ea06dc0fc2bc3fe2b192",
+          "sha256": "c4fab5d994518247f78d96bf212a7d5b36563b60663136765fbaebd33a74d4f9",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/Gayathri-Regular.ttf"
+        },
+        {
+          "path": "ofl/gayathri/OFL.txt",
+          "blob_sha": "3328321e5d9d15381f694edee157bf6ab957719f",
+          "sha256": "b2cc52a7162f0c8f71924211d040de37b19894f563a0190a75c017e2dc28d08a",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/OFL.txt"
+        },
+        {
+          "path": "ofl/gayathri/METADATA.pb",
+          "blob_sha": "6a1a390929bb65472870671335ee43cf1a6ac247",
+          "sha256": "e31952ee30273ea9f6766871b29ca2d3ad9d35270372544e8535bae1e4772c9e",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/METADATA.pb"
+        },
+        {
+          "path": "ofl/gayathri/upstream_info.md",
+          "blob_sha": "7d7d51d54d8bf6fbccd3c26e4fef0dfd7533f6b2",
+          "sha256": "a424c5d6ab2810813b82f0c84a72283f5577818df70efc33ffa4ea4e867ca03c",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/upstream_info.md"
+        }
+      ]
+    },
+    {
+      "family": "notosansmalayalam",
+      "file": "notosansmalayalam/NotoSansMalayalam[wdth,wght].ttf",
+      "split": "test",
+      "lineage_group": "noto-malayalam",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "license": "OFL-1.1",
+      "license_file": "notosansmalayalam/OFL.txt",
+      "assets": [
+        {
+          "path": "ofl/notosansmalayalam/NotoSansMalayalam[wdth,wght].ttf",
+          "blob_sha": "3a9a05e57c1567114386422a987280f4ff10f6fd",
+          "sha256": "312e0e7c3cc15fa09eb42a8f749eeb246b593ed420e3c81aafe8d910c3a6fb56",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notosansmalayalam/NotoSansMalayalam[wdth,wght].ttf"
+        },
+        {
+          "path": "ofl/notosansmalayalam/OFL.txt",
+          "blob_sha": "3fe274f292a1b917ed33839f1046bc9a238f4c17",
+          "sha256": "1df18163a0bf60f02131401ba1609df90051f40c4047684dda1c8a2e9586f7f2",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notosansmalayalam/OFL.txt"
+        },
+        {
+          "path": "ofl/notosansmalayalam/METADATA.pb",
+          "blob_sha": "5e2695e97d1abeecc0e4fd5e08ed73dd22465c42",
+          "sha256": "04c0c4f45bfd7eade8ee48dd6dc56586eda3e3514c355fc078cef966bc47cc1d",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notosansmalayalam/METADATA.pb"
+        },
+        {
+          "path": "ofl/notosansmalayalam/upstream_info.md",
+          "blob_sha": "40857d9ff8403e85a65a250ab5ef64e3ae3b6817",
+          "sha256": "69c96354080099662772a64784b4c46d5112902811970100e506bcc378b11244",
+          "url": "https://github.com/google/fonts/blob/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notosansmalayalam/upstream_info.md"
+        }
+      ]
+    }
+  ],
+  "split_policy": "Family-lineage separation; only Regular per family. Noto held out.",
+  "validation_split": null,
+  "hyperparameter_selection": "Fixed a priori; no tuning.",
+  "license_note": "Keep each OFL/copyright notice; respect reserved names and OFL derivative conditions. No unrestricted output licence is inferred."
+}

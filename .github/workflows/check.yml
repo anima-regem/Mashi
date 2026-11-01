@@ -11,6 +11,6 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked --no-editable --extra dev --python 3.12
-      - run: uv run --no-sync ruff check mashi tests
+      - run: uv run --no-sync ruff check mashi scripts tests
       - run: uv run --no-sync pytest -q
       - run: node --check mashi/static/app.js

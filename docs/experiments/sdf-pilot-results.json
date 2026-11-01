@@ -1,0 +1,480 @@
+{
+  "experiment": "sdf-pilot-v1",
+  "date": "2026-11-01",
+  "trained": true,
+  "model": "Paired-glyph SDF mean + shared rank-2 font-style PCA; ridge inference",
+  "training_families": [
+    "chilanka",
+    "manjari",
+    "gayathri"
+  ],
+  "test_families": [
+    "notosansmalayalam"
+  ],
+  "grid": 64,
+  "inventory": [
+    "അ",
+    "ആ",
+    "ഇ",
+    "ഈ",
+    "ഉ",
+    "ഊ",
+    "ഋ",
+    "എ",
+    "ഏ",
+    "ഐ",
+    "ഒ",
+    "ഓ",
+    "ഔ",
+    "ക",
+    "ഖ",
+    "ഗ",
+    "ഘ",
+    "ങ",
+    "ച",
+    "ഛ",
+    "ജ",
+    "ഝ",
+    "ഞ",
+    "ട",
+    "ഠ",
+    "ഡ",
+    "ഢ",
+    "ണ",
+    "ത",
+    "ഥ",
+    "ദ",
+    "ധ",
+    "ന",
+    "പ",
+    "ഫ",
+    "ബ",
+    "ഭ",
+    "മ",
+    "യ",
+    "ര",
+    "ല",
+    "വ",
+    "ശ",
+    "ഷ",
+    "സ",
+    "ഹ",
+    "ള",
+    "ഴ",
+    "റ",
+    "ൺ",
+    "ൻ",
+    "ർ",
+    "ൽ",
+    "ൾ",
+    "ൿ"
+  ],
+  "excluded_inventory": [],
+  "training_font_count": 3,
+  "rank": 2,
+  "ridge": 0.1,
+  "seed": null,
+  "deterministic": "NumPy symmetric eigendecomposition; fixed anchor set",
+  "training_seconds": 0.0028437080327421427,
+  "checkpoint_sha256": "907d342bf899ec7a6a5af1537366a64f17fec8897c592260b968986ad478c49b",
+  "corpus_manifest_sha256": "b69379c310d604091465fcbd79924655a6fa795b1f8a562dd112449339e8c33f",
+  "evaluation": [
+    {
+      "family": "notosansmalayalam",
+      "observed_sequences": [
+        "അ",
+        "ഇ",
+        "ഉ",
+        "എ",
+        "ഒ",
+        "ക",
+        "ച",
+        "ട",
+        "ത",
+        "പ"
+      ],
+      "held_out_glyphs": 45,
+      "style_weights": [
+        0.332945297591622,
+        0.28939187532751065
+      ],
+      "metrics": {
+        "predicted_iou": 0.7039764307137204,
+        "mean_baseline_iou": 0.6905133834463016,
+        "predicted_sdf_mae": 0.06311001210576958,
+        "mean_baseline_sdf_mae": 0.07092246794038348
+      },
+      "per_glyph": [
+        {
+          "sequence": "ആ",
+          "codepoint": "U+0D06",
+          "predicted_iou": 0.5062695924764891,
+          "mean_baseline_iou": 0.6326530612244898,
+          "predicted_sdf_mae": 0.05095508694648743,
+          "mean_baseline_sdf_mae": 0.043034203350543976
+        },
+        {
+          "sequence": "ഈ",
+          "codepoint": "U+0D08",
+          "predicted_iou": 0.6023856858846919,
+          "mean_baseline_iou": 0.5428015564202334,
+          "predicted_sdf_mae": 0.039812736213207245,
+          "mean_baseline_sdf_mae": 0.044895801693201065
+        },
+        {
+          "sequence": "ഊ",
+          "codepoint": "U+0D0A",
+          "predicted_iou": 0.5508345978755691,
+          "mean_baseline_iou": 0.5182829888712241,
+          "predicted_sdf_mae": 0.06255395710468292,
+          "mean_baseline_sdf_mae": 0.07435207068920135
+        },
+        {
+          "sequence": "ഋ",
+          "codepoint": "U+0D0B",
+          "predicted_iou": 0.6775170325510976,
+          "mean_baseline_iou": 0.593562874251497,
+          "predicted_sdf_mae": 0.10957630723714828,
+          "mean_baseline_sdf_mae": 0.14103490114212036
+        },
+        {
+          "sequence": "ഏ",
+          "codepoint": "U+0D0F",
+          "predicted_iou": 0.6931659693165969,
+          "mean_baseline_iou": 0.6970128022759602,
+          "predicted_sdf_mae": 0.047747548669576645,
+          "mean_baseline_sdf_mae": 0.05353022366762161
+        },
+        {
+          "sequence": "ഐ",
+          "codepoint": "U+0D10",
+          "predicted_iou": 0.5563063063063063,
+          "mean_baseline_iou": 0.5721153846153846,
+          "predicted_sdf_mae": 0.031142164021730423,
+          "mean_baseline_sdf_mae": 0.03199078515172005
+        },
+        {
+          "sequence": "ഓ",
+          "codepoint": "U+0D13",
+          "predicted_iou": 0.7687296416938111,
+          "mean_baseline_iou": 0.7817014446227929,
+          "predicted_sdf_mae": 0.030146900564432144,
+          "mean_baseline_sdf_mae": 0.033048540353775024
+        },
+        {
+          "sequence": "ഔ",
+          "codepoint": "U+0D14",
+          "predicted_iou": 0.6228893058161351,
+          "mean_baseline_iou": 0.6685823754789272,
+          "predicted_sdf_mae": 0.044007308781147,
+          "mean_baseline_sdf_mae": 0.048921264708042145
+        },
+        {
+          "sequence": "ഖ",
+          "codepoint": "U+0D16",
+          "predicted_iou": 0.6524973432518597,
+          "mean_baseline_iou": 0.7826589595375723,
+          "predicted_sdf_mae": 0.07102546095848083,
+          "mean_baseline_sdf_mae": 0.05479184165596962
+        },
+        {
+          "sequence": "ഗ",
+          "codepoint": "U+0D17",
+          "predicted_iou": 0.824966078697422,
+          "mean_baseline_iou": 0.7532981530343008,
+          "predicted_sdf_mae": 0.056329503655433655,
+          "mean_baseline_sdf_mae": 0.06875379383563995
+        },
+        {
+          "sequence": "ഘ",
+          "codepoint": "U+0D18",
+          "predicted_iou": 0.626916524701874,
+          "mean_baseline_iou": 0.6044142614601019,
+          "predicted_sdf_mae": 0.049316126853227615,
+          "mean_baseline_sdf_mae": 0.054128240793943405
+        },
+        {
+          "sequence": "ങ",
+          "codepoint": "U+0D19",
+          "predicted_iou": 0.7398477157360406,
+          "mean_baseline_iou": 0.7327586206896551,
+          "predicted_sdf_mae": 0.0520811602473259,
+          "mean_baseline_sdf_mae": 0.06462302058935165
+        },
+        {
+          "sequence": "ഛ",
+          "codepoint": "U+0D1B",
+          "predicted_iou": 0.599624060150376,
+          "mean_baseline_iou": 0.658203125,
+          "predicted_sdf_mae": 0.0435505211353302,
+          "mean_baseline_sdf_mae": 0.047066159546375275
+        },
+        {
+          "sequence": "ജ",
+          "codepoint": "U+0D1C",
+          "predicted_iou": 0.67591763652641,
+          "mean_baseline_iou": 0.5418032786885246,
+          "predicted_sdf_mae": 0.1052544116973877,
+          "mean_baseline_sdf_mae": 0.15432322025299072
+        },
+        {
+          "sequence": "ഝ",
+          "codepoint": "U+0D1D",
+          "predicted_iou": 0.5852631578947368,
+          "mean_baseline_iou": 0.4803921568627451,
+          "predicted_sdf_mae": 0.03854839503765106,
+          "mean_baseline_sdf_mae": 0.045851126313209534
+        },
+        {
+          "sequence": "ഞ",
+          "codepoint": "U+0D1E",
+          "predicted_iou": 0.5997023809523809,
+          "mean_baseline_iou": 0.6493108728943339,
+          "predicted_sdf_mae": 0.050699226558208466,
+          "mean_baseline_sdf_mae": 0.05698765441775322
+        },
+        {
+          "sequence": "ഠ",
+          "codepoint": "U+0D20",
+          "predicted_iou": 0.8157644824311491,
+          "mean_baseline_iou": 0.8558052434456929,
+          "predicted_sdf_mae": 0.06441354006528854,
+          "mean_baseline_sdf_mae": 0.05975216627120972
+        },
+        {
+          "sequence": "ഡ",
+          "codepoint": "U+0D21",
+          "predicted_iou": 0.731203007518797,
+          "mean_baseline_iou": 0.6827458256029685,
+          "predicted_sdf_mae": 0.044049497693777084,
+          "mean_baseline_sdf_mae": 0.04689718037843704
+        },
+        {
+          "sequence": "ഢ",
+          "codepoint": "U+0D22",
+          "predicted_iou": 0.7767527675276753,
+          "mean_baseline_iou": 0.8195488721804511,
+          "predicted_sdf_mae": 0.02970549650490284,
+          "mean_baseline_sdf_mae": 0.032561298459768295
+        },
+        {
+          "sequence": "ണ",
+          "codepoint": "U+0D23",
+          "predicted_iou": 0.7406716417910447,
+          "mean_baseline_iou": 0.6357142857142857,
+          "predicted_sdf_mae": 0.03889189660549164,
+          "mean_baseline_sdf_mae": 0.0471830777823925
+        },
+        {
+          "sequence": "ഥ",
+          "codepoint": "U+0D25",
+          "predicted_iou": 0.8834033613445378,
+          "mean_baseline_iou": 0.8393039918116684,
+          "predicted_sdf_mae": 0.0474022701382637,
+          "mean_baseline_sdf_mae": 0.06273753196001053
+        },
+        {
+          "sequence": "ദ",
+          "codepoint": "U+0D26",
+          "predicted_iou": 0.7485620377978636,
+          "mean_baseline_iou": 0.7843302443133952,
+          "predicted_sdf_mae": 0.10475121438503265,
+          "mean_baseline_sdf_mae": 0.09868676960468292
+        },
+        {
+          "sequence": "ധ",
+          "codepoint": "U+0D27",
+          "predicted_iou": 0.785234899328859,
+          "mean_baseline_iou": 0.7453580901856764,
+          "predicted_sdf_mae": 0.0590633787214756,
+          "mean_baseline_sdf_mae": 0.06112924963235855
+        },
+        {
+          "sequence": "ന",
+          "codepoint": "U+0D28",
+          "predicted_iou": 0.8201936376210235,
+          "mean_baseline_iou": 0.7217043941411452,
+          "predicted_sdf_mae": 0.060607410967350006,
+          "mean_baseline_sdf_mae": 0.07835265249013901
+        },
+        {
+          "sequence": "ഫ",
+          "codepoint": "U+0D2B",
+          "predicted_iou": 0.7645211930926217,
+          "mean_baseline_iou": 0.8568994889267462,
+          "predicted_sdf_mae": 0.040126290172338486,
+          "mean_baseline_sdf_mae": 0.03461885079741478
+        },
+        {
+          "sequence": "ബ",
+          "codepoint": "U+0D2C",
+          "predicted_iou": 0.7993421052631579,
+          "mean_baseline_iou": 0.7579113924050633,
+          "predicted_sdf_mae": 0.03655946999788284,
+          "mean_baseline_sdf_mae": 0.05193674564361572
+        },
+        {
+          "sequence": "ഭ",
+          "codepoint": "U+0D2D",
+          "predicted_iou": 0.7309941520467836,
+          "mean_baseline_iou": 0.625,
+          "predicted_sdf_mae": 0.12036837637424469,
+          "mean_baseline_sdf_mae": 0.1567152738571167
+        },
+        {
+          "sequence": "മ",
+          "codepoint": "U+0D2E",
+          "predicted_iou": 0.8094603597601598,
+          "mean_baseline_iou": 0.7574123989218329,
+          "predicted_sdf_mae": 0.09182189404964447,
+          "mean_baseline_sdf_mae": 0.11345740407705307
+        },
+        {
+          "sequence": "യ",
+          "codepoint": "U+0D2F",
+          "predicted_iou": 0.7696827262044653,
+          "mean_baseline_iou": 0.7704326923076923,
+          "predicted_sdf_mae": 0.04736907407641411,
+          "mean_baseline_sdf_mae": 0.05122331529855728
+        },
+        {
+          "sequence": "ര",
+          "codepoint": "U+0D30",
+          "predicted_iou": 0.7580372250423012,
+          "mean_baseline_iou": 0.7086092715231788,
+          "predicted_sdf_mae": 0.08128568530082703,
+          "mean_baseline_sdf_mae": 0.0979188084602356
+        },
+        {
+          "sequence": "ല",
+          "codepoint": "U+0D32",
+          "predicted_iou": 0.8081936685288641,
+          "mean_baseline_iou": 0.7366997294860235,
+          "predicted_sdf_mae": 0.06908112019300461,
+          "mean_baseline_sdf_mae": 0.09201369434595108
+        },
+        {
+          "sequence": "വ",
+          "codepoint": "U+0D35",
+          "predicted_iou": 0.8449197860962567,
+          "mean_baseline_iou": 0.8518024032042724,
+          "predicted_sdf_mae": 0.04126008227467537,
+          "mean_baseline_sdf_mae": 0.045756347477436066
+        },
+        {
+          "sequence": "ശ",
+          "codepoint": "U+0D36",
+          "predicted_iou": 0.7928669410150891,
+          "mean_baseline_iou": 0.772,
+          "predicted_sdf_mae": 0.04046856239438057,
+          "mean_baseline_sdf_mae": 0.04957868158817291
+        },
+        {
+          "sequence": "ഷ",
+          "codepoint": "U+0D37",
+          "predicted_iou": 0.5481927710843374,
+          "mean_baseline_iou": 0.47509113001215064,
+          "predicted_sdf_mae": 0.09039951115846634,
+          "mean_baseline_sdf_mae": 0.1093839779496193
+        },
+        {
+          "sequence": "സ",
+          "codepoint": "U+0D38",
+          "predicted_iou": 0.7252336448598131,
+          "mean_baseline_iou": 0.6734317343173432,
+          "predicted_sdf_mae": 0.0426420159637928,
+          "mean_baseline_sdf_mae": 0.045238956809043884
+        },
+        {
+          "sequence": "ഹ",
+          "codepoint": "U+0D39",
+          "predicted_iou": 0.6765249537892791,
+          "mean_baseline_iou": 0.7818532818532818,
+          "predicted_sdf_mae": 0.04224364459514618,
+          "mean_baseline_sdf_mae": 0.03448225557804108
+        },
+        {
+          "sequence": "ള",
+          "codepoint": "U+0D33",
+          "predicted_iou": 0.8003502626970228,
+          "mean_baseline_iou": 0.7426160337552743,
+          "predicted_sdf_mae": 0.0667724758386612,
+          "mean_baseline_sdf_mae": 0.08458537608385086
+        },
+        {
+          "sequence": "ഴ",
+          "codepoint": "U+0D34",
+          "predicted_iou": 0.6812227074235808,
+          "mean_baseline_iou": 0.6824471959213402,
+          "predicted_sdf_mae": 0.12834544479846954,
+          "mean_baseline_sdf_mae": 0.13880497217178345
+        },
+        {
+          "sequence": "റ",
+          "codepoint": "U+0D31",
+          "predicted_iou": 0.8308351177730193,
+          "mean_baseline_iou": 0.8249733191035219,
+          "predicted_sdf_mae": 0.06799419224262238,
+          "mean_baseline_sdf_mae": 0.07573582977056503
+        },
+        {
+          "sequence": "ൺ",
+          "codepoint": "U+0D7A",
+          "predicted_iou": 0.6195826645264848,
+          "mean_baseline_iou": 0.662847790507365,
+          "predicted_sdf_mae": 0.049133509397506714,
+          "mean_baseline_sdf_mae": 0.04731970280408859
+        },
+        {
+          "sequence": "ൻ",
+          "codepoint": "U+0D7B",
+          "predicted_iou": 0.6128668171557562,
+          "mean_baseline_iou": 0.5766081871345029,
+          "predicted_sdf_mae": 0.08665035665035248,
+          "mean_baseline_sdf_mae": 0.08226668834686279
+        },
+        {
+          "sequence": "ർ",
+          "codepoint": "U+0D7C",
+          "predicted_iou": 0.6915789473684211,
+          "mean_baseline_iou": 0.7183098591549296,
+          "predicted_sdf_mae": 0.08250520378351212,
+          "mean_baseline_sdf_mae": 0.07947666198015213
+        },
+        {
+          "sequence": "ൽ",
+          "codepoint": "U+0D7D",
+          "predicted_iou": 0.7047387606318347,
+          "mean_baseline_iou": 0.7006060606060606,
+          "predicted_sdf_mae": 0.06399017572402954,
+          "mean_baseline_sdf_mae": 0.0671006292104721
+        },
+        {
+          "sequence": "ൾ",
+          "codepoint": "U+0D7E",
+          "predicted_iou": 0.7674129353233831,
+          "mean_baseline_iou": 0.7286063569682152,
+          "predicted_sdf_mae": 0.060829222202301025,
+          "mean_baseline_sdf_mae": 0.06836098432540894
+        },
+        {
+          "sequence": "ൿ",
+          "codepoint": "U+0D7F",
+          "predicted_iou": 0.35776277724204436,
+          "mean_baseline_iou": 0.3748810656517602,
+          "predicted_sdf_mae": 0.1584727168083191,
+          "mean_baseline_sdf_mae": 0.16090312600135803
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Only three training font families and one held-out family.",
+    "Rendered isolated letters, not human handwriting or photographs.",
+    "Per-glyph bounding-box alignment removes baseline/spacing information.",
+    "No conjuncts, dependent marks, font shaping, or writer-consent corpus.",
+    "No validation tuning or broad quality claims; mean baseline may outperform.",
+    "Checkpoint derives from OFL font geometry; keep source licence lineage.",
+    "Not connected to the studio UI or enabled for user exports."
+  ]
+}

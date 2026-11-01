@@ -1,12 +1,20 @@
 # Missing-letter completion: research boundary
 
-**Status: no model has been trained. No reference font is bundled. No automatic missing-form generator is enabled.** The current coverage inventory asks for missing forms, rather than presenting invented strokes as photographed handwriting.
+**Status: a small CPU research pilot was trained on 2026-11-01.** It is separate from the studio UI; no checkpoint or font binaries are bundled in Git and no automatic completion is enabled in the app. This is preliminary rendered-font training, not extensive training or evidence of handwriting fidelity.
+
+The implemented model in `mashi/completion.py` learns per-form signed-distance means and shared rank-2 font-style axes with PCA, then infers style weights from observed forms by ridge regression. Training used Chilanka, Manjari and Gayathri Regular: 3 families × 55 isolated forms. Noto Sans Malayalam was held out by family, with 10 forms observed and 45 withheld. Mean foreground IoU on those 45 forms was **0.703976**, versus **0.690513** for the mean-shape baseline; normalized SDF MAE was **0.063110**, versus **0.070922**. One held-out family is insufficient for broad quality claims.
+
+The exact font revision, assets, hashes, split and licence paths are recorded in [the pilot corpus manifest](experiments/pilot-corpus-manifest.json); [the results](experiments/sdf-pilot-results.json) contain per-form metrics and the checkpoint hash. Exact reviewed licence texts are under `research-licenses/Pilot-*-OFL.txt`. The full local corpus is `data/pilot-corpus/`; the actual checkpoint and accompanying notices are `output/experiments/sdf-pilot/model.npz` and neighboring files. Both directories are gitignored. Reviewed OFL headers contain no additional Reserved Font Name declarations; preserve the notices and audit any later assets or outputs separately.
+
+To reproduce after normal setup, run `uv run --no-sync python -m scripts.fetch_pilot_corpus` (explicit network download), followed by `uv run --no-sync python -m scripts.train_pilot` (local CPU only). The optional `--via-gh` acquisition flag uses existing authorized public-read GitHub access. To generate separate research suggestions from a confirmed local page, run `uv run --no-sync python -m scripts.suggest_pilot --project YOUR_PROJECT_ID --sequences അ,ഖ`. This command wrote two unconfirmed, `model-generated` SVG/raster suggestions in a synthetic-project smoke test. It does not modify or accept forms in the studio.
+
+The masks are isolated letters rendered at 160 px and normalized into a centered 52 px box on a 64 × 64 grid. This loses baseline/spacing; it includes no conjuncts or dependent marks. No real writers, photo noise, calibrated confidence or full shaping were evaluated. The local preview columns are held-out target / mean baseline / prediction. A separate, coordinated task will handle extensive training; preserve this pilot as a baseline rather than treating it as the final model.
 
 `Predictor.suggest(project, sequences)` is the local interface for future experiments. `UntrainedPredictor` gives a useful unavailable message. An implementation must return geometry, the requested exact sequence, provenance (`template-generated` or `model-generated`), source asset/checkpoint hashes, the style observations used, uncertainty and licence/lineage information. Generated forms must remain separate suggestions, never automatically accepted. The current exporter deliberately excludes all non-observed provenance, even when marked confirmed; future explicit acceptance requires its own reviewed policy and state.
 
-## First experiment to evaluate
+## Further experiments
 
-An inexpensive CPU baseline could render aligned glyph signed-distance fields across audited Malayalam fonts, learn low-rank per-glyph bases, infer a writer-style latent vector from observed forms with ridge regression, and synthesize missing distance fields. A reference-font affine adaptation is a simpler baseline, but would be visibly labelled a template transformation, not learned handwriting. Neither method is implemented or validated here.
+The linear SDF baseline above is implemented and measured. A reference-font affine adaptation remains a useful additional comparison, visibly labelled a template transformation. The next experiments need larger audited corpora and real consented handwriting; the current numerical result does not establish useful photo-to-handwriting completion.
 
 Training material needs a manifest with the exact repository/release/commit, selected files and SHA-256s, full licence texts, reserved names, use/redistribution conditions, family/derivative lineage, rendering settings, Unicode/shaping sequence, split and acquisition date. Include all GSUB/GPOS dependencies needed for the chosen samples. The source research manifest is **not** a training dataset manifest.
 
@@ -21,5 +29,5 @@ Some few-shot font-generation repositories mix permissive portions with inherite
 1. Collect real consented handwriting examples and establish segmentation/recognition measurements.
 2. Add perspective/shadow correction with invertible coordinate transforms, then an optional local handwriting-specific recognizer.
 3. Design a Malayalam inventory with community review; add editable anchors, contextual substitutions, alternates and shaping fixtures for both script tags.
-4. Assemble and audit a small lineage-labelled font corpus. Run and record the CPU completion experiment against basic baselines.
+4. Expand the pilot corpus with audited family/derivative lineage, several held-out families and stronger baselines; coordinate extensive training separately.
 5. Add a suggestion review workflow that clearly separates observed, generated, edited and explicitly accepted forms and preserves training/source attribution.
