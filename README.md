@@ -25,7 +25,8 @@ Without uv, create a Python 3.12 virtual environment and `python -m pip install 
 2. Review connected-ink proposals. **They are not identified letters.** Draw a crop, edit its exact pixel coordinates, merge checked regions, split at an explicit line, or discard a crop. Detached vowel marks often need merging.
 3. Assign the exact Malayalam Unicode sequence and confirm it. Codepoints and joiners are shown and preserved; labels are never normalized silently.
 4. Trace the selected pixels with a controllable ink threshold. Inspect the closed contours, including counters. Edit SVG path geometry, baseline, scale and advance width.
-5. Export an SVG/UFO ZIP, or compile an experimental TTF ZIP. Each contains `coverage.json`, `project.json`, SVGs and reloadable UFO sources. Photos are not embedded in exports.
+5. Enter exact proof text, check required samples and build its compiled preview. Review actual glyphs, missing forms and spacing; adjust the font name, metrics or anchors if needed.
+6. Export an SVG/UFO ZIP or TTF ZIP with that proof text and settings. Each contains `coverage.json`, `project.json`, SVGs and reloadable UFO sources. Photos are not embedded in exports.
 
 Saved edits and original image bytes stay in `.mashi/` in the working directory (gitignored). Restarting preserves projects. Set `MASHI_DATA_DIR` to choose another directory. Back up this directory to preserve originals, canonical pages, SQLite project history and traced outlines. Exports contain metadata, not the original photos; they are not complete project backups. To remove local data, stop Mashi and delete its data directory.
 
@@ -63,7 +64,7 @@ The local integration check recognized മലയാളം, മഷി and കേ�
 - Built-in practice pages persist `synthetic-fixture` provenance across reload, crop edits, split/merge and OCR. They are excluded from normal font exports. An explicit test-export checkbox produces a synthetic-labelled ZIP, font family, glyph metadata and SVG metadata; it never claims the practice shapes are actual handwriting.
 - The integrated typography V1 backend targets a bounded HarfBuzz `mlm2` repertoire: direct characters/chillus/digits, selected captured conjuncts and attached-vowel forms, legacy chillu aliases, and explicit joiner handling. Every required observed sample must exist. See [the exact repertoire and limits](docs/TYPOGRAPHY.md).
 - HarfBuzz reorders pre-base and split vowels. Spacing vowel signs retain positive advance; the visible virama uses zero advance with adjustable estimated `abvm` anchors. These defaults require visual and Malayalam-reader review.
-- Backend exact-text preflight reports missing samples and unsupported sequences without normalizing the original input. Verified TTF export checks actual glyph selection, positions and clipping. HarfBuzz is a normal runtime dependency; no test tooling is needed to run the app. The proof-text/preflight UI is the next application increment.
+- The proof panel reports missing samples and unsupported sequences without normalizing the original input. Its drawing uses paths and positions from the actual compiled font, with no fallback font. UI TTF export requires a current supported preview; the server rechecks revision, proof text, settings, glyph selection and clipping. See [proofing and concurrency behavior](docs/PROOFING.md).
 - General contextual consonant forms, mark stacks, historical repertoire and platform qualification remain incomplete. Compilation or passing synthetic tests does not establish reader-level quality or universal Malayalam support.
 - Initial baseline and scale are estimates. Outlines need visual review. Perspective/rotation and lighting/adaptive preparation are available, but need review; their synthetic fixture checks do not establish robustness on real handwriting photographs.
 - Duplicate confirmed labels must be resolved to one variant before export. Alternate forms and multi-page font assembly are future work.
@@ -91,7 +92,7 @@ uv sync --locked --no-editable --extra dev --python 3.12
 uv run --no-sync pytest -q
 uv run --no-sync ruff check mashi scripts tests
 node --check mashi/static/app.js
-node --test tests/outline-geometry.test.cjs
+node --test tests/*.test.cjs
 ```
 
 Tests cover EXIF orientation/hashes, half-open crop bounds, revisions and split/merge ancestry, exact Malayalam/joiner persistence, OCR suggestion handling, counters and orientation, full image-to-TTF export, UFO reload, cmap/contours, selective HarfBuzz shaping, excluded generated forms, local input protections, and completion-model fitting/checkpoint reload.

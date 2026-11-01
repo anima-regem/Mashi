@@ -47,7 +47,9 @@ def main():
         upload = client.post("/api/projects?source=synthetic-fixture", content=raster.read_bytes())
         upload.raise_for_status()
         project = upload.json()
-        result = client.post(f"/api/projects/{project['id']}/ocr")
+        result = client.post(
+            f"/api/projects/{project['id']}/ocr", json={"revision": project["revision"]}
+        )
         result.raise_for_status()
         proposals = [r for r in result.json()["regions"] if r["source"] == "ocr-word"]
     raw = [r["suggestion"]["raw_text"] for r in proposals]

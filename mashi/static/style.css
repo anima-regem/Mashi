@@ -124,83 +124,17 @@ header {
   font-size: 21px;
   line-height: 1.2;
 }
-.brand small {
-  display: block;
-  letter-spacing: 2px;
-  font-size: 8px;
-  font-weight: 600;
-  margin-top: 5px;
-}
-.local {
-  font-size: 11px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.local i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green);
-}
 main {
   max-width: 1440px;
   margin: auto;
   padding: 0 4.5%;
 }
-.intro {
-  display: flex;
-  justify-content: space-between;
-  gap: 30px;
-  align-items: flex-end;
-  padding: 45px 0 35px;
-}
-.eyebrow {
-  font-size: 10px;
-  letter-spacing: 2.3px;
-  color: var(--purple);
-  font-weight: 700;
-  margin: 0 0 14px;
-}
 h1 {
-  font-size: clamp(30px, 3.4vw, 47px);
+  font-size: clamp(25px, 2.5vw, 32px);
   font-weight: 500;
   line-height: 1.13;
-  letter-spacing: -1.8px;
-  margin: 0;
-}
-.intro > p {
-  font-size: 13px;
-  line-height: 1.9;
-  margin: 0 0 3px;
-  color: var(--muted);
-}
-.intro > p span {
-  color: var(--green);
-}
-.steps {
-  display: flex;
-  gap: 38px;
-  padding: 16px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  font-size: 12px;
-}
-.steps span {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.steps b {
-  background: var(--wash);
-  color: var(--purple);
-  width: 23px;
-  height: 23px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-weight: 500;
+  letter-spacing: -0.7px;
+  margin: 28px 0 12px;
 }
 #status {
   font-size: 12px;
@@ -219,19 +153,6 @@ h1 {
   text-align: center;
   padding: 35px 20px 30px;
   min-height: 355px;
-}
-.upload-mark {
-  font-family: "Malayalam MN", "Noto Sans Malayalam", sans-serif;
-  display: grid;
-  place-items: center;
-  margin: 0 auto 12px;
-  width: 70px;
-  height: 70px;
-  border-radius: 15px;
-  background: var(--wash);
-  color: var(--purple);
-  font-size: 40px;
-  transform: rotate(-6deg);
 }
 h2 {
   font-weight: 600;
@@ -558,10 +479,6 @@ details .coords {
   line-height: 1.8;
   color: var(--muted);
 }
-.export-section .eyebrow {
-  font-size: 9px;
-  color: var(--purple);
-}
 .export-actions {
   display: flex;
   flex-wrap: wrap;
@@ -578,28 +495,12 @@ details .coords {
   line-height: 2;
   letter-spacing: 3px;
 }
-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  font-size: 10px;
-  color: var(--muted);
-  padding: 24px 0;
-  margin-top: 32px;
-  border-top: 1px solid var(--line);
-}
 [hidden] {
   display: none !important;
 }
 @media (max-width: 950px) {
   .studio {
     grid-template-columns: minmax(0, 1fr) 300px;
-  }
-  .intro > p {
-    max-width: 230px;
-  }
-  .local span {
-    display: none;
   }
   .canvas-wrap {
     padding: 12px;
@@ -615,35 +516,8 @@ footer {
   .brand > span:last-child {
     font-size: 17px;
   }
-  .brand small {
-    font-size: 6px;
-  }
-  .local {
-    font-size: 9px;
-  }
   main {
     padding: 0 5%;
-  }
-  .intro {
-    display: block;
-    padding: 30px 0;
-  }
-  .intro > p {
-    margin-top: 18px;
-    max-width: none;
-  }
-  .intro > p br {
-    display: none;
-  }
-  .intro > p span {
-    display: block;
-  }
-  .steps {
-    gap: 16px;
-    font-size: 10px;
-  }
-  .steps span {
-    gap: 6px;
   }
   .studio {
     grid-template-columns: 1fr;
@@ -676,13 +550,6 @@ footer {
     padding: 23px;
   }
   .metrics {
-    gap: 8px;
-  }
-  .intro h1 {
-    letter-spacing: -1px;
-  }
-  footer {
-    flex-direction: column;
     gap: 8px;
   }
   .canvas-bar {
@@ -966,3 +833,34 @@ footer {
   align-items: center;
   gap: 14px;
 }
+.proof-section {
+  border-top: 1px solid var(--line);
+  padding: 36px 0;
+  margin-top: 32px;
+}
+.proof-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.proof-options label {font-size: 12px;}
+.proof-options input {display: block; width: 100%; margin-top: 6px;}
+.proof-actions {margin: 16px 0; flex-wrap: wrap;}
+.proof-report {font-size: 13px; overflow-wrap: anywhere;}
+.proof-report li {margin-bottom: 6px;}
+.proof-drawing {min-width: 0;}
+.proof-line {overflow: auto; max-width: 100%; max-height: 600px; background: white; border: 1px solid var(--line); border-radius: 6px; margin: 8px 0;}
+.proof-line svg {display: block; fill: var(--ink); max-width: none;}
+.proof-drawing p {font-size: 12px; color: var(--muted);}
+#proof-text {font-size: 22px; line-height: 1.7;}
+#proof-anchors {display: block; width: 100%; margin: 6px 0 12px;}
+#proof-unicode {white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px;}
+.workspace-nav {display: flex; flex-wrap: wrap; gap: 24px; padding: 14px 0; border-bottom: 1px solid var(--line); margin-bottom: 20px; font-size: 13px;}
+.workspace-nav a {text-underline-offset: 4px;}
+main {padding-bottom: 40px;}
+#page-tools, #vectors, #proof-title, #export-tools {scroll-margin-top: 20px;}
+#proof-metadata, #proof-issues {font-size: 12px; overflow-wrap: anywhere;}
+.proof-actions button {min-height: 44px;}
+@media (max-width: 730px) {.actions button {font-size: 12px; min-height: 40px;} .workspace-nav {gap: 20px;}}
+@media (max-width: 730px) {.proof-options {grid-template-columns: repeat(2, minmax(0, 1fr));}}

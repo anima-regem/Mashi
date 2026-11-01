@@ -6,6 +6,7 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
+from dataclasses import asdict
 
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.transformPen import TransformPen
@@ -233,6 +234,8 @@ def make_ufo(project, include_fixture=False, *, options=None, required_text=None
             "unsupported_single_codepoints": sorted(set(singles) - SINGLE_REPERTOIRE),
             "supported_forms": supported_forms,
             "required_text": required,
+            "typography_options": asdict(options),
+            "font_family": font.info.familyName,
             "metrics": {
                 "units_per_em": 1000,
                 "ascender": top,
@@ -341,9 +344,13 @@ def preview_project(project, text, include_fixture=False, *, options=None):
         _compile(root / "preview.ufo", root / "preview.ttf")
         data = (root / "preview.ttf").read_bytes()
         _validate_ttf(data, report, require_shaping=True)
+        from .shaping import proof_outlines
+
+        preview = shape_preview(data, text)
         return {
             "coverage": preflight,
-            "preview": shape_preview(data, text),
+            "preview": preview,
+            "drawing": proof_outlines(data, preview),
             "metrics": report["metrics"],
         }
 

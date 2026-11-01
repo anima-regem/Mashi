@@ -8,7 +8,7 @@ Baseline: `075a88ec` (15 automated tests). Status is evidence of implemented beh
 | Outline | Actual ink tracing, closed contours/counters; visual cubic/quadratic nodes/handles, zoom/pan, raster comparison, metric guides, session undo/redo, Advanced paths | No real-writer usability benchmark; no visual node insertion/deletion or automatic smoothing | Larger-contour usability work and typographic review |
 | Projects | SQLite persistence, names, recent 50 named pages, last-page reopen; crop/outline draft recovery with stale-state protection; visible preparation and saved-region history restore | One uploaded page per project; undo/redo stack lasts for the loaded editor session | General whole-project undo, multi-page single-font assembly, variant/duplicate selection, backup/import, batch work |
 | Completion | Audited small CPU SDF pilot; extensive research and reproducibility work published separately in [Mashi-ML](https://github.com/anima-regem/Mashi-ML) | Separate experimental CLI; no measured handwriting fidelity; local weights are not bundled or blanket-cleared for redistribution | Explicit reviewed application integration and writer evaluation |
-| Font building | Reviewed typography V1 backend merged: bounded mlm2 repertoire, anchors/metrics, exact-text preflight and HarfBuzz validation APIs | Reader/platform/contextual coverage incomplete; proof text is not yet wired into the UI | Cached proof preview/preflight controls, final-export proof gating, reader review, broader shaping |
+| Font building | Bounded mlm2 backend; exact-text sample checks and compiled-outline proof UI; revision/options/text cache; name/metrics/anchor controls; proof-gated TTF export | Reader/platform/contextual coverage incomplete; cancel ignores results but does not stop a running compiler | Reader review and broader shaping |
 | Privacy | Loopback, Host/Origin/token checks, local data, no cloud fallback | Same-user local processes remain trusted | Packaging/distribution hardening after product workflows settle |
 
 ## Completed capture/editor milestone
@@ -21,4 +21,8 @@ Each increment gets a coherent tested commit and CI verification. Preserve the e
 
 ## Subsequent work
 
-Cached exact-text proof preview and required-text export controls; multi-page font assembly; guided capture sheets; reviewed batch operations; project backup/import; visible general history restore; local handwriting-specific OCR evaluation; explicit completion review; packaging and distribution. These remain missing until implemented and tested. Synthetic fixtures test software mechanics and are never handwriting validation.
+Explicit completion review; multi-page font assembly; guided capture sheets; reviewed batch operations; project backup/import; visible general history restore; local handwriting-specific OCR evaluation; packaging and distribution. These remain missing until implemented and tested. Synthetic fixtures test software mechanics and are never handwriting validation.
+
+## Proof/export and interface milestone
+
+Exact Unicode preflight, actual compiled glyph drawings, font settings and required-text export are delivered; see [PROOFING.md](PROOFING.md). Cache keys include project ID/revision, exact text, options and fixture inclusion. Late or canceled results cannot replace current review state. Crop creation and OCR now require project revisions; pixel requests can bind to expected hashes, and the client swaps raster and metadata together. The prior stale-preparation bug is reproduced and regression-tested. Promotional hero/taglines, version/local badges and filler footer are removed; functional navigation replaces the decorative workflow strip. Advanced shaping diagnostics are disclosed on demand.

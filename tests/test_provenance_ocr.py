@@ -61,7 +61,9 @@ def test_synthetic_fixture_survives_operations_and_requires_explicit_export(
     assert font.info.familyName == "Mashi Synthetic Fixture"
     assert font[glyph_name("ക")].lib["org.mashi.provenance"]["state"] == "synthetic-fixture"
     assert "synthetic-fixture" in client.get(f"{base}/regions/{merged['id']}/svg").text
-    doc = client.post(f"{base}/regions", json={"box": [200, 20, 300, 160]}).json()
+    doc = client.post(
+        f"{base}/regions", json={"box": [200, 20, 300, 160], "project_revision": doc["revision"]}
+    ).json()
     assert doc["regions"][-1]["provenance"] == "synthetic-fixture"
     monkeypatch.setattr(
         ocr,
@@ -70,7 +72,7 @@ def test_synthetic_fixture_survives_operations_and_requires_explicit_export(
             {"box": [200, 20, 300, 160], "raw_text": "മഷി", "granularity": "word", "confidence": 20}
         ],
     )
-    doc = client.post(f"{base}/ocr").json()
+    doc = client.post(f"{base}/ocr", json={"revision": doc["revision"]}).json()
     assert doc["regions"][-1]["provenance"] == "synthetic-fixture"
 
 

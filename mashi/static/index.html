@@ -6,63 +6,50 @@
     <meta name="color-scheme" content="light" />
     <title>Mashi · Malayalam handwriting studio</title>
     <link rel="stylesheet" href="/static/style.css" />
+    <script src="/static/review-state.js" defer></script>
     <script src="/static/app.js" defer></script>
     <script src="/static/capture.js" defer></script>
     <script src="/static/outline-geometry.js" defer></script>
     <script src="/static/outline.js" defer></script>
+    <script src="/static/proof.js" defer></script>
   </head>
   <body>
     <header>
       <a class="brand" href="/" aria-label="Mashi home"
         ><span lang="ml">മഷി</span
-        ><span>Mashi<small>HANDWRITING STUDIO</small></span></a
+        ><span>Mashi</span></a
       >
-      <div class="local">
-        <i></i> On this computer <span>· v0.1 experimental</span>
-      </div>
     </header>
     <main>
-      <section class="intro">
-        <div>
-          <p class="eyebrow">YOUR HAND. YOUR MALAYALAM.</p>
-          <h1>From a page of ink<br />to a type of your own.</h1>
-        </div>
-        <p>
-          Bring a photograph. Choose the forms.<br />Keep the curves that make
-          them yours.<br /><span>Images stay on this computer.</span>
-        </p>
-      </section>
-      <div class="steps" aria-label="Workflow">
-        <span><b>1</b> Bring a page</span><span><b>2</b> Choose & label</span
-        ><span><b>3</b> Trace & export</span>
-      </div>
+      <h1>Build a Malayalam font</h1>
       <div id="status" role="status" aria-live="polite">
-        Loading local studio…
+        Loading saved pages…
       </div>
       <section id="start" class="start">
-        <div class="upload-mark" aria-hidden="true">അ</div>
-        <h2>Start with your handwriting</h2>
+        <h2>Upload a page</h2>
         <p>
           Dark ink on plain, light paper works best. Use a clear, evenly lit
           photograph.
         </p>
         <label class="button primary" for="file">Choose a photograph</label>
         <input id="file" type="file" accept="image/png,image/jpeg,image/webp" />
-        <p class="fine">JPEG, PNG or WebP · up to 12 MiB / 16 megapixels</p>
-        <button id="demo" class="text-button">
-          Try a synthetic practice page ↗
-        </button>
+        <p class="fine">JPEG, PNG or WebP · up to 12 MiB / 16 megapixels. Images are stored locally.</p>
+        <details><summary>Test without a photograph</summary>
+          <p class="hint">Sample shapes test crop editing and font export. They are not Malayalam handwriting.</p>
+          <button id="demo">Load sample shapes</button>
+        </details>
         <div id="recent"></div>
       </section>
       <section id="workspace" hidden>
+        <nav class="workspace-nav" aria-label="Page tools"><a href="#page-tools">Crops</a><a href="#vectors">Outline</a><a href="#proof-title">Proof text</a><a href="#export-tools">Export</a></nav>
         <p id="capture-notice" class="hint" hidden></p>
         <p id="fixture-note" class="hint" hidden>
           Synthetic practice page. These shapes are test input, not handwriting.
           Normal handwriting export excludes them.
         </p>
-        <div class="workspace-bar">
+        <div id="page-tools" class="workspace-bar">
           <div>
-            <h2>Your page</h2>
+            <h2>Page</h2>
             <form id="page-name-form" class="name-form">
               <label class="sr-only" for="page-name">Page name</label
               ><input
@@ -75,7 +62,8 @@
             <p id="page-meta"></p>
           </div>
           <div class="actions">
-            <button id="new-page">Another page</button
+            <button id="reload-page">Reload saved page</button>
+            <button id="new-page">Open another page</button
             ><button id="ocr">Suggest words with OCR</button>
           </div>
         </div>
@@ -168,7 +156,7 @@
         <div class="studio">
           <div class="page-panel">
             <div class="canvas-bar">
-              <span>ORIENTED ORIGINAL</span
+              <span id="page-kind">Uploaded page</span
               ><label
                 ><input id="draw-mode" type="checkbox" /> Draw a new crop</label
               >
@@ -214,7 +202,7 @@
           </div>
           <aside class="inspector">
             <div class="inspector-heading">
-              <h2>Letter desk</h2>
+              <h2>Crops</h2>
               <span id="count"></span>
             </div>
             <div id="regions" class="regions" aria-label="Crop list"></div>
@@ -225,7 +213,7 @@
             <form id="region-form" hidden>
               <div class="crop-preview">
                 <canvas id="crop" aria-label="Selected crop"></canvas
-                ><span id="provenance">OBSERVED INK</span>
+                ><span id="provenance">From photo</span>
               </div>
               <p id="suggestion" class="hint"></p>
               <label class="field"
@@ -244,13 +232,13 @@
                   class="text-button"
                   type="button"
                 >
-                  Download local crop draft</button
+                  Download crop draft</button
                 ><button
                   id="crop-draft-discard"
                   class="text-button"
                   type="button"
                 >
-                  Discard local crop draft
+                  Discard crop draft
                 </button>
               </div>
               <div class="coords">
@@ -316,8 +304,7 @@
         </div>
         <section id="vectors" class="vector-section" hidden>
           <div>
-            <p class="eyebrow">OUTLINE WORKBENCH</p>
-            <h2>Give your ink a shape.</h2>
+            <h2>Edit outline</h2>
             <p class="hint">
               Closed contours from your selected pixels. Adjust the baseline and
               spacing before export.
@@ -392,14 +379,14 @@
                 class="text-button"
                 type="button"
               >
-                Download local outline draft
+                Download outline draft
               </button>
               <button
                 id="outline-discard-draft"
                 class="text-button"
                 type="button"
               >
-                Discard local outline draft
+                Discard outline draft
               </button>
               <a id="svg-download" class="text-button">Download this SVG ↗</a>
             </div>
@@ -453,10 +440,52 @@
             </button>
           </form>
         </section>
-        <section class="export-section">
+        <section class="proof-section" aria-labelledby="proof-title">
+          <h2 id="proof-title">Proof text</h2>
+          <p class="hint">Preview saved outlines together. Save crop and outline edits first.</p>
+          <form id="proof-form">
+            <label class="field">Exact proof text<textarea id="proof-text" lang="ml" rows="3"
+              maxlength="1000" placeholder="Enter Malayalam text to check and shape" required spellcheck="false"></textarea></label>
+            <details id="proof-settings">
+              <summary>Font name, spacing &amp; mark anchors</summary>
+              <div class="proof-options">
+                <label>Font family name<input id="proof-family" value="Mashi Handwriting" maxlength="100" required /></label>
+                <label>Ascender<input id="proof-ascender" type="number" value="1000" min="1" max="16000" required /></label>
+                <label>Descender<input id="proof-descender" type="number" value="-400" min="-16000" max="0" required /></label>
+                <label>Line gap<input id="proof-line-gap" type="number" value="100" min="0" max="4000" required /></label>
+                <label>Space advance<input id="proof-space" type="number" value="300" min="1" max="5000" required /></label>
+                <label>Virama anchor gap<input id="proof-mark-gap" type="number" value="40" min="0" max="1000" required /></label>
+              </div>
+              <p class="hint">1000 units per em. Vertical metrics expand to contain ink and positioned marks.
+                Only the visible virama has attachment anchors in V1. Estimates need visual review.
+                Synthetic tests always retain their synthetic font name.</p>
+              <label class="field" for="proof-anchors">Anchor overrides · JSON</label>
+              <textarea id="proof-anchors" rows="4" spellcheck="false">{}</textarea>
+              <button id="proof-copy-anchors" type="button" disabled>Copy current anchor estimates for editing</button>
+              <p class="hint">Exact labels map to top or _top pairs in font units, for example
+                {"ക":{"top":[550,740]},"്":{"_top":[70,660]}}. These controls change this font's anchors, not the photograph.</p>
+            </details>
+            <div class="actions proof-actions">
+              <button id="proof-check" type="button">Check required samples</button>
+              <button id="proof-build" type="submit" class="primary">Build proof preview</button>
+              <button id="proof-cancel" type="button" disabled>Cancel preview</button>
+            </div>
+          </form>
+          <p id="proof-status" role="status" aria-live="polite" class="hint">Enter proof text, then check the samples or build a preview.</p>
+          <p id="proof-storage" class="fine">Proof text and settings are kept in this browser for this page.</p>
+          <div id="proof-coverage" class="proof-report"></div>
+          <div id="proof-drawing" class="proof-drawing" aria-label="Compiled font proof preview"></div>
+          <div id="proof-diagnostics" class="proof-report"></div>
+          <details><summary>Unicode and shaping details</summary><div id="proof-metadata"></div><div id="proof-issues"></div><pre id="proof-unicode"></pre>
+            <p class="hint">NFC and NFD are informative only. Your input is preserved, including joiners.
+              Diagnostic positions count Unicode scalar values from zero, not browser UTF-16 units.
+              Proofs draw compiled glyphs at HarfBuzz positions without a fallback font.
+              The V1 repertoire is limited; reader review and broader platform testing are still needed.</p></details>
+        </section>
+        <section id="export-tools" class="export-section">
           <div>
-            <p class="eyebrow">BUILD YOUR FIRST GLYPHS</p>
-            <h2 id="coverage-title">0 confirmed forms</h2>
+            <h2>Export font</h2>
+            <p id="coverage-title">0 confirmed forms</p>
             <p id="export-note">
               Only confirmed, traced observed ink enters your export.
             </p>
@@ -471,19 +500,15 @@
               explicitly labelled synthetic test export</label
             >
             <button id="export-ufo" class="primary">Export SVG + UFO</button
-            ><button id="export-ttf">Build experimental TTF</button>
+            ><button id="export-ttf">Export TTF</button>
             <p class="fine">
-              TTF is a test subset. Complete Malayalam shaping and mark
-              positioning are still in development. Each export includes a
-              coverage report.
+              Build a current, supported proof preview before TTF export. Both exports check the
+              exact proof text and settings above. TTF is a V1 test subset; broader shaping and
+              reader validation remain incomplete. Each export includes coverage and proof reports.
             </p>
           </div>
         </section>
       </section>
-      <footer>
-        <span>Mashi / മഷി — an open-source work in progress.</span
-        ><span>No cloud requests. No API key. Your ink stays yours.</span>
-      </footer>
     </main>
   </body>
 </html>

@@ -16,4 +16,6 @@ jobs:
       - run: node --check mashi/static/app.js
       - run: node --check mashi/static/capture.js
       - run: node --check mashi/static/outline.js
-      - run: node --test tests/outline-geometry.test.cjs
+      - run: node --check mashi/static/proof.js
+      - run: node --check mashi/static/review-state.js
+      - run: node --test tests/*.test.cjs

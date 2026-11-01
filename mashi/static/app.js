@@ -6,6 +6,20 @@ let token = "",
   pageImage = null,
   busy = false;
 const checked = new Set();
+const pageLoads = new window.MashiReviewState.LatestRequest();
+async function setProject(doc) {
+  return pageLoads.run(async () => {
+    let image = pageImage;
+    if (!image || project?.id !== doc.id ||
+        project.image.canonical_sha256 !== doc.image.canonical_sha256) {
+      image = new Image();
+      image.src = `/api/projects/${doc.id}/image?expected_sha256=${encodeURIComponent(doc.image.canonical_sha256)}`;
+      try { await image.decode(); }
+      catch { throw new Error("Page pixels changed or could not load. Reload the saved page before editing."); }
+    }
+    return {doc, image};
+  }, ({doc, image}) => { project = doc; pageImage = image; }, error => { throw error; });
+}
 function remember(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
@@ -48,7 +62,9 @@ async function api(path, options = {}) {
     throw new Error(
       typeof error.detail === "string"
         ? error.detail
-        : "Check the crop, label and metrics. Some values are invalid.",
+        : Array.isArray(error.detail)
+          ? error.detail.slice(0, 5).map(e => `${e.loc?.slice(1).join(".") || "Input"}: ${e.msg}`).join("; ")
+          : "Some values are invalid. Check the highlighted fields and retry.",
     );
   }
   return response;
@@ -70,6 +86,7 @@ async function work(callback) {
       .forEach((b) => (b.disabled = false));
     $("prep-restore").disabled = !project?.preparation_history?.length;
     window.MashiOutline?.refreshControls();
+    window.MashiProof?.refreshControls();
     $("restore-state").disabled = !$("saved-history").value;
   }
 }
@@ -111,7 +128,7 @@ async function loadSavedHistory(r) {
   }
 }
 async function update(path, options, text) {
-  project = await (await api(path, options)).json();
+  if (!await setProject(await (await api(path, options)).json())) return;
   if (path.endsWith("/vector")) window.MashiOutline?.saved();
   if (options.method === "PUT" && /\/regions\/[a-f0-9]{32}$/.test(path))
     forget(cropDraftKey());
@@ -132,13 +149,10 @@ async function recent() {
   });
 }
 async function openProject(id) {
-  project = await (await api(`/api/projects/${id}`)).json();
+  if (!await setProject(await (await api(`/api/projects/${id}`)).json())) return;
   selected = project.regions.find((r) => r.active)?.id || null;
   checked.clear();
   $("fixture-export").checked = false;
-  pageImage = new Image();
-  pageImage.src = `${url()}/image`;
-  await pageImage.decode();
   $("start").hidden = true;
   $("workspace").hidden = false;
   render();
@@ -194,6 +208,7 @@ function drawPage(drag = null) {
   }
 }
 function render() {
+  window.MashiProof?.sync();
   const active = project.regions.filter((r) => r.active);
   const fixture = project.source_kind === "synthetic-fixture";
   $("fixture-note").hidden = !fixture;
@@ -202,7 +217,8 @@ function render() {
     ? "Practice shapes are excluded by default. Test exports are explicitly labelled synthetic."
     : "Only confirmed, traced observed ink enters your export.";
   $("page-meta").textContent =
-    `${project.image.width} × ${project.image.height} px · EXIF oriented · revision ${project.revision}`;
+    `${project.image.width} × ${project.image.height} px`;
+  $("page-kind").textContent = project.preparation ? "Prepared page" : "Uploaded page";
   $("count").textContent = `${active.length} crops`;
   $("capture-notice").textContent = project.capture_notice || "";
   $("capture-notice").hidden = !project.capture_notice;
@@ -287,10 +303,10 @@ function render() {
     );
   $("provenance").textContent =
     r.provenance === "observed"
-      ? "OBSERVED INK"
+      ? "From photo"
       : r.provenance === "synthetic-fixture"
-        ? "SYNTHETIC TEST INK"
-        : "GENERATED SUGGESTION";
+        ? "Synthetic sample"
+        : "Generated suggestion";
   if (r.vector) {
     const v = r.vector;
     ["baseline", "scale", "advance"].forEach((k) => ($(k).value = v[k]));
@@ -380,9 +396,11 @@ $("new-page").onclick = () =>
     $("start").hidden = false;
     forget("mashi:last-project");
     selected = null;
+    window.MashiProof?.cancel();
     await recent();
-    message("Choose another photograph, or reopen a saved local page.");
+    message("Choose a photograph or reopen a saved page.");
   });
+$("reload-page").onclick = () => work(() => openProject(project.id));
 $("page-name-form").onsubmit = (event) => {
   event.preventDefault();
   work(async () => {
@@ -513,6 +531,7 @@ $("add-crop").onclick = () =>
       {
         method: "POST",
         json: {
+          project_revision: project.revision,
           box: ["new-x0", "new-y0", "new-x1", "new-y1"].map((k) =>
             Number($(k).value),
           ),
@@ -528,7 +547,7 @@ $("ocr").onclick = () =>
     message("Running local Malayalam OCR…");
     await update(
       `${url()}/ocr`,
-      { method: "POST" },
+      { method: "POST", json: {revision: project.revision} },
       "OCR word proposals added. Their labels remain unconfirmed; review every crop.",
     );
   });
@@ -575,7 +594,7 @@ $("vector-form").onsubmit = (event) => {
     );
   });
 };
-async function download(kind) {
+async function download(kind, proof) {
   const fixture = project.source_kind === "synthetic-fixture";
   if (fixture && !$("fixture-export").checked)
     throw new Error(
@@ -583,12 +602,12 @@ async function download(kind) {
     );
   message(
     kind === "ttf"
-      ? "Compiling experimental TTF. This may take a minute…"
+      ? "Building TTF and checking the proof text…"
       : "Packaging SVG outlines and UFO sources…",
   );
   const response = await api(
     `${url()}/export/${kind}?include_fixture=${fixture && $("fixture-export").checked}`,
-    { method: "POST" },
+    { method: "POST", json: proof },
   );
   const blob = await response.blob();
   const objectURL = URL.createObjectURL(blob),
@@ -600,11 +619,18 @@ async function download(kind) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(objectURL), 10000);
   message(
-    "Export downloaded. Read coverage.json before using the experimental font.",
+    "Export downloaded. Coverage and proof reports are included in the ZIP.",
   );
 }
-$("export-ufo").onclick = () => work(() => download("ufo"));
-$("export-ttf").onclick = () => work(() => download("ttf"));
+function startExport(kind) {
+  if (busy) return;
+  try {
+    const proof = window.MashiProof.exportInput(kind);
+    work(() => download(kind, proof));
+  } catch (error) { message(error.message, true); }
+}
+$("export-ufo").onclick = () => startExport("ufo");
+$("export-ttf").onclick = () => startExport("ttf");
 let dragStart = null;
 function point(event) {
   const rect = $("page").getBoundingClientRect();
@@ -679,7 +705,7 @@ $("page").onpointerup = (event) => {
   work(async () => {
     await update(
       `${url()}/regions`,
-      { method: "POST", json: { box } },
+      { method: "POST", json: { box, project_revision: project.revision } },
       "Crop drawn. Assign its exact label.",
     );
     selected = project.regions.at(-1).id;
@@ -691,17 +717,17 @@ work(async () => {
   token = session.token;
   $("ocr").title = session.ocr.reason;
   await recent();
-  message(`Ready locally. ${session.ocr.reason}`);
+  message("Choose a photograph or reopen a saved page.");
   const saved = recall("mashi:last-project");
   if (typeof saved === "string" && /^[a-f0-9]{32}$/.test(saved)) {
     try {
       await openProject(saved);
       message(
-        "Your last saved page was reopened. All saved crops and outlines are local.",
+        "Last saved page reopened.",
       );
     } catch {
       forget("mashi:last-project");
-      message(`Ready locally. ${session.ocr.reason}`);
+      message("Choose a photograph or reopen a saved page.");
     }
   }
 });

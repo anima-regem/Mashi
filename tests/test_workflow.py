@@ -99,7 +99,7 @@ def test_ocr_suggestions_remain_words_and_unconfirmed(client, monkeypatch):
         "granularity": "word",
     }
     monkeypatch.setattr("mashi.ocr.recognize", lambda path: [suggestion])
-    response = client.post(f"/api/projects/{doc['id']}/ocr")
+    response = client.post(f"/api/projects/{doc['id']}/ocr", json={"revision": doc["revision"]})
     item = response.json()["regions"][-1]
     assert not item["confirmed"] and item["label"] == ""
     assert item["suggestion"] == suggestion
@@ -261,7 +261,8 @@ def test_input_security_and_bounds(client):
     doc = upload(client)
     assert (
         client.post(
-            f"/api/projects/{doc['id']}/regions", json={"box": [-1, 0, 100, 100]}
+            f"/api/projects/{doc['id']}/regions",
+            json={"box": [-1, 0, 100, 100], "project_revision": doc["revision"]},
         ).status_code
         == 400
     )

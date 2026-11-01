@@ -14,12 +14,14 @@ from PIL import Image
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import ocr
-from .exporting import export_bundle
+from .exporting import export_bundle, export_preflight, preview_project
+from .font_metrics import TypographyOptions
+from .proofing import PreviewCache, bounded_diagnostics
 from .imaging import MAX_BYTES, decode, propose_regions, validate_box
 from .models import (
     MergeInput,
     RegionEdit,
-    RegionInput,
+    RegionCreateInput,
     SplitInput,
     TraceInput,
     VectorInput,
@@ -28,6 +30,7 @@ from .models import (
     ProjectNameInput,
     RevisionInput,
     RegionRestoreInput,
+    ProofInput,
 )
 from .preparation import prepare, source_polygons, suggest_corners
 from .predictors import coverage
@@ -71,6 +74,8 @@ def create_app(root=None, *, testing=False):
     app = FastAPI(title="Mashi", docs_url=None, redoc_url=None, openapi_url=None)
     store = Store(Path(root or os.environ.get("MASHI_DATA_DIR", ".mashi")))
     app.state.store = store
+    previews = PreviewCache()
+    app.state.previews = previews
     token = secrets.token_urlsafe(32)
     app.add_middleware(BodyLimit)
     hosts = ["localhost", "127.0.0.1"] + (["testserver"] if testing else [])
@@ -215,8 +220,11 @@ def create_app(root=None, *, testing=False):
         return project(project_id)
 
     @app.get("/api/projects/{project_id}/image")
-    def image(project_id: str):
-        return FileResponse(image_path(project(project_id)), media_type="image/png")
+    def image(project_id: str, expected_sha256: str | None = None):
+        doc = project(project_id)
+        if expected_sha256 is not None and expected_sha256 != doc["image"]["canonical_sha256"]:
+            raise HTTPException(409, "Page pixels changed; reload the saved page")
+        return FileResponse(image_path(doc), media_type="image/png")
 
     @app.get("/api/projects/{project_id}/source-image")
     def source_image(project_id: str):
@@ -299,8 +307,9 @@ def create_app(root=None, *, testing=False):
         return event(doc, "restore-preparation-and-crops", [])
 
     @app.post("/api/projects/{project_id}/regions")
-    def add_region(project_id: str, data: RegionInput):
+    def add_region(project_id: str, data: RegionCreateInput):
         doc = project(project_id)
+        check_revision(doc, data.project_revision)
         if len(doc["regions"]) >= 5000:
             raise ValueError("Project region limit reached; start a new page")
         validate_box(data.box, doc["image"]["width"], doc["image"]["height"])
@@ -386,8 +395,9 @@ def create_app(root=None, *, testing=False):
         return event(doc, "merge", data.ids + [merged["id"]])
 
     @app.post("/api/projects/{project_id}/ocr")
-    def run_ocr(project_id: str):
+    def run_ocr(project_id: str, data: RevisionInput):
         doc = project(project_id)
+        check_revision(doc, data.revision)
         if len(doc["regions"]) >= 4000:
             raise ValueError("Too many regions; use another project")
         suggestions = ocr.recognize(image_path(doc))
@@ -496,14 +506,54 @@ def create_app(root=None, *, testing=False):
     def get_coverage(project_id: str):
         return coverage(project(project_id))
 
+    @app.post("/api/projects/{project_id}/proof/{action}")
+    def proof(
+        project_id: str,
+        action: Literal["preflight", "preview"],
+        data: ProofInput,
+        include_fixture: bool = False,
+    ):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        options = TypographyOptions(**data.options.model_dump())
+        options.validate()
+        if action == "preflight":
+            result = {
+                "coverage": bounded_diagnostics(
+                    export_preflight(doc, data.text, include_fixture), "issues"
+                )
+            }
+        else:
+            result = previews.get(
+                doc,
+                data.text,
+                options,
+                include_fixture,
+                lambda: preview_project(doc, data.text, include_fixture, options=options),
+            )
+        check_revision(project(project_id), data.revision)
+        return {**result, "project_id": project_id, "revision": data.revision}
+
     @app.post("/api/projects/{project_id}/export/{kind}")
-    def export(project_id: str, kind: str, include_fixture: bool = False):
+    def export(
+        project_id: str, kind: str, include_fixture: bool = False, data: ProofInput | None = None
+    ):
         if kind not in {"ufo", "ttf"}:
             raise ValueError("Choose ufo or ttf")
         doc = project(project_id)
+        if data is not None:
+            check_revision(doc, data.revision)
+        archive = export_bundle(
+            doc,
+            kind,
+            include_fixture=include_fixture,
+            options=TypographyOptions(**data.options.model_dump()) if data else None,
+            required_text=data.text if data else None,
+        )
+        check_revision(project(project_id), doc["revision"])
         prefix = "Mashi-SYNTHETIC" if doc.get("source_kind") == "synthetic-fixture" else "Mashi"
         return Response(
-            export_bundle(doc, kind, include_fixture=include_fixture),
+            archive,
             media_type="application/zip",
             headers={"Content-Disposition": f'attachment; filename="{prefix}-{kind}.zip"'},
         )

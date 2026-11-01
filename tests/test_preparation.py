@@ -141,6 +141,9 @@ def test_noisy_upload_can_still_be_prepared_or_cropped_manually(client):
     doc = response.json()
     assert doc["regions"] == [] and "Prepare the photo" in doc["capture_notice"]
     assert (
-        client.post(f"/api/projects/{doc['id']}/regions", json={"box": [0, 0, 20, 20]}).status_code
+        client.post(
+            f"/api/projects/{doc['id']}/regions",
+            json={"box": [0, 0, 20, 20], "project_revision": doc["revision"]},
+        ).status_code
         == 200
     )

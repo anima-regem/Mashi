@@ -22,6 +22,10 @@ class RegionEdit(RegionInput):
     revision: int = Field(ge=1)
 
 
+class RegionCreateInput(RegionInput):
+    project_revision: int = Field(ge=1)
+
+
 class SplitInput(BaseModel):
     revision: int
     axis: Literal["x", "y"]
@@ -93,3 +97,25 @@ class RevisionInput(BaseModel):
 
 class RegionRestoreInput(RevisionInput):
     history_index: int = Field(ge=0)
+
+
+class TypographyInput(BaseModel):
+    family_name: str = Field(default="Mashi Handwriting", min_length=1, max_length=100)
+    ascender: int = Field(default=1000, ge=1, le=16000)
+    descender: int = Field(default=-400, ge=-16000, le=0)
+    line_gap: int = Field(default=100, ge=0, le=4000)
+    space_advance: int = Field(default=300, ge=1, le=5000)
+    mark_gap: int = Field(default=40, ge=0, le=1000)
+    anchors: dict[str, dict[str, tuple[float, float]]] = Field(default_factory=dict, max_length=512)
+
+
+class ProofInput(RevisionInput):
+    text: str = Field(min_length=1, max_length=1000)
+    options: TypographyInput = Field(default_factory=TypographyInput)
+
+    @field_validator("text")
+    @classmethod
+    def proof_size(cls, value):
+        if not value.strip() or value.count("\n") >= 32:
+            raise ValueError("Enter visible proof text, at most 1,000 codepoints and 32 lines")
+        return value  # Preserve exact text, including joiners and decomposition.

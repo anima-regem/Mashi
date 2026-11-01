@@ -8,6 +8,7 @@ import io
 import unicodedata
 
 from fontTools.ttLib import TTFont
+from fontTools.pens.svgPathPen import SVGPathPen
 
 VIRAMA, ZWJ, ZWNJ = "\u0d4d", "\u200d", "\u200c"
 CONSONANTS = "കഖഗഘങചഛജഝഞടഠഡഢണതഥദധനപഫബഭമയരലവശഷസഹളഴറ"
@@ -280,3 +281,54 @@ def shape_preview(font_bytes, text):
         "diagnostics": problems,
         "has_notdef": any(p["code"] == "notdef" for p in problems),
     }
+
+
+def proof_outlines(font_bytes, preview):
+    """Draw exactly the positioned glyphs from the compiled font, without fallback.
+
+    Paths stay font-up. The browser flips Y explicitly for each placement. A
+    shared path dictionary preserves counters and bounds response/DOM growth.
+    """
+    with TTFont(io.BytesIO(font_bytes)) as font:
+        glyphs, paths, lines = font.getGlyphSet(), {}, []
+        top, bottom = font["hhea"].ascent + 40, font["hhea"].descent - 40
+        line_advance = font["hhea"].ascent - font["hhea"].descent + font["hhea"].lineGap
+        overall_left, overall_right = 0, 100
+        for line in preview["lines"]:
+            x, y, placed = 0, 0, []
+            left, right = 0, line["advance"]
+            for glyph in line["glyphs"]:
+                name = glyph["name"]
+                if name not in paths:
+                    pen = SVGPathPen(glyphs)
+                    glyphs[name].draw(pen)
+                    paths[name] = pen.getCommands()
+                placed.append(
+                    {"name": name, "x": x + glyph["x_offset"], "y": y + glyph["y_offset"]}
+                )
+                if glyph["bounds"]:
+                    left = min(left, glyph["bounds"][0])
+                    right = max(right, glyph["bounds"][2])
+                x, y = x + glyph["x_advance"], y + glyph["y_advance"]
+            overall_left, overall_right = min(overall_left, left), max(overall_right, right)
+            lines.append(
+                {
+                    "glyphs": placed,
+                    "baseline_offset": len(lines) * line_advance,
+                    "view_box": [left - 40, -top, max(100, right - left + 80), top - bottom],
+                }
+            )
+        if sum(map(len, paths.values())) > 2_000_000:
+            raise ValueError("Proof outlines are too complex; reduce the project subset")
+        return {
+            "paths": paths,
+            "lines": lines,
+            "family_name": font["name"].getDebugName(1),
+            "line_advance": line_advance,
+            "view_box": [
+                overall_left - 40,
+                -top,
+                overall_right - overall_left + 80,
+                top - bottom + max(0, len(lines) - 1) * line_advance,
+            ],
+        }

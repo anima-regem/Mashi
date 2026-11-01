@@ -1,0 +1,25 @@
+# Proof text and export
+
+Enter the exact text the font must handle. **Check required samples** is a cheap coverage check. **Build proof preview** compiles the saved confirmed outlines, uses HarfBuzz's actual glyph selection/positions, then draws those glyphs from that same TTF. It never substitutes a system font for missing handwriting. Missing-glyph drawings are inspection output, not a passing proof. Sources, unsupported grammar, mark stacks and platform limitations are described in [TYPOGRAPHY.md](TYPOGRAPHY.md).
+
+Font name, line/space metrics and exact-label anchor overrides are under a disclosure. Estimated anchors can be copied as editable JSON. Positions use 1000-UPM font coordinates, Y upward; only the visible virama has a mark anchor in V1. Requested vertical metrics expand to contain positioned ink. Synthetic sample fonts retain their synthetic name and provenance regardless of the requested family name. Generated suggestions cannot satisfy coverage or enter normal exports.
+
+The drawing preserves explicit newlines and uses the compiled ascender − descender + line gap for baseline spacing. It does not wrap text automatically; scroll the preview to inspect long lines/pages. This is a controlled proof layout, not a claim that all external applications choose the same automatic line height.
+
+Proof text and settings persist per page in this browser's local storage, independently of saved project data. They are not included in a project backup until an export records them. The interface uses saved outlines: save crop and outline changes before proofing. TTF export requires a supported preview for the current revision, exact text, settings and synthetic-inclusion choice. Editing any of those clears that review. Both UI export requests send the exact proof/settings; the backend validates them again and checks the stored revision after compilation. `coverage.json` includes `required_text`, `required_preview` for TTF, `typography_options`, effective `font_family` and actual metrics. UFO reports coverage/geometry only, not completed shaping validation.
+
+Original text, joiners and decomposed sequences are retained. Informative NFC/NFD, scalar codepoints, actual engine/metrics, cache status and detailed issues live under **Unicode and shaping details**. Issue positions are zero-based Unicode scalar indexes. Main results show missing samples and unsupported text; collecting an arbitrary whole word cannot implement unsupported grammar. The API limits proof text to 1000 codepoints/32 lines and shows the first 100 issues/diagnostics with explicit totals. Shorter proofs expose remaining issues.
+
+## Revisions, caching and cancellation
+
+The in-memory LRU cache retains eight results, each bounded to eight MB. Keys include project ID and revision, exact text, validated typography options and fixture inclusion. New revisions evict that project's older entries on the next preview. Failed compilation is not cached. Compiler work is serialized for previews, runs outside the event loop and has a 60-second subprocess timeout. Cancel or editing stops display of the pending result; it does not terminate a compiler already running. Retry remains available. The client rejects late responses after input changes, page switches or cancellations. The server rejects a result if the project changed during compilation.
+
+Crop creation now requires `project_revision`; OCR requires `{revision}`. A stale tab cannot apply coordinates or OCR to a newly prepared image. `/image?expected_sha256=...` rejects mismatched pixels; the client decodes the matching immutable raster before swapping project metadata and image together. Late image loads cannot replace a newer selection. **Reload saved page** recovers after another window changes the page. Preparation always creates unconfirmed proposals without carrying labels across to different pixels.
+
+## API boundary
+
+`POST /api/projects/{id}/proof/preflight` and `/proof/preview` take `{revision, text, options}` and the existing explicit `include_fixture` query option. They require the same local mutation token as the rest of the app, even though they do not mutate the project. Preview responses contain paths/placements, not font bytes or photos. SVG DOM is constructed with geometry attributes; no supplied markup is inserted.
+
+`POST /export/{ufo|ttf}` accepts that same proof body. Existing bodyless API calls remain available for source/export scripts; their report has `required_text: null` and does **not** claim arbitrary proof-text coverage. The studio always supplies a proof body, and gates TTF on actual compiled review. The backend Python interfaces remain keyword-only/backward-compatible. This does not establish Malayalam-reader quality, universal shaping or handwriting recognition accuracy.
+
+Optional Mashi-ML application review is a separate next milestone. No checkpoint was loaded, retrained or distributed in this proof/interface increment.

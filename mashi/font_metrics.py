@@ -14,7 +14,7 @@ class TypographyOptions:
     top belongs to a base; _top belongs to the visible virama mark.
     """
 
-    family_name: str = "Mashi Handwriting Experimental"
+    family_name: str = "Mashi Handwriting"
     style_name: str = "Regular"
     ascender: int = 1000
     descender: int = -400
