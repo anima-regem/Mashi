@@ -27,14 +27,15 @@ Without uv, create a Python 3.12 virtual environment and `python -m pip install 
 4. Trace the selected pixels with a controllable ink threshold. Inspect the closed contours, including counters. Edit SVG path geometry, baseline, scale and advance width.
 5. Enter exact proof text, check required samples and build its compiled preview. Review actual glyphs, missing forms and spacing; adjust the font name, metrics or anchors if needed.
 6. Export an SVG/UFO ZIP or TTF ZIP with that proof text and settings. Each contains `coverage.json`, `project.json`, SVGs and reloadable UFO sources. Photos are not embedded in exports.
+7. Add more pages to the same font project, choose between sample variants, and save an editable `.mashi.zip` backup. **Project backups include source photographs** and import into a fresh project.
 
-Saved edits and original image bytes stay in `.mashi/` in the working directory (gitignored). Restarting preserves projects. Set `MASHI_DATA_DIR` to choose another directory. Back up this directory to preserve originals, canonical pages, SQLite project history and traced outlines. Exports contain metadata, not the original photos; they are not complete project backups. To remove local data, stop Mashi and delete its data directory.
+Saved edits and original image bytes stay in `.mashi/` in the working directory (gitignored). Restarting preserves projects. Set `MASHI_DATA_DIR` to choose another directory. Use **Project backup** for a portable editable project; copying the entire data folder while Mashi is stopped is also possible. Font exports contain metadata, not the original photos; they are not complete project backups. To remove local data, stop Mashi and delete its data directory.
 
 ### Prepare a photographed page
 
 Open **Prepare photo** to drag or enter four paper corners, correct perspective, rotate, reduce uneven lighting and preview fixed/adaptive thresholding. Boundary suggestions need visual review. Every adjustment regenerates from the preserved oriented source. Applying creates fresh unconfirmed crop proposals; **Restore previous preparation & crops** returns the exact previous image, labels and outlines. Geometry has forward/inverse transforms and every new crop records source/original polygons. Photometric cleanup is reversible by regenerating from preserved pixels, not by inverting thresholded pixels. Up to 20 earlier preparation states are retained.
 
-Name a page using **Save name**. The last saved page reopens on reload; the local page chooser shows up to 50 named pages. Each upload is still one separate page/project. Multi-page font assembly and variant selection remain on the roadmap.
+Name the font project using **Save name**, then add/switch/rename individual sheets. Up to 20 pages share one font's exact sequence choices and saved typography. Duplicate eligible samples require an explicit variant choice in **Font samples**; changing that chosen sample requires choosing again. The last page reopens on reload, and **Projects** lists up to 50 saved font projects. See [projects, migration and editable backups](docs/PROJECTS_BACKUPS.md). Older projects migrate only on their first edit, after an exact recovery backup; quit older processes before sharing a data folder with this version.
 
 ### Edit and recover an outline
 
@@ -67,7 +68,7 @@ The local integration check recognized മലയാളം, മഷി and കേ�
 - The proof panel reports missing samples and unsupported sequences without normalizing the original input. Its drawing uses paths and positions from the actual compiled font, with no fallback font. UI TTF export requires a current supported preview; the server rechecks revision, proof text, settings, glyph selection and clipping. See [proofing and concurrency behavior](docs/PROOFING.md).
 - General contextual consonant forms, mark stacks, historical repertoire and platform qualification remain incomplete. Compilation or passing synthetic tests does not establish reader-level quality or universal Malayalam support.
 - Initial baseline and scale are estimates. Outlines need visual review. Perspective/rotation and lighting/adaptive preparation are available, but need review; their synthetic fixture checks do not establish robustness on real handwriting photographs.
-- Duplicate confirmed labels must be resolved to one variant before export. Alternate forms and multi-page font assembly are future work.
+- Duplicate confirmed labels require an explicit selected sample across pages. Coverage, proof and export use the same selection. Alternatives stay editable; they are not exported as OpenType stylistic alternates.
 
 ## Engineering and research
 

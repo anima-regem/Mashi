@@ -18,7 +18,7 @@ test("generated editor stays disabled until its current raster loads; stale load
     window:{MashiReviewState:{LatestRequest},MashiOutline:{load:(...args)=>loaded.push(args)}},
     $:element,project:null,busy:false,selected:null,outlineReady:false,
     current:()=>({coordinate_space:"generated-canvas"}),generatedSelection:()=>true,
-    Image:DeferredImage,url:()=>"/api/projects/p",message:text=>errors.push(text),
+    Image:DeferredImage,url:()=>"/api/projects/p",pageURL:path=>path,message:text=>errors.push(text),
   };
   vm.createContext(context);
   vm.runInContext(fs.readFileSync(require.resolve("../mashi/static/completion.js"),"utf8"),context);

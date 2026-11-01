@@ -154,3 +154,20 @@ class CompletionReview(RevisionInput):
 
 class CompletionVector(VectorInput):
     project_revision: int = Field(ge=1)
+
+
+class SampleChoiceInput(RevisionInput):
+    label: str = Field(min_length=1, max_length=32)
+    page_id: str
+    region_id: str
+    sample_revision: int = Field(ge=1)
+
+    @field_validator("label")
+    @classmethod
+    def exact_label(cls, value):
+        return RegionInput.valid_label(value)
+
+
+class SavedTypographyInput(RevisionInput):
+    options: TypographyInput = Field(default_factory=TypographyInput)
+    text: str = Field(default="", max_length=1000)

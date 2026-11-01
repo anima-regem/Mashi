@@ -4,14 +4,18 @@
   const ids = ["text", "family", "ascender", "descender", "line-gap", "space", "mark-gap", "anchors"];
   const defaults = ["", "Mashi Handwriting", 1000, -400, 100, 300, 40, "{}"];
   const NS = "http://www.w3.org/2000/svg";
-  let identity = "", running = false, reviewed = null, anchors = null, lastCoverage = null;
+  let identity = "", settingsIdentity = "", running = false, reviewed = null, anchors = null, lastCoverage = null;
   const storageKey = () => `mashi:proof:${project.id}`;
-  const fixture = () => project?.source_kind === "synthetic-fixture" && $("fixture-export").checked;
+  const fixture = () => (project?.has_synthetic_pages ?? project?.source_kind === "synthetic-fixture") && $("fixture-export").checked;
   function text(tag, content, parent) {
     const node = document.createElement(tag); node.textContent = content; parent.append(node); return node;
   }
-  function values() {
-    if (!$("proof-form").reportValidity()) throw new Error("Check proof text and font settings.");
+  function values(requireText = true) {
+    const textInput = $("proof-text"), wasRequired = textInput.required;
+    textInput.required = requireText;
+    const valid = $("proof-form").reportValidity();
+    textInput.required = wasRequired;
+    if (!valid) throw new Error("Check proof text and font settings.");
     let anchorData;
     try { anchorData = JSON.parse($("proof-anchors").value); }
     catch { throw new Error("Anchor overrides must be a JSON object with exact labels and coordinate pairs."); }
@@ -40,18 +44,22 @@
   }
   function persist() {
     if (!project) return;
-    const saved = remember(storageKey(), ids.map(id => $("proof-" + id).value));
+    const saved = remember(storageKey(), {typography_revision:project.typography_revision || 1, values:ids.map(id => $("proof-" + id).value)});
     $("proof-storage").hidden = saved;
     $("proof-storage").textContent = saved ? "" : "Your proof could not be saved. Copy the text before leaving.";
   }
   function sync() {
     const next = `${project.id}:${project.revision}`;
     if (next === identity) return;
-    const changedPage = identity.split(":")[0] !== project.id;
     identity = next;
-    if (changedPage) {
+    const nextSettings = `${project.id}:${project.typography_revision || 1}`;
+    if (nextSettings !== settingsIdentity) {
+      settingsIdentity = nextSettings;
       const saved = recall(storageKey());
-      ids.forEach((id, i) => $("proof-" + id).value = Array.isArray(saved) && saved.length === ids.length ? saved[i] : defaults[i]);
+      const options = project.typography || {};
+      const stored = [project.proof_text || "", options.family_name, options.ascender, options.descender, options.line_gap, options.space_advance, options.mark_gap, JSON.stringify(options.anchors || {})];
+      const draft = Array.isArray(saved) ? saved : saved?.typography_revision === (project.typography_revision || 1) ? saved.values : null;
+      ids.forEach((id, i) => $("proof-" + id).value = Array.isArray(draft) && draft.length === ids.length ? draft[i] : stored[i] ?? defaults[i]);
     }
     invalidate("Build a fresh preview after saving your outlines.");
   }
@@ -61,15 +69,18 @@
     text("h3", report.supported ? "Required forms are available" : "This text needs attention", box);
     if (report.synthetic_test_export) text("p", "This proof uses synthetic sample shapes, not handwriting.", box);
     if (report.generated_font) text("p", "Includes accepted model-generated forms. Font output is OFL-1.1 with retained source notices.", box);
-    if (report.required_samples.length) text("p", "Capture and confirm: " + report.required_samples.join(" · "), box);
-    if (report.duplicate_labels.length) text("p", "Choose one confirmed variant for duplicate labels: " + report.duplicate_labels.join(" · "), box);
+    const conflicts = new Set(report.variant_conflicts || []);
+    const missing = report.required_samples.filter(label => !conflicts.has(label));
+    if (missing.length) text("p", "Capture and confirm: " + missing.join(" · "), box);
+    if (report.variant_conflicts?.length) text("p", "Choose a sample in Font samples: " + report.variant_conflicts.join(" · "), box);
+    else if (report.duplicate_labels.length) text("p", "Choose one confirmed variant for duplicate labels: " + report.duplicate_labels.join(" · "), box);
     const list = document.createElement("ul");
     report.issues.forEach(issue => text("li", `${issue.code.replaceAll("_", " ")} · ${issue.sequence} · position ${issue.index}` +
       (issue.required_samples.length ? ` · samples: ${issue.required_samples.join(" · ")}` : " · requires a text change or future shaping support"), list));
     if (!report.supported && !report.issues.length && !report.duplicate_labels.length)
       text("p", "Confirm and trace eligible ink first. Synthetic practice ink also needs the explicit test-export checkbox below.", box);
     $("proof-issues").replaceChildren(list);
-    const unsupported = report.issues.filter(issue => !issue.required_samples.length);
+    const unsupported = report.issues.filter(issue => !issue.required_samples.length && issue.code !== "choose_sample_variant");
     if (unsupported.length) text("p", "Unsupported text: " + [...new Set(unsupported.map(issue => issue.sequence))].slice(0, 6).join(" · ") + ". Edit the text; capturing a whole word will not add shaping support. See details below.", box);
     if (report.issues_truncated) text("p", `Showing the first 100 of ${report.issues_total} issues in shaping details. Shorten the text to inspect the rest.`, box);
     const normalize = report.normalization;
@@ -135,7 +146,7 @@
   $("fixture-export").onchange = () => invalidate("Export provenance changed. Build a fresh proof with this choice.");
   $("generated-export").onchange = () => invalidate("Generated-font inclusion changed. Build a fresh proof with this choice.");
   $("proof-copy-anchors").onclick = () => { $("proof-anchors").value = JSON.stringify(anchors, null, 2); persist(); invalidate("Anchor estimates copied. Edit the pairs and rebuild to inspect positioning."); };
-  window.MashiProof = {sync, refreshControls, missingSamples: () => lastCoverage?.required_samples || [], cancel: () => invalidate("Page closed. Late proof results are ignored."),
+  window.MashiProof = {sync, refreshControls, projectSettings: () => values(false), settingsSaved: () => {forget(storageKey()); settingsIdentity = "";}, missingSamples: () => lastCoverage?.required_samples || [], cancel: () => invalidate("Page closed. Late proof results are ignored."),
     exportInput(kind) {
       const input = values();
       if (kind === "ttf" && reviewed !== stamp(input)) throw new Error("Build and review a current, supported proof preview before TTF export.");

@@ -5,16 +5,17 @@ let token = "",
   selected = null,
   pageImage = null,
   outlineReady = false,
-  busy = false;
+  busy = false,
+  features = {};
 const checked = new Set();
 const pageLoads = new window.MashiReviewState.LatestRequest();
 async function setProject(doc) {
   return pageLoads.run(async () => {
     let image = pageImage;
-    if (!image || project?.id !== doc.id ||
+    if (!image || project?.id !== doc.id || project?.page_id !== doc.page_id ||
         project.image.canonical_sha256 !== doc.image.canonical_sha256) {
       image = new Image();
-      image.src = `/api/projects/${doc.id}/image?expected_sha256=${encodeURIComponent(doc.image.canonical_sha256)}`;
+      image.src = pageURL(`/api/projects/${doc.id}/image?expected_sha256=${encodeURIComponent(doc.image.canonical_sha256)}`, doc.page_id);
       try { await image.decode(); }
       catch { throw new Error("Page pixels changed or could not load. Reload the saved page before editing."); }
     }
@@ -46,6 +47,7 @@ function message(text, error = false) {
   $("status").classList.toggle("error", error);
 }
 async function api(path, options = {}) {
+  if (project?.page_id && path.startsWith(`/api/projects/${project.id}`)) path = pageURL(path);
   const headers = { "X-Mashi-Token": token, ...(options.headers || {}) };
   if (options.json !== undefined) {
     headers["Content-Type"] = "application/json";
@@ -89,15 +91,24 @@ async function work(callback) {
     window.MashiOutline?.refreshControls();
     window.MashiProof?.refreshControls();
     window.MashiCompletion?.refreshControls();
+    window.MashiProjects?.refreshControls();
+    window.MashiCapture?.refreshControls();
     $("restore-state").disabled = !$("saved-history").value;
   }
 }
 const url = () => `/api/projects/${project.id}`;
+function pageURL(path, page = project?.page_id) {
+  if (!page || /[?&]page_id=/.test(path)) return path;
+  return path + (path.includes("?") ? "&" : "?") + "page_id=" + encodeURIComponent(page);
+}
 const current = () =>
   project?.regions.find((r) => r.id === selected && r.active) ||
   project?.completion_suggestions?.find(r => r.id === selected && r.active && r.review_state !== "rejected");
 const generatedSelection = r => r?.coordinate_space === "generated-canvas";
-const cropDraftKey = () => `mashi:crop-draft:${project.id}:${selected}`;
+const cropDraftKey = () => `mashi:crop-draft:${project.id}:${project.page_id || project.id}:${selected}`;
+const legacyCropKey = () => !project.page_id || project.page_id === project.id ? `mashi:crop-draft:${project.id}:${selected}` : "";
+const cropDraft = () => recall(cropDraftKey()) || (legacyCropKey() ? recall(legacyCropKey()) : null);
+function clearCropDraft() {forget(cropDraftKey()); if (legacyCropKey()) forget(legacyCropKey());}
 function saveCropDraft() {
   const r = current();
   if (!r) return;
@@ -112,14 +123,14 @@ function saveCropDraft() {
     "Unsaved crop changes are stored in this browser. Save to apply them to the project.";
 }
 async function loadSavedHistory(r) {
-  const id = project.id;
+  const id = project.id, pageId = project.page_id;
   $("saved-history").replaceChildren();
   $("restore-state").disabled = true;
   try {
     const entries = await (
       await api(`${url()}/regions/${r.id}/history`)
     ).json();
-    if (project.id !== id || selected !== r.id) return;
+    if (project.id !== id || project.page_id !== pageId || selected !== r.id) return;
     entries.forEach((e) => {
       const option = document.createElement("option");
       option.value = e.index;
@@ -135,7 +146,7 @@ async function update(path, options, text) {
   if (!await setProject(await (await api(path, options)).json())) return;
   if (path.endsWith("/vector")) window.MashiOutline?.saved();
   if (options.method === "PUT" && /\/regions\/[a-f0-9]{32}$/.test(path))
-    forget(cropDraftKey());
+    clearCropDraft();
   if (!current())
     selected = project.regions.filter((r) => r.active).at(-1)?.id || null;
   render();
@@ -147,23 +158,26 @@ async function recent() {
   $("recent").replaceChildren();
   entries.slice(0, 50).forEach((p) => {
     const button = document.createElement("button");
-    button.textContent = `${p.name || "Untitled page"} · ${p.image.width} × ${p.image.height}`;
+    button.textContent = `${p.name || "Untitled font"} · ${p.page_count ? `${p.page_count} page${p.page_count === 1 ? "" : "s"}` : `${p.image.width} × ${p.image.height}`}`;
     button.onclick = () => work(() => openProject(p.id));
     $("recent").append(button);
   });
 }
-async function openProject(id) {
-  if (!await setProject(await (await api(`/api/projects/${id}`)).json())) return;
+async function openProject(id, pageId = null) {
+  const sameProject = project?.id === id;
+  window.MashiCompletion?.cancel();
+  window.MashiCompletion?.clearEditorIdentity();
+  if (!sameProject) window.MashiProof?.cancel();
+  if (!await setProject(await (await api(pageURL(`/api/projects/${id}`, pageId || (sameProject ? project.page_id : null)))).json())) return;
   selected = project.regions.find((r) => r.active)?.id || null;
   checked.clear();
-  $("fixture-export").checked = false;
-  $("generated-export").checked = false;
+  if (!sameProject) {$("fixture-export").checked = false; $("generated-export").checked = false;}
   $("start").hidden = true;
   $("workspace").hidden = false;
   render();
-  await renderCoverage();
-  remember("mashi:last-project", id);
   window.MashiCapture?.load().catch((e) => message(e.message, true));
+  await renderCoverage();
+  remember("mashi:last-project", {id, page_id:project.page_id});
   message(
     "Page ready. Review crop boxes and confirm each exact Malayalam sequence.",
   );
@@ -215,17 +229,19 @@ function drawPage(drag = null) {
 function render() {
   window.MashiProof?.sync();
   window.MashiCompletion?.sync();
+  window.MashiProjects?.sync();
   const active = project.regions.filter((r) => r.active);
   const fixture = project.source_kind === "synthetic-fixture";
   $("fixture-note").hidden = !fixture;
-  $("fixture-export-option").hidden = !fixture;
+  const anyFixture = project.has_synthetic_pages ?? fixture;
+  $("fixture-export-option").hidden = !anyFixture;
   $("export-note").textContent = fixture
     ? "Practice shapes are excluded by default. Test exports are explicitly labelled synthetic."
     : "Only confirmed, traced observed ink enters your export.";
   $("page-meta").textContent =
     `${project.image.width} × ${project.image.height} px`;
   $("page-kind").textContent = project.preparation ? "Prepared page" : "Uploaded page";
-  $("count").textContent = `${active.length} crops`;
+  $("count").textContent = `${active.length} crop${active.length === 1 ? "" : "s"}`;
   $("capture-notice").textContent = project.capture_notice || "";
   $("capture-notice").hidden = !project.capture_notice;
   $("page-name").value = project.name || "Untitled page";
@@ -282,7 +298,7 @@ function render() {
   ["x0", "y0", "x1", "y1"].forEach((key, i) => ($(key).value = r.box[i]));
   $("label").value = r.label;
   $("confirmed").checked = r.confirmed;
-  const draft = recall(cropDraftKey());
+  const draft = cropDraft();
   $("crop-draft-note").textContent = "";
   if (
     draft?.revision === r.revision &&
@@ -352,7 +368,7 @@ function render() {
     svg.append(baseline);
     if (window.MashiOutline) window.MashiOutline.load(r, project, pageImage);
     else $("vector-preview").replaceChildren(svg);
-    $("svg-download").href = `${url()}/regions/${r.id}/svg`;
+  $("svg-download").href = pageURL(`${url()}/regions/${r.id}/svg`);
     $("svg-download").download = "mashi-glyph.svg";
   }
 }
@@ -369,9 +385,7 @@ function showCodepoints() {
 async function renderCoverage() {
   const data = await (await api(`${url()}/coverage`)).json();
   $("coverage-title").textContent =
-    project.source_kind === "synthetic-fixture"
-      ? `${data.synthetic_confirmed.length} traced practice forms`
-      : `${data.observed.length} confirmed, traced forms`;
+    `${data.observed.length} forms selected${data.synthetic_confirmed.length ? ` · ${data.synthetic_confirmed.length} practice forms available` : ""}`;
   $("missing").textContent = data.missing.join("  ");
 }
 $("file").onchange = (event) => {
@@ -429,7 +443,7 @@ $("page-name-form").onsubmit = (event) => {
         method: "PUT",
         json: { name: $("page-name").value, revision: project.revision },
       },
-      "Page name saved.",
+      "Font project name saved.",
     );
   });
 };
@@ -440,11 +454,11 @@ $("label").oninput = () => {
 ["x0", "y0", "x1", "y1"].forEach((k) => ($(k).oninput = saveCropDraft));
 $("confirmed").onchange = saveCropDraft;
 $("crop-draft-discard").onclick = () => {
-  forget(cropDraftKey());
+  clearCropDraft();
   render();
 };
 $("crop-draft-download").onclick = () => {
-  const draft = recall(cropDraftKey());
+  const draft = cropDraft();
   if (!draft) {
     message("No crop draft to download.");
     return;
@@ -616,8 +630,9 @@ $("vector-form").onsubmit = (event) => {
   });
 };
 async function download(kind, proof) {
-  const fixture = project.source_kind === "synthetic-fixture";
-  if (fixture && !$("fixture-export").checked)
+  const fixture = project.has_synthetic_pages ?? project.source_kind === "synthetic-fixture";
+  const onlyFixture = project.pages?.every(p => p.source_kind === "synthetic-fixture") ?? fixture;
+  if (onlyFixture && !$("fixture-export").checked)
     throw new Error(
       "Practice shapes are excluded. Enable the explicitly labelled synthetic test export first.",
     );
@@ -634,7 +649,7 @@ async function download(kind, proof) {
   const objectURL = URL.createObjectURL(blob),
     a = document.createElement("a");
   a.href = objectURL;
-  a.download = `Mashi-${fixture ? "SYNTHETIC-" : ""}${$("generated-export").checked ? "GENERATED-" : ""}${kind}.zip`;
+  a.download = response.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1] || `Mashi-${kind}.zip`;
   document.body.append(a);
   a.click();
   a.remove();
@@ -736,14 +751,17 @@ $("page").onpointerup = (event) => {
 work(async () => {
   const session = await (await api("/api/session")).json();
   token = session.token;
+  features = session.features || {};
+  $("backup-import").hidden = !features.editable_backup;
   $("ocr").hidden = !session.ocr.available;
   $("ocr").title = session.ocr.available ? "Review suggested words before confirming them." : "Word suggestions are unavailable. Label crops manually.";
   await recent();
   message("Choose a photograph or reopen a saved page.");
   const saved = recall("mashi:last-project");
-  if (typeof saved === "string" && /^[a-f0-9]{32}$/.test(saved)) {
+  const savedId = typeof saved === "string" ? saved : saved?.id;
+  if (typeof savedId === "string" && /^[a-f0-9]{32}$/.test(savedId)) {
     try {
-      await openProject(saved);
+      await openProject(savedId, typeof saved === "object" ? saved.page_id : null);
       message(
         "Last saved page reopened.",
       );

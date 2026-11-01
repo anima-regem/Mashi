@@ -1,6 +1,7 @@
 """A replaceable local predictor boundary; no pretrained completion model is bundled."""
 
 from typing import Protocol
+from .projects import pages, resolve
 
 # Coverage inventory, not an assertion that a codepoint equals a visible glyph.
 COMMON = list("അആഇഈഉഊഋഎഏഐഒഓഔകഖഗഘങചഛജഝഞടഠഡഢണതഥദധനപഫബഭമയരലവശഷസഹളഴറ")
@@ -22,25 +23,30 @@ class UntrainedPredictor:
 
 
 def coverage(project):
-    regions = [r for r in project["regions"] if r["active"]]
+    regions = [r for page in pages(project) for r in page["regions"] if r["active"]]
+    selected, conflicts = resolve(project)
+    fixture_selected, _ = resolve(project, include_fixture=True)
     observed = {
         r["label"]
-        for r in regions
+        for r in selected
         if r["confirmed"] and r["vector"] and r["provenance"] == "observed"
     }
     generated = [
         r["id"] for r in regions if r["provenance"] not in {"observed", "synthetic-fixture"}
     ]
-    generated += [r["id"] for r in project.get("completion_suggestions", [])]
+    generated += [
+        r["id"] for page in pages(project) for r in page.get("completion_suggestions", [])
+    ]
     return {
         "observed": sorted(observed),
         "missing": [s for s in COMMON if s not in observed],
         "inventory_size": len(COMMON),
+        "variant_conflicts": conflicts,
         "generated_excluded": generated,
         "fixtures_excluded": [r["id"] for r in regions if r["provenance"] == "synthetic-fixture"],
         "synthetic_confirmed": [
             r["label"]
-            for r in regions
+            for r in fixture_selected
             if r["provenance"] == "synthetic-fixture" and r["confirmed"] and r["vector"]
         ],
         "predictor": {

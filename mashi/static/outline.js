@@ -6,6 +6,7 @@
     BASELINE_LIMIT = 100000;
   let key = "",
     draftKey = "",
+    legacyDraftKey = "",
     contours = [],
     metrics = {},
     vector = null,
@@ -391,6 +392,7 @@
     const nextKey =
       doc.id +
       ":" +
+      (doc.page_id || doc.id) + ":" +
       region.id +
       ":" +
       region.revision +
@@ -401,8 +403,9 @@
       return;
     }
     key = nextKey;
-    draftKey = `mashi:outline-draft:${doc.id}:${region.id}`;
-    identity = { revision: region.revision, image: doc.image.canonical_sha256,
+    draftKey = `mashi:outline-draft:${doc.id}:${doc.page_id || doc.id}:${region.id}`;
+    legacyDraftKey = !doc.page_id || doc.page_id === doc.id ? `mashi:outline-draft:${doc.id}:${region.id}` : "";
+    identity = { page_id: doc.page_id, revision: region.revision, image: doc.image.canonical_sha256,
       provenance: region.provenance, input_kind: doc.source_kind,
       ...(region.generation ? {generation:region.generation, vectorization:region.vectorization, not_observed_in_photo:true} : {}) };
     vector = region.vector;
@@ -414,7 +417,7 @@
     };
     let chosen = initial,
       note = "Saved outline. Choose a node or control handle to edit.";
-    const draft = recall(draftKey);
+    const draft = recall(draftKey) || (legacyDraftKey ? recall(legacyDraftKey) : null);
     if (
       draft?.revision === identity.revision &&
       draft.image === identity.image
@@ -593,6 +596,7 @@
   };
   $("outline-discard-draft").onclick = () => {
     forget(draftKey);
+    if (legacyDraftKey) forget(legacyDraftKey);
     contours = G.parse(initial.paths);
     metrics = {
       baseline: initial.baseline,
@@ -611,7 +615,7 @@
     draw();
   };
   $("outline-download-draft").onclick = () => {
-    const draft = recall(draftKey);
+    const draft = recall(draftKey) || (legacyDraftKey ? recall(legacyDraftKey) : null);
     if (!draft) {
       message("No outline draft to download.");
       return;
@@ -635,6 +639,7 @@
     },
     saved() {
       forget(draftKey);
+      if (legacyDraftKey) forget(legacyDraftKey);
       key = "";
     },
   };

@@ -6,7 +6,7 @@ Baseline: `075a88ec` (15 automated tests). Status is evidence of implemented beh
 | --- | --- | --- | --- |
 | Capture | Bounded raster upload, EXIF/alpha handling, hashes, crop drawing/coordinates, split/merge, exact sequence confirmation, local Malayalam OCR; perspective corners, rotation, illumination/adaptive preview and apply/restore with source polygons | OCR verified only on one clean printed fixture; preparation tested with synthetic transforms/lighting; connected ink is not letter segmentation | Real-photo quality evaluation and reliable automatic line deskew |
 | Outline | Actual ink tracing, closed contours/counters; visual cubic/quadratic nodes/handles, zoom/pan, raster comparison, metric guides, session undo/redo, Advanced paths | No real-writer usability benchmark; no visual node insertion/deletion or automatic smoothing | Larger-contour usability work and typographic review |
-| Projects | SQLite persistence, names, recent 50 named pages, last-page reopen; crop/outline draft recovery with stale-state protection; visible preparation and saved-region history restore | One uploaded page per project; undo/redo stack lasts for the loaded editor session | General whole-project undo, multi-page single-font assembly, variant/duplicate selection, backup/import, batch work |
+| Projects | SQLite persistence; up to 20 pages per font, named pages/projects and last-page reopen; explicit sample choices shared by coverage/proof/export; saved typography; editable backup/fresh-ID import; exact legacy recovery; page-aware crop/outline drafts and saved-region restore | Undo/redo stack lasts for the loaded editor session; no page deletion/reorder or OpenType alternates; archive limits apply | General whole-project undo, guided batch work, real-writer workflow validation |
 | Completion | Optional configured local format-2/3 loading, canonical reference review, real inference, per-candidate edit/accept/reject, retained lineage and explicit generated-font output | Published model underperforms retrieval; no measured writer fidelity; weights remain local/unclassified for redistribution; low-res pixel fallback may be blocky | Real-writer alignment/style/reader evaluation and improved learned quality |
 | Font building | Bounded mlm2 backend; exact-text sample checks and compiled-outline proof UI; revision/options/text cache; name/metrics/anchor controls; proof-gated TTF export | Reader/platform/contextual coverage incomplete; cancel ignores results but does not stop a running compiler | Reader review and broader shaping |
 | Privacy | Loopback, Host/Origin/token checks, local data, no cloud fallback | Same-user local processes remain trusted | Packaging/distribution hardening after product workflows settle |
@@ -21,7 +21,11 @@ Each increment gets a coherent tested commit and CI verification. Preserve the e
 
 ## Subsequent work
 
-Multi-page font assembly; guided capture sheets; reviewed batch operations; project backup/import; visible general history restore; local handwriting-specific OCR evaluation; improved completion/writer evaluation; packaging and distribution. These remain missing until implemented and tested. Synthetic fixtures test software mechanics and are never handwriting validation.
+Guided capture sheets; reviewed batch operations; page deletion/reordering; OpenType alternate forms; visible general history restore; local handwriting-specific OCR evaluation; improved completion/writer evaluation; packaging and distribution updates. These remain missing until implemented and tested. Synthetic fixtures test software mechanics and are never handwriting validation.
+
+## Multi-page projects and editable backup milestone
+
+Delivered page-local capture/preparation/history, shared revision-bound variants and typography, and `.mashi.zip` backup/import with source-image disclosure and bounded staged validation. Old projects remain read-only until the first edit creates an exact recovery archive and atomically saves schema 2. Selection changes invalidate proof; alternatives and generated provenance stay separate. See [PROJECTS_BACKUPS.md](PROJECTS_BACKUPS.md) for acceptance criteria, migration and remaining limits. This source milestone needs its own native rebuild/QA; it does not update an already-built application bundle.
 
 ## Local completion review milestone
 

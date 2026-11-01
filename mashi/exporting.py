@@ -35,27 +35,64 @@ from .shaping import (
 from .tracing import svg, validate_paths
 from .ml_capture import references_current
 from .ml_service import source_terms, LICENSE_ROOT
+from .projects import schema, pages, resolve, font_is_synthetic
 
 
 def regions_metadata(project):
     return [
         {
-            key: item[key]
-            for key in [
-                "id",
-                "label",
-                "generation",
-                "vectorization",
-                "review_state",
-                "provenance",
-                "not_observed_in_photo",
-            ]
+            "page_id": page["id"],
+            **{
+                key: item[key]
+                for key in [
+                    "id",
+                    "label",
+                    "generation",
+                    "vectorization",
+                    "review_state",
+                    "provenance",
+                    "not_observed_in_photo",
+                ]
+            },
         }
-        for item in project.get("completion_suggestions", [])
+        for page in pages(project)
+        for item in page.get("completion_suggestions", [])
     ]
 
 
-def eligible(project, include_fixture=False, *, include_generated=False):
+def plist_metadata(value):
+    if isinstance(value, dict):
+        return {key: plist_metadata(item) for key, item in value.items() if item is not None}
+    if isinstance(value, list):
+        return [plist_metadata(item) for item in value if item is not None]
+    return value
+
+
+def eligible(project, include_fixture=False, *, include_generated=False, strict=True):
+    if schema(project) == 2:
+        regions, conflicts = resolve(project, include_fixture, include_generated)
+        if conflicts and strict:
+            raise ValueError("Choose the sample to use for: " + " · ".join(conflicts))
+        generated = [r for r in regions if r["provenance"] == "model-generated"]
+        if include_generated and not generated and strict:
+            raise ValueError(
+                "Choose at least one accepted generated suggestion for generated-font output"
+            )
+        for item in generated:
+            terms = source_terms(item["generation"]["model"]["sha256"])
+            if (
+                not terms["checkpoint_source_known"]
+                or item["generation"]["model"]["terms"]["source_manifest_sha256"]
+                != terms["source_manifest_sha256"]
+            ):
+                raise ValueError(
+                    "This checkpoint has no verified source-notice mapping for font export"
+                )
+            if not references_current(item["_reference_page"], item):
+                raise ValueError(
+                    "Generated references changed. Reject and regenerate the affected suggestions."
+                )
+        return regions
     fixture = project.get("source_kind") == "synthetic-fixture"
     if fixture and not include_fixture:
         return []
@@ -108,7 +145,16 @@ def export_project_snapshot(project, regions):
     """
     snapshot = {
         key: deepcopy(project[key])
-        for key in ["id", "name", "revision", "created", "source_kind", "image", "source_image", "preparation"]
+        for key in [
+            "id",
+            "name",
+            "revision",
+            "created",
+            "source_kind",
+            "image",
+            "source_image",
+            "preparation",
+        ]
         if key in project
     }
     snapshot.update(
@@ -118,12 +164,27 @@ def export_project_snapshot(project, regions):
         completion_suggestions=[],
     )
     fields = [
-        "id", "label", "revision", "active", "confirmed", "box", "provenance",
-        "source", "parents", "source_polygon", "original_polygon",
+        "id",
+        "label",
+        "revision",
+        "active",
+        "confirmed",
+        "box",
+        "provenance",
+        "source",
+        "parents",
+        "source_polygon",
+        "original_polygon",
+        "page_id",
+        "source_page",
     ]
     generated_fields = [
-        "generation", "vectorization", "raster_sha256", "not_observed_in_photo",
-        "coordinate_space", "review_state",
+        "generation",
+        "vectorization",
+        "raster_sha256",
+        "not_observed_in_photo",
+        "coordinate_space",
+        "review_state",
     ]
     for region in regions:
         generated = region["provenance"] == "model-generated"
@@ -135,12 +196,41 @@ def export_project_snapshot(project, regions):
         item["vector"] = {
             key: deepcopy(region["vector"][key])
             for key in [
-                "paths", "width", "height", "baseline", "scale", "advance",
-                "threshold", "tracer", "transform", "edited",
+                "paths",
+                "width",
+                "height",
+                "baseline",
+                "scale",
+                "advance",
+                "threshold",
+                "tracer",
+                "transform",
+                "edited",
             ]
             if key in region["vector"]
         }
         snapshot["completion_suggestions" if generated else "regions"].append(item)
+    if schema(project) == 2:
+        used = {r["page_id"] for r in regions}
+        snapshot.pop("image", None)
+        snapshot.pop("source_image", None)
+        snapshot.pop("preparation", None)
+        snapshot.pop("source_kind", None)
+        snapshot["source_kinds"] = sorted({r["source_page"]["source_kind"] for r in regions})
+        snapshot["pages"] = [
+            {
+                key: deepcopy(page[key])
+                for key in ["id", "name", "image", "source_image", "source_kind", "preparation"]
+                if key in page
+            }
+            for page in pages(project)
+            if page["id"] in used
+        ]
+        snapshot["sample_choices"] = {
+            label: deepcopy(choice)
+            for label, choice in project.get("sample_choices", {}).items()
+            if label in {r["label"] for r in regions}
+        }
     return snapshot
 
 
@@ -150,14 +240,25 @@ def export_preflight(project, text="", include_fixture=False, *, include_generat
     Use make_ufo for geometry/metadata validation and preview_project for actual
     shaping. Synthetic practice data is never treated as observed handwriting.
     """
-    regions = eligible(project, include_fixture, include_generated=include_generated)
+    regions = eligible(project, include_fixture, include_generated=include_generated, strict=False)
     labels = [r["label"] for r in regions]
     result = text_coverage(text, labels)
     result.update(make_plan(labels))
     result["profile"] = "malayalam-v1"
     result["duplicate_labels"] = sorted({s for s in labels if labels.count(s) > 1})
-    result["synthetic_test_export"] = project.get("source_kind") == "synthetic-fixture"
+    result["synthetic_test_export"] = (
+        font_is_synthetic(project, regions) if regions else font_is_synthetic(project)
+    )
     result["generated_font"] = include_generated
+    result["variant_conflicts"] = (
+        resolve(project, include_fixture, include_generated)[1] if schema(project) == 2 else []
+    )
+    if result["variant_conflicts"]:
+        result["supported"] = False
+        result["issues"].extend(
+            {"code": "choose_sample_variant", "index": 0, "sequence": label, "required_samples": []}
+            for label in result["variant_conflicts"]
+        )
     if result["duplicate_labels"] or not regions:
         result["supported"] = False
     return result
@@ -166,9 +267,9 @@ def export_preflight(project, text="", include_fixture=False, *, include_generat
 def make_ufo(
     project, include_fixture=False, *, options=None, required_text=None, include_generated=False
 ):
-    options = options or TypographyOptions()
+    options = options or TypographyOptions(**project.get("typography", {}))
     options.validate()
-    fixture = project.get("source_kind") == "synthetic-fixture"
+    fixture = font_is_synthetic(project)
     if fixture and not include_fixture:
         raise ValueError(
             "Synthetic practice shapes are excluded from handwriting exports. Explicitly enable a synthetic test export."
@@ -176,6 +277,8 @@ def make_ufo(
     regions = eligible(project, include_fixture, include_generated=include_generated)
     if not regions:
         raise ValueError("Confirm and trace at least one labelled crop before exporting")
+    fixture = font_is_synthetic(project, regions)
+    generated_regions = [r for r in regions if r["provenance"] == "model-generated"]
     labels = [r["label"] for r in regions]
     if len(set(labels)) != len(labels):
         raise ValueError(
@@ -247,7 +350,9 @@ def make_ufo(
     )
     if include_generated:
         notices = []
-        for record in source_terms(regions[-1]["generation"]["model"]["sha256"])["notices"]:
+        for record in source_terms(generated_regions[0]["generation"]["model"]["sha256"])[
+            "notices"
+        ]:
             notice = (LICENSE_ROOT / record["notice"]).read_text(encoding="utf-8-sig")
             notices.append(notice.split("SIL OPEN FONT LICENSE")[0].strip()[:2000])
         font.info.copyright = (
@@ -286,21 +391,37 @@ def make_ufo(
         bounds[label] = bounds_pen.bounds
         if any(abs(v) > 16000 for v in bounds[label]):
             raise ValueError("Font outline exceeds 16,000 units. Reduce scale or path coordinates.")
+        page_info = region.get("source_page", {})
+        image_info = page_info.get("image") or project.get("image", {})
         glyph.lib["org.mashi.provenance"] = {
             "state": "model-generated"
             if region["provenance"] == "model-generated"
-            else ("synthetic-fixture" if fixture else region["provenance"]),
-            "inputKind": project.get("source_kind", "user-upload"),
+            else (
+                "synthetic-fixture"
+                if region.get("source_page", {}).get("source_kind", project.get("source_kind"))
+                == "synthetic-fixture"
+                else region["provenance"]
+            ),
+            "inputKind": region.get("source_page", {}).get(
+                "source_kind", project.get("source_kind", "user-upload")
+            ),
             "region": region["id"],
             "revision": region["revision"],
             "label": label,
-            "canonicalImageSHA256": project["image"]["canonical_sha256"],
+            "canonicalImageSHA256": image_info["canonical_sha256"],
             "crop": region["box"],
             "vectorEdited": vector["edited"],
         }
+        if "page_id" in region:
+            glyph.lib["org.mashi.provenance"].update(
+                pageId=region["page_id"],
+                sourcePage=plist_metadata(page_info),
+                sourcePolygon=region.get("source_polygon", []),
+                originalPolygon=region.get("original_polygon", []),
+            )
         if region["provenance"] == "model-generated":
             glyph.lib["org.mashi.provenance"]["canonicalImageSHA256"] = region["raster_sha256"]
-            glyph.lib["org.mashi.provenance"]["referencePageSHA256"] = project["image"][
+            glyph.lib["org.mashi.provenance"]["referencePageSHA256"] = image_info[
                 "canonical_sha256"
             ]
             glyph.lib["org.mashi.provenance"]["coordinateSpace"] = "generated-canvas"
@@ -370,9 +491,41 @@ def make_ufo(
     report.update(
         {
             "format_version": 2,
+            "selected_samples": [
+                {
+                    "label": r["label"],
+                    "region_id": r["id"],
+                    "revision": r["revision"],
+                    "page_id": r.get("page_id", project.get("id")),
+                }
+                for r in regions
+            ],
+            "source_pages": [
+                {
+                    key: deepcopy(page[key])
+                    for key in ["id", "name", "source_kind", "image"]
+                    if key in page
+                }
+                for page in pages(project)
+                if page.get("id") in {r.get("page_id", project.get("id")) for r in regions}
+            ],
             "experimental": True,
             "shaping_profile": "malayalam-v1",
-            "input_kind": project.get("source_kind", "user-upload"),
+            "input_kind": (
+                "mixed"
+                if len(
+                    {
+                        r.get("source_page", {}).get(
+                            "source_kind", project.get("source_kind", "user-upload")
+                        )
+                        for r in regions
+                    }
+                )
+                > 1
+                else regions[0]
+                .get("source_page", {})
+                .get("source_kind", project.get("source_kind", "user-upload"))
+            ),
             "synthetic_test_export": fixture,
             "synthetic_included": [
                 r["id"] for r in regions if r["provenance"] == "synthetic-fixture"
@@ -395,14 +548,20 @@ def make_ufo(
                 r["id"] for r in regions if r["provenance"] == "model-generated"
             ],
             "generated_excluded": [
-                r["id"] for r in project.get("completion_suggestions", []) if r not in regions
+                r["id"]
+                for page in pages(project)
+                for r in page.get("completion_suggestions", [])
+                if r["id"] not in {s["id"] for s in regions}
             ]
             + [
                 r["id"]
-                for r in project["regions"]
+                for page in pages(project)
+                for r in page["regions"]
                 if r["provenance"] not in {"observed", "synthetic-fixture"}
             ],
-            "generated_font_terms": source_terms(regions[-1]["generation"]["model"]["sha256"])
+            "generated_font_terms": source_terms(
+                generated_regions[0]["generation"]["model"]["sha256"]
+            )
             if include_generated
             else None,
             "metrics": {
@@ -546,7 +705,7 @@ def export_bundle(
         required_text=required_text,
         include_generated=include_generated,
     )
-    fixture = project.get("source_kind") == "synthetic-fixture"
+    fixture = report["synthetic_test_export"]
     with tempfile.TemporaryDirectory(prefix="mashi-export-") as directory:
         root = Path(directory)
         stem = (
@@ -577,7 +736,9 @@ def export_bundle(
         )
         exported_regions = eligible(project, include_fixture, include_generated=include_generated)
         (root / "project.json").write_text(
-            json.dumps(export_project_snapshot(project, exported_regions), ensure_ascii=False, indent=2),
+            json.dumps(
+                export_project_snapshot(project, exported_regions), ensure_ascii=False, indent=2
+            ),
             encoding="utf-8",
         )
         (root / "READ-ME.txt").write_text(

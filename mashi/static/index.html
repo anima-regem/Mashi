@@ -13,6 +13,7 @@
     <script src="/static/outline.js" defer></script>
     <script src="/static/proof.js" defer></script>
     <script src="/static/completion.js" defer></script>
+    <script src="/static/studio-projects.js" defer></script>
   </head>
   <body>
     <header>
@@ -40,6 +41,7 @@
           <button id="demo">Load sample shapes</button>
         </details>
         <div id="recent"></div>
+        <div id="backup-import" hidden><button id="backup-open" type="button">Import project backup</button><input id="backup-file" class="sr-only" type="file" tabindex="-1" aria-hidden="true" accept=".zip,.mashi.zip" /></div>
       </section>
       <section id="workspace" hidden>
         <nav class="workspace-nav" aria-label="Page tools"><a href="#page-tools">Crops</a><a href="#vectors">Outline</a><a href="#proof-title">Proof text</a><a href="#export-tools">Export</a></nav>
@@ -50,13 +52,13 @@
         </p>
         <div id="page-tools" class="workspace-bar">
           <div>
-            <h2>Page</h2>
+            <h2>Font project</h2>
             <form id="page-name-form" class="name-form">
-              <label class="sr-only" for="page-name">Page name</label
+              <label class="sr-only" for="page-name">Font project name</label
               ><input
                 id="page-name"
                 maxlength="80"
-                placeholder="Name this page"
+                placeholder="Name this font project"
                 required
               /><button>Save name</button>
             </form>
@@ -64,9 +66,15 @@
           </div>
           <div class="actions">
             <button id="reload-page">Reload saved page</button>
-            <button id="new-page">Open another page</button
+            <button id="new-page">Projects</button
             ><button id="ocr">Suggest word labels</button>
           </div>
+        </div>
+        <div id="project-page-tools" class="page-navigation" hidden>
+          <label id="page-switcher" hidden>Page<select id="project-page"></select></label>
+          <form id="page-rename-form" class="name-form"><label class="sr-only" for="current-page-name">Page name</label><input id="current-page-name" maxlength="80" required /><button>Rename page</button></form>
+          <button id="page-upload-open" type="button">Add page</button><input id="add-page-file" class="sr-only" type="file" tabindex="-1" aria-hidden="true" accept="image/png,image/jpeg,image/webp" />
+          <details><summary>Project backup</summary><p class="hint">Includes source photos, all pages, samples and saved settings.</p><div class="actions"><button id="project-backup" type="button">Back up project</button><button id="workspace-import" type="button">Import backup</button></div></details>
         </div>
         <details id="photo-prep" class="photo-prep">
           <summary>Prepare photo · page corners, rotation & lighting</summary>
@@ -440,6 +448,7 @@
             </button>
           </form>
         </section>
+        <details id="font-samples" class="font-samples" hidden><summary id="font-samples-summary">Samples used in the font</summary><p class="hint">Choose one form when a sequence has several samples. Alternatives stay in the project.</p><div id="font-sample-list"></div></details>
         <section class="proof-section" aria-labelledby="proof-title">
           <h2 id="proof-title">Proof text</h2>
           <p class="hint">Preview saved outlines together. Save crop and outline edits first.</p>
@@ -464,6 +473,7 @@
               <button id="proof-copy-anchors" type="button" disabled>Copy current anchor estimates for editing</button>
               <p class="hint">Exact labels map to top or _top pairs in font units, for example
                 {"ക":{"top":[550,740]},"്":{"_top":[70,660]}}.</p></details>
+              <button id="save-font-settings" type="button" hidden>Save proof and font settings</button>
             </details>
             <div class="actions proof-actions">
               <button id="proof-check" type="button">Check required samples</button>

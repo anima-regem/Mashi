@@ -883,4 +883,16 @@ main {padding-bottom: 40px;}
 #completion-target-note {overflow-wrap: anywhere;}
 @media (max-width: 950px) {#completion-suggestions {grid-template-columns: 1fr;}}
 @media (max-width: 730px) {.actions button {font-size: 12px; min-height: 40px;} .workspace-nav {gap: 20px;}}
+.page-navigation {display:flex; align-items:center; flex-wrap:wrap; gap:16px; margin:0 0 28px; padding:18px 0; border-block:1px solid var(--line, #ded9e5);}
+.page-navigation > label {min-width:140px;}
+.page-navigation .name-form {margin:0; flex:1; min-width:230px;}
+.page-navigation details {flex-basis:100%;}
+.page-navigation details .actions {justify-content:flex-start;}
+.font-samples {margin-block:28px; padding:20px; border:1px solid var(--line, #ded9e5); border-radius:12px;}
+.font-sample-row {display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line, #ded9e5);}
+.font-sample-row:last-child {border:0;}
+.font-sample-row .sample-label {font-size:24px; min-width:48px;}
+.font-sample-row select {flex:1; min-width:180px; max-width:440px;}
+.font-sample-row small {color:#705239;}
+@media (max-width:730px) {.page-navigation .name-form {flex-basis:100%;}.font-sample-row select {max-width:100%;}.font-sample-row {gap:8px;}}
 @media (max-width: 730px) {.proof-options {grid-template-columns: repeat(2, minmax(0, 1fr));}}

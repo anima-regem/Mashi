@@ -15,6 +15,12 @@
     "prep-window",
     "prep-bias",
   ];
+  const currentKey = () => project ? `${project.id}:${project.page_id || project.id}:${project.image.canonical_sha256}` : "";
+  function refreshControls() {
+    const ready = source && key === currentKey();
+    $("photo-prep").querySelectorAll("button,input,select").forEach(control => control.disabled = busy || !ready);
+    $("prep-restore").disabled = busy || !ready || !project?.preparation_history?.length;
+  }
   function options() {
     return {
       corners: $("prep-perspective").checked ? points : null,
@@ -91,8 +97,8 @@
     });
   }
   async function preview() {
-    if (!source || !project) return;
-    const number = ++requestNumber;
+    if (!source || !project || key !== currentKey()) return;
+    const number = ++requestNumber, snapshot = key;
     $("prep-preview-note").textContent = "Preparing preview…";
     try {
       const response = await api(`${url()}/preparation/preview`, {
@@ -100,7 +106,7 @@
         json: options(),
       });
       const blob = await response.blob();
-      if (number !== requestNumber) return;
+      if (number !== requestNumber || snapshot !== key) return;
       if (previewURL) URL.revokeObjectURL(previewURL);
       previewURL = URL.createObjectURL(blob);
       $("prep-preview").src = previewURL;
@@ -117,12 +123,18 @@
   }
   async function load() {
     if (!project || !$("photo-prep").open) return;
-    const newKey = project.id + ":" + (project.image.preparation_revision || 0);
+    const newKey = currentKey();
     if (key === newKey && source?.complete && source.naturalWidth) return;
     key = newKey;
-    source = new Image();
-    source.src = `${url()}/source-image`;
-    await source.decode();
+    ++requestNumber; clearTimeout(timer); source = null;
+    refreshControls();
+    if (previewURL) URL.revokeObjectURL(previewURL);
+    previewURL = null; $("prep-preview").removeAttribute("src");
+    const image = new Image();
+    image.src = pageURL(`${url()}/source-image`);
+    await image.decode();
+    if (key !== newKey) return;
+    source = image;
     const state = project.preparation || {};
     points = state.corners?.map((p) => [...p]) || [
       [0, 0],
@@ -144,7 +156,7 @@
     );
     cornerFields();
     draw();
-    $("prep-restore").disabled = !project.preparation_history?.length;
+    refreshControls();
     await preview();
   }
   $("photo-prep").ontoggle = () => {
@@ -158,6 +170,7 @@
   $("prep-preview-button").onclick = () => preview();
   $("prep-detect").onclick = () =>
     work(async () => {
+      if (!source || key !== currentKey()) throw new Error("Wait for this page's source photo to load, then retry.");
       const found = await (
         await api(`${url()}/preparation/suggest`, { method: "POST" })
       ).json();
@@ -170,14 +183,15 @@
     });
   $("prep-apply").onclick = () =>
     work(async () => {
-      const id = project.id;
+      if (!source || key !== currentKey()) throw new Error("Wait for this page's source photo to load, then retry.");
+      const id = project.id, pageId = project.page_id;
       message("Applying preparation from the preserved source…");
       await api(`${url()}/preparation`, {
         method: "POST",
         json: { ...options(), revision: project.revision },
       });
       key = "";
-      await openProject(id);
+      await openProject(id, pageId);
       await load();
       message(
         "Prepared page saved. New crop proposals need review; previous crops can be restored.",
@@ -185,13 +199,13 @@
     });
   $("prep-restore").onclick = () =>
     work(async () => {
-      const id = project.id;
+      const id = project.id, pageId = project.page_id;
       await api(`${url()}/preparation/restore`, {
         method: "POST",
         json: { revision: project.revision },
       });
       key = "";
-      await openProject(id);
+      await openProject(id, pageId);
       await load();
       message("Previous image, labels, crops and outlines restored.");
     });
@@ -240,6 +254,6 @@
   c.onpointercancel = () => {
     drag = null;
   };
-  window.MashiCapture = { load };
+  window.MashiCapture = { load, refreshControls };
   window.addEventListener("resize",()=>{if(source&&$("photo-prep").open)draw();});
 })();

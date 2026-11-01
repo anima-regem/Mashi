@@ -18,5 +18,6 @@ jobs:
       - run: node --check mashi/static/outline.js
       - run: node --check mashi/static/proof.js
       - run: node --check mashi/static/completion.js
+      - run: node --check mashi/static/studio-projects.js
       - run: node --check mashi/static/review-state.js
       - run: node --test tests/*.test.cjs

@@ -18,7 +18,7 @@ async function scene(initial,suggestions=[]){
   let capability=initial;
   const response=value=>({json:async()=>value});
   const context={window:{MashiReviewState:{LatestRequest}},document:{createElement:()=>new Element()},
-    $,project:null,busy:false,current:()=>null,generatedSelection:()=>false,url:()=>"/api/projects/p",
+    $,project:null,busy:false,current:()=>null,generatedSelection:()=>false,url:()=>"/api/projects/p",pageURL:path=>path,
     crypto:{randomUUID:()=>"11111111-1111-1111-1111-111111111111"},
     api:async path=>{
       if(path==="/api/completion/capabilities")return response(capability);
@@ -31,8 +31,18 @@ async function scene(initial,suggestions=[]){
   vm.runInContext(fs.readFileSync(require.resolve("../mashi/static/completion.js"),"utf8"),context);
   context.project={id:"p",revision:1,image:{canonical_sha256:"page"},regions:[],completion_suggestions:suggestions};
   context.window.MashiCompletion.sync();await tick();
-  return {$,loads,loaded(){capability={...capability,loaded:true,model:{labels:[]}};return response(capability);}};
+  return {$,loads,setPage(page_id){context.project={...context.project,page_id};context.window.MashiCompletion.sync();},loaded(){capability={...capability,loaded:true,model:{labels:[]}};return response(capability);}};
 }
+
+test("switching pages cancels a model request even when the font revision is unchanged",async()=>{
+  const ui=await scene({available:true,configured:true,loaded:false});
+  ui.setPage("a");
+  const pending=ui.$("completion-load").onclick();await tick();
+  ui.setPage("b");await tick();
+  ui.loads[0].resolve({json:async()=>({available:true,loaded:true,model:{labels:[]}})});await pending;
+  assert.equal(ui.$("completion-load").hidden,false);
+  assert.equal(ui.$("completion-unload").hidden,true);
+});
 
 test("model controls show only available actions; cancellation suppresses a late load and permits retry",async()=>{
   const ui=await scene({available:true,configured:true,loaded:false,reason:"Suggestions are off."});

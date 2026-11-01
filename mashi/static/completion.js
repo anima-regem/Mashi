@@ -17,12 +17,13 @@
     $("completion-status").classList.toggle("error", error);
   }
   function image(src, alt, parent) {
-    const img = node("img", "", parent); img.src = src; img.alt = alt; return img;
+    const img = node("img", "", parent); img.src = src.startsWith("/api/projects/") ? pageURL(src) : src; img.alt = alt; return img;
   }
   function targetNote() {
     const targets = targetValues(), labels = capability?.model?.labels || [];
-    const present = new Set(project.regions.filter(r => r.active && r.confirmed).map(r => r.label));
-    (project.completion_suggestions || []).filter(r => r.review_state !== "rejected").forEach(r => present.add(r.label));
+    const pages = project.pages || [project];
+    const present = new Set(pages.flatMap(p => p.regions.filter(r => r.active && r.confirmed).map(r => r.label)));
+    pages.flatMap(p => p.completion_suggestions || []).filter(r => r.review_state !== "rejected").forEach(r => present.add(r.label));
     $("completion-target-note").textContent = targets.map(s => `${s} · ${!labels.includes(s) ? "not supported by this model" : present.has(s) ? "already captured or awaiting review" : "missing, supported"} · ${[...s].map(c => "U+" + c.codePointAt(0).toString(16).toUpperCase().padStart(4,"0")).join(" ")}`).join("; ");
   }
   function refreshControls() {
@@ -50,7 +51,7 @@
     requests.cancel();
     const previous = job; job = null; running = false;
     if (previous) {
-      api(`/api/projects/${previous.project}/completion/cancel`, {method:"POST", json:{revision:previous.revision, job_id:previous.id}}).then(() => {if (previous.action === "load") fetchCapability();}).catch(() => status("Cancel could not be confirmed. Reload the page before reviewing any late candidates.", true));
+      api(pageURL(`/api/projects/${previous.project}/completion/cancel`, previous.page), {method:"POST", json:{revision:previous.revision, job_id:previous.id}}).then(() => {if (previous.action === "load") fetchCapability();}).catch(() => status("Cancel could not be confirmed. Reload the page before reviewing any late candidates.", true));
     }
     status("Request canceled. You can retry."); refreshControls();
   }
@@ -63,11 +64,11 @@
   }
   async function run(action, body, accept) {
     if (busy || running) return;
-    const snapshot = {id:crypto.randomUUID(), project:project.id, revision:project.revision, action};
+    const snapshot = {id:crypto.randomUUID(), project:project.id, page:project.page_id, revision:project.revision, action};
     requests.cancel(); job = snapshot; running = true; refreshControls();
     status(action === "load" ? "Loading model…" : "Generating suggestions…");
     await requests.run(async signal => (await api(`/api/projects/${snapshot.project}/completion/${action}`, {method:"POST", json:{...body, revision:snapshot.revision, job_id:snapshot.id}, signal})).json(), async result => {
-      if (!project || project.id !== snapshot.project || project.revision !== snapshot.revision) return;
+      if (!project || project.id !== snapshot.project || project.page_id !== snapshot.page || project.revision !== snapshot.revision) return;
       job = null; running = false;
       await accept(result);
     }, error => {status(action === "load" ? "Could not load the model. Check model setup or continue with captured forms." : error.message, true);});
@@ -94,7 +95,7 @@
     const suggestions = project.completion_suggestions || [];
     $("completion-quality").hidden = !capability?.available && !suggestions.length;
     $("completion-review-title").hidden = !suggestions.length;
-    const accepted = suggestions.filter(s => s.review_state === "accepted");
+    const accepted = (project.pages || [project]).flatMap(p => p.completion_suggestions || []).filter(s => s.review_state === "accepted");
     $("generated-export-option").hidden = !accepted.length;
     $("generated-export-terms").hidden = !accepted.length;
     if (!accepted.length) $("generated-export").checked = false;
@@ -130,10 +131,10 @@
   }
   function sync(force = false) {
     if (!project) return;
-    const next = `${project.id}:${project.revision}`;
+    const next = `${project.id}:${project.page_id || project.id}:${project.revision}`;
     if (!force && identity === next) return;
-    if (job && (project.id !== job.project || project.revision !== job.revision)) cancel();
-    if (identity.split(":")[0] !== project.id) chosen.clear();
+    if (job && (project.id !== job.project || project.page_id !== job.page || project.revision !== job.revision)) cancel();
+    if (identity.split(":").slice(0,2).join(":") !== next.split(":").slice(0,2).join(":")) chosen.clear();
     identity = next; clearAlignment();
     if (!capability) fetchCapability();
     $("completion-capability").textContent = !capability ? "Checking suggestions…" : capability.loaded ? "Choose reference forms to guide the suggestions." : capability.available ? "Suggestions are off. Load the model to continue." : "Suggestions are unavailable. You can still capture missing forms.";
@@ -143,16 +144,16 @@
   }
   async function loadEditor(item) {
     if (!item.vector) return;
-    const key = `${project.id}:${item.id}:${item.revision}`;
+    const key = `${project.id}:${project.page_id || project.id}:${item.id}:${item.revision}`;
     if (editorKey === key) {outlineReady = true;refreshControls();return;}
     outlineReady = false; $("vector-preview").replaceChildren(); refreshControls();
-    const pid = project.id;
-    await editorLoads.run(async () => {const raster = new Image(); raster.src = `${url()}/completion/suggestions/${item.id}/raster`; await raster.decode(); return raster;}, raster => {
-      if (project.id !== pid || selected !== item.id) return;
+    const pid = project.id, pageId = project.page_id;
+    await editorLoads.run(async () => {const raster = new Image(); raster.src = pageURL(`${url()}/completion/suggestions/${item.id}/raster`); await raster.decode(); return raster;}, raster => {
+      if (project.id !== pid || project.page_id !== pageId || selected !== item.id) return;
       ["baseline", "scale", "advance"].forEach(k => $(k).value = item.vector[k]);
       $("paths").value = JSON.stringify(item.vector.paths, null, 2);
       window.MashiOutline.load(item, {...project, image:{...project.image, canonical_sha256:item.raster_sha256}}, raster);
-      $("svg-download").href = `${url()}/completion/suggestions/${item.id}/svg`;
+      $("svg-download").href = pageURL(`${url()}/completion/suggestions/${item.id}/svg`);
       $("svg-download").download = "Mashi-model-generated-glyph.svg";
       $("svg-download").hidden = item.review_state !== "accepted" || !item.generation.model.terms.checkpoint_source_known;
       editorKey = key;
@@ -164,10 +165,10 @@
   $("completion-cancel").onclick = cancel;
   $("completion-align").onclick = async () => {
     if (chosen.size > 20) {status("Choose at most 20 references.",true);return;}
-    const pid = project.id, revision = project.revision, ids = [...chosen];
+    const pid = project.id, pageId = project.page_id, revision = project.revision, ids = [...chosen];
     const fingerprint = JSON.stringify(ids);
     await alignmentLoads.run(async signal => (await api(`${url()}/completion/references`, {method:"POST", json:{revision, ids}, signal})).json(), result => {
-      if (project.id !== pid || project.revision !== revision || JSON.stringify([...chosen]) !== fingerprint) return;
+      if (project.id !== pid || project.page_id !== pageId || project.revision !== revision || JSON.stringify([...chosen]) !== fingerprint) return;
       references = result.references; $("completion-aligned").replaceChildren();
       references.forEach(ref => {const figure = node("figure", "", $("completion-aligned")); figure.className = "aligned-reference"; image("data:image/png;base64," + ref.png, `Aligned reference ${ref.label}`, figure); node("figcaption", ref.label, figure);});
       $("completion-alignment-confirmed").checked = false;

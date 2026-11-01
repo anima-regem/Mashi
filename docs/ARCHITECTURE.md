@@ -1,8 +1,10 @@
-# First vertical slice
+# Application architecture
 
 `mashi/imaging.py` validates and orients raster bytes, composites transparency on white and proposes connected ink. `ocr.py` wraps a local optional Tesseract process. `store.py` stores project documents in SQLite with atomic project revision checks. `app.py` exposes the loopback API. `tracing.py` isolates dark pixels, traces alpha-masked ink, flattens tracer translations and validates geometry. `exporting.py` converts those same paths to UFO glyphs and invokes fontmake for TTF. `predictors.py` defines the completion boundary and an honest unavailable state.
 
 ## Coordinates and lineage
+
+Schema 2 has explicit pages, shared typography and exact sequence choices. `projects.py` owns page views and the common sample resolver; `backups.py` owns read-only editable backup, staged import and durable first-write legacy recovery. Page identity is carried into each selected glyph's source metadata. See [PROJECTS_BACKUPS.md](PROJECTS_BACKUPS.md) for schema, concurrency, archive validation and limits.
 
 - Keep original bytes and their SHA-256. Decode and EXIF-orient once. Store a separate SHA-256 for the RGB canonical PNG, the original dimensions and orientation, and the ordered transformation log.
 - Every region uses **current working image pixels**, top-left origin, half-open `[x0,y0,x1,y1)` bounds. Display resizing affects only the canvas. Page preparation records pixel-edge forward/inverse homographies; each new/edited crop stores its polygon in preserved oriented-source and original-file coordinates. EXIF orientation has a numeric inverse mapping. Pixel-center adjustment is explicit at the OpenCV sampling boundary.
@@ -37,4 +39,4 @@ The provided CLI binds `127.0.0.1`. Host validation allows localhost/127.0.0.1, 
 
 Byte and decoded-pixel limits apply before tracing. Only JPEG/PNG/WebP rasters are accepted. Storage paths use generated UUIDs and internal filenames; supplied paths and filenames are never opened. No uploaded SVG is accepted. Vector edits accept a bounded list of SVG geometry strings, validated as closed finite contours; markup, scripts, external references and foreign objects cannot pass. XML exports are built with ElementTree. OCR and font compilation use argument lists, never shell interpolation, with timeouts.
 
-`.mashi/`, photos, environments, caches and model checkpoints are excluded from Git. ZIP exports contain the selected current glyph geometry and metadata, including labels, coordinates and hashes; users should review that metadata before sharing. Complete project/history backup remains a separate future workflow. There is no telemetry, automatic cloud fallback or API-key requirement. A future BYOK feature must ask for explicit image-upload opt-in before sending photographs anywhere.
+`.mashi/`, photos, environments, caches and model checkpoints are excluded from Git. Font ZIPs contain selected current glyph geometry and metadata, including labels, coordinates and hashes. The separate editable `.mashi.zip` backup intentionally includes original photographs, all samples and referenced histories; users should review it before sharing. Model files remain external. There is no telemetry, automatic cloud fallback or API-key requirement. A future BYOK feature must ask for explicit image-upload opt-in before sending photographs anywhere.

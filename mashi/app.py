@@ -5,6 +5,7 @@ import io
 import base64
 import hashlib
 import json
+import zipfile
 from statistics import median
 from copy import deepcopy
 from pathlib import Path
@@ -16,9 +17,10 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.concurrency import run_in_threadpool
 
 from . import ocr
-from .exporting import export_bundle, export_preflight, preview_project
+from .exporting import export_bundle, export_preflight, preview_project, eligible
 from .font_metrics import TypographyOptions
 from .proofing import PreviewCache, bounded_diagnostics
 from .ml_capture import aligned_reference, references_current, pixel_boundaries
@@ -42,7 +44,19 @@ from .models import (
     CompletionGenerate,
     CompletionReview,
     CompletionVector,
+    SampleChoiceInput,
+    SavedTypographyInput,
 )
+from .projects import (
+    pages,
+    samples,
+    signature,
+    request_page,
+    MAX_PAGES,
+    font_is_synthetic,
+    document,
+)
+from .backups import export_backup, import_backup, MAX_ARCHIVE
 from .preparation import prepare, source_polygons, suggest_corners
 from .predictors import coverage
 from .store import Store, new_region, uid
@@ -57,7 +71,14 @@ class BodyLimit:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
         headers = dict(scope["headers"])
-        limit = MAX_BYTES if scope["path"] == "/api/projects" else 2_000_000
+        path = scope["path"]
+        limit = (
+            MAX_ARCHIVE
+            if path == "/api/projects/import"
+            else MAX_BYTES
+            if path == "/api/projects" or path.endswith("/pages")
+            else 2_000_000
+        )
         try:
             length = int(headers.get(b"content-length", b"0"))
         except ValueError:
@@ -109,7 +130,23 @@ def create_app(root=None, *, testing=False):
                 return JSONResponse(
                     {"detail": "Reload Mashi before making changes"}, status_code=403
                 )
-        response = await call_next(request)
+        parts = request.url.path.split("/")
+        page_scopes = {
+            "image",
+            "source-image",
+            "regions",
+            "preparation",
+            "ocr",
+            "merge",
+            "completion",
+        }
+        context = request_page.set(
+            (request.query_params.get("page_id"), len(parts) > 4 and parts[4] in page_scopes)
+        )
+        try:
+            response = await call_next(request)
+        finally:
+            request_page.reset(context)
         response.headers.update(
             {
                 "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; "
@@ -151,9 +188,10 @@ def create_app(root=None, *, testing=False):
         return item
 
     def image_path(doc, source=False):
-        return store.asset(
-            doc["id"], doc.get("source_asset" if source else "image_asset", "page.png")
+        asset = (
+            (doc.get("source_asset") if source else None) or doc.get("image_asset") or "page.png"
         )
+        return store.asset(doc["id"], asset)
 
     def check_revision(doc, revision):
         if doc["revision"] != revision:
@@ -182,9 +220,21 @@ def create_app(root=None, *, testing=False):
         store.save(doc)
         return doc
 
+    def project_event(doc, operation):
+        doc.setdefault("project_history", []).append(
+            {"operation": operation, "at": time.time(), "project_revision": doc["revision"] + 1}
+        )
+        store.save(doc)
+        return doc
+
     @app.get("/api/session")
     def session():
-        return {"token": token, "ocr": ocr.capabilities(), "version": "0.1.0"}
+        return {
+            "token": token,
+            "ocr": ocr.capabilities(),
+            "version": "0.1.0",
+            "features": {"multi_page": True, "editable_backup": True},
+        }
 
     @app.get("/api/projects")
     def projects():
@@ -194,6 +244,7 @@ def create_app(root=None, *, testing=False):
                 "created": p["created"],
                 "image": p["image"],
                 "name": p.get("name", "Untitled page"),
+                "page_count": len(p["pages"]),
             }
             for p in store.list()
         ]
@@ -215,7 +266,7 @@ def create_app(root=None, *, testing=False):
             "revision": 1,
             "created": time.time(),
             "source_kind": source,
-            "name": "Practice page" if source == "synthetic-fixture" else "Untitled page",
+            "name": "Practice font" if source == "synthetic-fixture" else "Untitled font",
             "image": metadata,
             "regions": [],
             "history": [{"operation": "upload", "at": time.time()}],
@@ -224,14 +275,135 @@ def create_app(root=None, *, testing=False):
             make_region(doc, box, source="connected-ink-proposal")
             for box in proposals_for(doc, image)
         ]
+        (store.root / doc["id"]).mkdir()
         store.asset(doc["id"], "original.bin").write_bytes(data)
         store.asset(doc["id"], "page.png").write_bytes(canonical)
-        store.create(doc)
-        return doc
+        raw = document(doc)
+        raw["pages"][0]["name"] = "Page 1"
+        store.create(raw)
+        return raw
 
     @app.get("/api/projects/{project_id}")
     def get_project(project_id: str):
         return project(project_id)
+
+    @app.post("/api/projects/import")
+    async def restore_backup(request: Request):
+        data, size = [], 0
+        async for chunk in request.stream():
+            size += len(chunk)
+            if size > MAX_ARCHIVE:
+                raise HTTPException(413, "Backup exceeds 256 MiB")
+            data.append(chunk)
+        try:
+            return await run_in_threadpool(import_backup, store, b"".join(data))
+        except (
+            OSError,
+            TypeError,
+            KeyError,
+            AttributeError,
+            IndexError,
+            zipfile.BadZipFile,
+            OverflowError,
+            Image.DecompressionBombError,
+            Image.DecompressionBombWarning,
+        ) as error:
+            raise ValueError(
+                "Invalid project backup. Your existing projects were not changed."
+            ) from error
+
+    @app.post("/api/projects/{project_id}/backup")
+    def backup_project(project_id: str, data: RevisionInput):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        archive = export_backup(store, project_id)
+        check_revision(project(project_id), data.revision)
+        return Response(
+            archive,
+            media_type="application/zip",
+            headers={"Content-Disposition": 'attachment; filename="Mashi-Project.mashi.zip"'},
+        )
+
+    @app.post("/api/projects/{project_id}/pages")
+    async def append_page(
+        project_id: str,
+        request: Request,
+        revision: int,
+        source: Literal["user-upload", "synthetic-fixture"] = "user-upload",
+    ):
+        doc = project(project_id)
+        check_revision(doc, revision)
+        if len(doc["pages"]) >= MAX_PAGES:
+            raise ValueError("A font project can contain up to 20 pages")
+        chunks, size = [], 0
+        async for chunk in request.stream():
+            size += len(chunk)
+            if size > MAX_BYTES:
+                raise HTTPException(413, "Image exceeds 12 MiB")
+            chunks.append(chunk)
+        data = b"".join(chunks)
+        image, canonical, metadata = decode(data)
+        page_id = uid()
+        page = {
+            "id": page_id,
+            "name": f"Page {len(doc['pages']) + 1}",
+            "revision": 1,
+            "source_kind": source,
+            "image": metadata,
+            "regions": [],
+            "history": [{"operation": "upload", "at": time.time()}],
+            "original_asset": f"p-{page_id}-original.bin",
+            "image_asset": f"p-{page_id}.png",
+        }
+        page["regions"] = [
+            make_region(page, box, source="connected-ink-proposal")
+            for box in proposals_for(page, image)
+        ]
+        store.asset(project_id, page["original_asset"]).write_bytes(data)
+        store.asset(project_id, page["image_asset"]).write_bytes(canonical)
+        doc["pages"].append(page)
+        project_event(doc, "add-page")
+        return store.get(project_id, page_id)
+
+    @app.put("/api/projects/{project_id}/pages/{page_id}/name")
+    def rename_page(project_id: str, page_id: str, data: ProjectNameInput):
+        doc = store.get(project_id, page_id)
+        check_revision(doc, data.revision)
+        doc["page_name"] = data.name
+        return event(doc, "rename-page", [])
+
+    @app.put("/api/projects/{project_id}/samples/select")
+    def select_sample(project_id: str, data: SampleChoiceInput):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        found = next(
+            (
+                (page, row)
+                for page, row, _, _ in samples(doc)
+                if page["id"] == data.page_id
+                and row["id"] == data.region_id
+                and row["label"] == data.label
+                and row["revision"] == data.sample_revision
+            ),
+            None,
+        )
+        if not found:
+            raise HTTPException(409, "That sample changed. Reload before choosing it.")
+        doc.setdefault("sample_choices", {})[data.label] = signature(*found)
+        doc.setdefault("selection_required", {}).pop(data.label, None)
+        return project_event(doc, "choose-font-sample")
+
+    @app.put("/api/projects/{project_id}/typography")
+    def save_typography(project_id: str, data: SavedTypographyInput):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        TypographyOptions(**data.options.model_dump()).validate()
+        if data.text.count("\n") >= 32:
+            raise ValueError("Use at most 32 proof lines")
+        doc["typography"] = data.options.model_dump()
+        doc["proof_text"] = data.text
+        doc["typography_revision"] = doc.get("typography_revision", 1) + 1
+        return project_event(doc, "save-font-settings")
 
     @app.get("/api/projects/{project_id}/image")
     def image(project_id: str, expected_sha256: str | None = None):
@@ -249,7 +421,7 @@ def create_app(root=None, *, testing=False):
         doc = project(project_id)
         check_revision(doc, data.revision)
         doc["name"] = data.name
-        return event(doc, "rename", [])
+        return project_event(doc, "rename-font-project")
 
     @app.post("/api/projects/{project_id}/preparation/suggest")
     def suggest_preparation(project_id: str):
@@ -606,10 +778,16 @@ def create_app(root=None, *, testing=False):
             raise ValueError(
                 "Preview and confirm these exact reference alignments before generation"
             )
-        present = {r["label"] for r in doc["regions"] if r["active"] and r["confirmed"]}
+        present = {
+            r["label"]
+            for page in pages(doc)
+            for r in page["regions"]
+            if r["active"] and r["confirmed"]
+        }
         present |= {
             r["label"]
-            for r in doc.get("completion_suggestions", [])
+            for page in pages(doc)
+            for r in page.get("completion_suggestions", [])
             if r["review_state"] != "rejected"
         }
         if len(set(data.targets)) != len(data.targets) or any(
@@ -632,6 +810,7 @@ def create_app(root=None, *, testing=False):
         generation = {
             "job_id": data.job_id,
             "project_id": project_id,
+            "page_id": doc["page_id"],
             "project_revision": data.revision,
             "image_sha256": doc["image"]["canonical_sha256"],
             "model": result["model"],
@@ -819,7 +998,13 @@ def create_app(root=None, *, testing=False):
     ):
         doc = project(project_id)
         check_revision(doc, data.revision)
-        options = TypographyOptions(**data.options.model_dump())
+        options = TypographyOptions(
+            **(
+                data.options.model_dump()
+                if "options" in data.model_fields_set
+                else doc.get("typography", {})
+            )
+        )
         options.validate()
         if action == "preflight":
             result = {
@@ -869,12 +1054,26 @@ def create_app(root=None, *, testing=False):
             doc,
             kind,
             include_fixture=include_fixture,
-            options=TypographyOptions(**data.options.model_dump()) if data else None,
-            required_text=data.text if data else None,
+            options=TypographyOptions(
+                **(
+                    data.options.model_dump()
+                    if "options" in data.model_fields_set
+                    else doc.get("typography", {})
+                )
+            )
+            if data
+            else TypographyOptions(**doc.get("typography", {})),
+            required_text=data.text if data else doc.get("proof_text") or None,
             include_generated=include_generated,
         )
         check_revision(project(project_id), doc["revision"])
-        prefix = "Mashi-SYNTHETIC" if doc.get("source_kind") == "synthetic-fixture" else "Mashi"
+        prefix = (
+            "Mashi-SYNTHETIC"
+            if font_is_synthetic(
+                doc, eligible(doc, include_fixture, include_generated=include_generated)
+            )
+            else "Mashi"
+        )
         if include_generated:
             prefix += "-GENERATED"
         return Response(
