@@ -423,13 +423,13 @@
       note = "Recovered unsaved outline draft. Review it, then save.";
     } else if (draft)
       note =
-        "An older local draft was not applied because the saved revision/image changed.";
+        "An older draft was not applied because the saved form or photo changed.";
     try {
       contours = G.parse(chosen.paths);
     } catch {
       contours = G.parse(initial.paths);
       chosen = initial;
-      note = "Local draft was invalid; the saved outline is shown.";
+      note = "The draft could not be read. The saved outline is shown.";
     }
     metrics = {
       baseline: chosen.baseline,
@@ -606,14 +606,14 @@
     contourOptions();
     $("point-form").hidden = true;
     $("outline-status").textContent =
-      "Local draft discarded. Saved outline restored.";
+      "Draft discarded. Saved outline restored.";
     sync();
     draw();
   };
   $("outline-download-draft").onclick = () => {
     const draft = recall(draftKey);
     if (!draft) {
-      message("No local outline draft to download.");
+      message("No outline draft to download.");
       return;
     }
     const uri = URL.createObjectURL(

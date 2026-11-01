@@ -72,9 +72,9 @@ class CompletionService:
             "model": self.model,
             "profile": "configured-local-checkpoint" if configured else None,
             "filename": self.path.name if configured else None,
-            "reason": "Choose and load the configured checkpoint."
+            "reason": "Suggestions are off. Load the model to continue."
             if available
-            else "Completion is unavailable. Configure a local checkpoint and SHA-256, and install the completion extra. Manual capture and export remain available.",
+            else "Suggestions are unavailable. You can still capture missing forms.",
         }
 
     def cancel(self, project_id, job_id):
@@ -160,7 +160,7 @@ class CompletionService:
             return result
         except OSError as error:
             raise ValueError(
-                "Completion worker could not start or finish. Check the optional installation; manual capture/export remain available."
+                "Suggestions could not be generated. Try again or capture the missing forms."
             ) from error
         finally:
             with self.guard:

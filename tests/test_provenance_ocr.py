@@ -143,5 +143,5 @@ def test_missing_tsv_is_actionable(monkeypatch, tmp_path):
         "run",
         lambda args, **kwargs: subprocess.CompletedProcess(args, 0, "മഷി\n", ""),
     )
-    with pytest.raises(ValueError, match="TSV word boxes"):
+    with pytest.raises(ValueError, match="no usable crop positions"):
         ocr.recognize(tmp_path / "fixture.png")

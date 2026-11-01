@@ -364,9 +364,9 @@ def main(argv=None):
         if not args.headless:
             alert(
                 "Mashi could not open",
-                f"Reopen Mashi after checking {state / 'desktop.log'}.\n"
-                "Your saved project folder has not been removed.\n"
-                "Source fallback: uv run mashi --port 8001 (uses the source studio data folder).",
+                "Try opening Mashi again.\n"
+                "Your saved projects have not been removed.\n"
+                "Help: https://github.com/anima-regem/Mashi/blob/main/docs/DESKTOP.md",
             )
         return 1
     finally:

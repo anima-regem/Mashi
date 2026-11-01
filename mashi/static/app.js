@@ -446,7 +446,7 @@ $("crop-draft-discard").onclick = () => {
 $("crop-draft-download").onclick = () => {
   const draft = recall(cropDraftKey());
   if (!draft) {
-    message("No local crop draft to download.");
+    message("No crop draft to download.");
     return;
   }
   const uri = URL.createObjectURL(
@@ -521,7 +521,7 @@ $("discard").onclick = () =>
     await update(
       `${url()}/regions/${r.id}?revision=${r.revision}`,
       { method: "DELETE" },
-      "Crop discarded. Its history remains in the local project.",
+      "Crop discarded. You can restore it from saved history.",
     );
   });
 $("merge").onclick = () =>
@@ -563,7 +563,7 @@ $("add-crop").onclick = () =>
   });
 $("ocr").onclick = () =>
   work(async () => {
-    message("Running local Malayalam OCR…");
+    message("Recognizing words…");
     await update(
       `${url()}/ocr`,
       { method: "POST", json: {revision: project.revision} },
@@ -736,7 +736,8 @@ $("page").onpointerup = (event) => {
 work(async () => {
   const session = await (await api("/api/session")).json();
   token = session.token;
-  $("ocr").title = session.ocr.reason;
+  $("ocr").hidden = !session.ocr.available;
+  $("ocr").title = session.ocr.available ? "Review suggested words before confirming them." : "Word suggestions are unavailable. Label crops manually.";
   await recent();
   message("Choose a photograph or reopen a saved page.");
   const saved = recall("mashi:last-project");

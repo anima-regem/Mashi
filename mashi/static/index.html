@@ -34,7 +34,7 @@
         </p>
         <label class="button primary" for="file">Choose a photograph</label>
         <input id="file" type="file" accept="image/png,image/jpeg,image/webp" />
-        <p class="fine">JPEG, PNG or WebP · up to 12 MiB / 16 megapixels. Images are stored locally.</p>
+        <p class="fine">JPEG, PNG or WebP · up to 12 MiB / 16 megapixels.</p>
         <details><summary>Test without a photograph</summary>
           <p class="hint">Sample shapes test crop editing and font export. They are not Malayalam handwriting.</p>
           <button id="demo">Load sample shapes</button>
@@ -65,16 +65,14 @@
           <div class="actions">
             <button id="reload-page">Reload saved page</button>
             <button id="new-page">Open another page</button
-            ><button id="ocr">Suggest words with OCR</button>
+            ><button id="ocr">Suggest word labels</button>
           </div>
         </div>
         <details id="photo-prep" class="photo-prep">
           <summary>Prepare photo · page corners, rotation & lighting</summary>
           <p class="hint">
-            Start from the preserved oriented source. Drag the four page corners
-            or enter their coordinates. Preview changes before applying.
-            Applying replaces active crop proposals; restore brings the previous
-            page and crops back.
+            Drag the corners to straighten the page. Preview before applying.
+            Applying replaces the current crops; restore brings them back.
           </p>
           <div class="prep-grid">
             <div>
@@ -458,60 +456,55 @@
                 <label>Space advance<input id="proof-space" type="number" value="300" min="1" max="5000" required /></label>
                 <label>Virama anchor gap<input id="proof-mark-gap" type="number" value="40" min="0" max="1000" required /></label>
               </div>
-              <p class="hint">1000 units per em. Vertical metrics expand to contain ink and positioned marks.
-                Only the visible virama has attachment anchors in V1. Estimates need visual review.
-                Synthetic tests always retain their synthetic font name.</p>
+              <p class="hint">Values use font units. Line height expands to fit the ink.</p>
+              <details><summary>Adjust virama anchors</summary>
+              <p class="hint">Only virama attachment can be adjusted here. Check the preview after each change.</p>
               <label class="field" for="proof-anchors">Anchor overrides · JSON</label>
               <textarea id="proof-anchors" rows="4" spellcheck="false">{}</textarea>
               <button id="proof-copy-anchors" type="button" disabled>Copy current anchor estimates for editing</button>
               <p class="hint">Exact labels map to top or _top pairs in font units, for example
-                {"ക":{"top":[550,740]},"്":{"_top":[70,660]}}. These controls change this font's anchors, not the photograph.</p>
+                {"ക":{"top":[550,740]},"്":{"_top":[70,660]}}.</p></details>
             </details>
             <div class="actions proof-actions">
               <button id="proof-check" type="button">Check required samples</button>
               <button id="proof-build" type="submit" class="primary">Build proof preview</button>
-              <button id="proof-cancel" type="button" disabled>Cancel preview</button>
+              <button id="proof-cancel" type="button" hidden disabled>Cancel preview</button>
             </div>
           </form>
           <p id="proof-status" role="status" aria-live="polite" class="hint">Enter proof text, then check the samples or build a preview.</p>
-          <p id="proof-storage" class="fine">Proof text and settings are kept in this browser for this page.</p>
+          <p id="proof-storage" class="fine" hidden></p>
           <div id="proof-coverage" class="proof-report"></div>
           <div id="proof-drawing" class="proof-drawing" aria-label="Compiled font proof preview"></div>
           <div id="proof-diagnostics" class="proof-report"></div>
-          <details><summary>Unicode and shaping details</summary><div id="proof-metadata"></div><div id="proof-issues"></div><pre id="proof-unicode"></pre>
-            <p class="hint">NFC and NFD are informative only. Your input is preserved, including joiners.
-              Diagnostic positions count Unicode scalar values from zero, not browser UTF-16 units.
-              Proofs draw compiled glyphs at HarfBuzz positions without a fallback font.
-              The V1 repertoire is limited; reader review and broader platform testing are still needed.</p></details>
+          <details><summary>Text and font details</summary><div id="proof-metadata"></div><div id="proof-issues"></div><pre id="proof-unicode"></pre>
+            <p class="hint">Your exact text and joiners are preserved.
+              <a href="https://github.com/anima-regem/Mashi/blob/main/docs/TYPOGRAPHY.md" target="_blank" rel="noopener noreferrer">Supported forms and text rules</a></p></details>
         </section>
         <details id="completion-panel" class="completion-panel">
           <summary>Suggestions for missing forms</summary>
-          <p class="hint">Optional local research model. Its predictions underperformed nearest-font retrieval on rendered-font tests; handwriting accuracy is unmeasured. Generated forms need review and remain distinct from captured ink.</p>
+          <p id="completion-quality" class="hint" hidden>This model is not validated for handwriting. Review every suggestion before using it.</p>
           <p id="completion-capability" role="status" class="hint"></p>
-          <div class="actions">
-            <label>Configured checkpoint<select id="completion-profile"><option value="configured-local-checkpoint">No checkpoint configured</option></select></label>
-            <button id="completion-load" type="button">Load local checkpoint</button>
-            <button id="completion-unload" type="button">Turn completion off</button>
-            <button id="completion-cancel" type="button" disabled>Cancel request</button>
+          <div id="completion-actions" class="actions" hidden>
+            <button id="completion-load" type="button">Load model</button>
+            <button id="completion-unload" type="button" hidden>Turn suggestions off</button>
+            <button id="completion-cancel" type="button" hidden disabled>Cancel request</button>
           </div>
-          <p class="hint">Generated-font outputs use OFL-1.1 and retain source notices. Checkpoint redistribution remains unresolved; no weights are included in exports.</p>
-          <details><summary>Model source and setup</summary><p id="completion-model-info" class="hint"></p>
-            <p class="hint">Configuration is set outside the browser. <a href="https://github.com/anima-regem/Mashi/blob/main/docs/LOCAL_COMPLETION.md" target="_blank" rel="noopener noreferrer">Local completion setup</a>. The studio never downloads a model.</p></details>
+          <p class="fine"><a href="https://github.com/anima-regem/Mashi/blob/main/docs/LOCAL_COMPLETION.md" target="_blank" rel="noopener noreferrer">Model setup, sources and limitations</a></p>
           <div id="completion-request" hidden>
-            <h3>1. Choose reference crops</h3>
-            <p class="hint">Select up to 20 confirmed, traced forms with distinct supported labels. Save their baseline and shared scale in the outline editor first.</p>
+            <h3>Reference forms</h3>
+            <p class="hint">Choose up to 20 confirmed forms. Align their baselines and size in the outline editor first.</p>
             <div id="completion-references" class="completion-references"></div>
             <button id="completion-align" type="button">Preview reference alignment</button>
             <div id="completion-aligned" class="completion-references"></div>
-            <label class="check"><input id="completion-alignment-confirmed" type="checkbox" /> I checked the reference baselines and scale on these canvases</label>
-            <h3>2. Choose missing sequences</h3>
+            <label class="check"><input id="completion-alignment-confirmed" type="checkbox" /> Reference size and baselines look right</label>
+            <h3>Missing forms</h3>
             <label class="field">Missing sequences, separated by commas<input id="completion-targets" lang="ml" placeholder="e.g. ഖ, ക്ക" autocomplete="off" /></label>
             <button id="completion-use-proof" type="button">Use missing samples from proof text</button>
             <p id="completion-target-note" class="hint"></p>
-            <button id="completion-generate" type="button" class="primary">Generate review candidates</button>
+            <button id="completion-generate" type="button" class="primary">Generate suggestions</button>
           </div>
           <p id="completion-status" role="status" class="hint"></p>
-          <h3 id="completion-review-title" hidden>3. Review each candidate</h3>
+          <h3 id="completion-review-title" hidden>Review suggestions</h3>
           <div id="completion-suggestions"></div>
         </details>
         <section id="export-tools" class="export-section">
@@ -528,7 +521,7 @@
           </div>
           <div class="export-actions">
             <label id="generated-export-option" class="check" hidden><input id="generated-export" type="checkbox" /> Include accepted generated glyphs in an OFL font</label>
-            <p id="generated-export-terms" class="fine" hidden>Generated font: OFL-1.1, retained source notices and a distinct family name. Review rights in your captured forms before distributing this combined font. This does not license checkpoint redistribution.</p>
+            <p id="generated-export-terms" class="fine" hidden>The combined font uses OFL-1.1 and retains source notices. Check that you can share your captured forms under these terms.</p>
             <label id="fixture-export-option" class="check" hidden
               ><input id="fixture-export" type="checkbox" /> Create an
               explicitly labelled synthetic test export</label
@@ -536,9 +529,7 @@
             <button id="export-ufo" class="primary">Export SVG + UFO</button
             ><button id="export-ttf">Export TTF</button>
             <p class="fine">
-              Build a current, supported proof preview before TTF export. Both exports check the
-              exact proof text and settings above. TTF is a V1 test subset; broader shaping and
-              reader validation remain incomplete. Each export includes coverage and proof reports.
+              Review the preview before exporting TTF. Missing or unsupported forms block export.
             </p>
           </div>
         </section>

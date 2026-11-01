@@ -27,6 +27,7 @@
     $("proof-check").disabled = busy || running;
     $("proof-build").disabled = busy || running;
     $("proof-cancel").disabled = busy || !running;
+    $("proof-cancel").hidden = !running;
     $("proof-copy-anchors").disabled = busy || running || !anchors;
   }
   function invalidate(note = "Proof changed. Check samples or rebuild the preview before export.") {
@@ -40,9 +41,8 @@
   function persist() {
     if (!project) return;
     const saved = remember(storageKey(), ids.map(id => $("proof-" + id).value));
-    $("proof-storage").textContent = saved
-      ? "Proof text and settings are kept in this browser for this page."
-      : "Browser storage unavailable. Copy proof text and settings before leaving.";
+    $("proof-storage").hidden = saved;
+    $("proof-storage").textContent = saved ? "" : "Your proof could not be saved. Copy the text before leaving.";
   }
   function sync() {
     const next = `${project.id}:${project.revision}`;
@@ -53,12 +53,12 @@
       const saved = recall(storageKey());
       ids.forEach((id, i) => $("proof-" + id).value = Array.isArray(saved) && saved.length === ids.length ? saved[i] : defaults[i]);
     }
-    invalidate(`Saved page revision ${project.revision}. Build a fresh proof from its confirmed outlines.`);
+    invalidate("Build a fresh preview after saving your outlines.");
   }
   function coverage(report) {
     lastCoverage = report;
     const box = $("proof-coverage"); box.replaceChildren();
-    text("h3", report.supported ? "Required samples are available in V1" : "This text needs attention", box);
+    text("h3", report.supported ? "Required forms are available" : "This text needs attention", box);
     if (report.synthetic_test_export) text("p", "This proof uses synthetic sample shapes, not handwriting.", box);
     if (report.generated_font) text("p", "Includes accepted model-generated forms. Font output is OFL-1.1 with retained source notices.", box);
     if (report.required_samples.length) text("p", "Capture and confirm: " + report.required_samples.join(" · "), box);
@@ -96,14 +96,13 @@
     const metrics = result.metrics;
     const metadata = $("proof-metadata");
     metadata.replaceChildren();
-    text("p", `${result.drawing.family_name} · ${result.preview.engine} · revision ${result.revision}${result.cache.hit ? " · cached" : ""}. ` +
-      `Actual ascender ${metrics.ascender}, descender ${metrics.descender}, line gap ${metrics.line_gap} at 1000 UPM.`, metadata);
+    text("p", `${result.drawing.family_name}. Ascender ${metrics.ascender}, descender ${metrics.descender}, line gap ${metrics.line_gap}.`, metadata);
     const diagnostics = $("proof-diagnostics"); diagnostics.replaceChildren();
     const list = document.createElement("ul");
     result.preview.diagnostics.forEach(d => text("li", `${d.code.replaceAll("_", " ")} · line ${d.line + 1}${d.glyph ? " · " + d.glyph : ""}`, list));
     diagnostics.append(list);
     if (result.preview.diagnostics_truncated) text("p", `Showing 100 of ${result.preview.diagnostics_total} diagnostics. Shorten proof text for the rest.`, diagnostics);
-    if (result.preview.diagnostics.length) text("p", "Overlap checks compare ink bounds, not contours. Review the actual shapes. Forms and mark stacks outside V1 remain unsupported.", diagnostics);
+    if (result.preview.diagnostics.length) text("p", "Review any overlaps and clipped forms in the preview.", diagnostics);
     anchors = Object.fromEntries(Object.entries(metrics.anchors).map(([label, a]) => [label, {[a.name]: a.point}]));
   }
   async function run(action) {
@@ -113,7 +112,7 @@
     catch (e) { $("proof-status").textContent = e.message; return; }
     const fingerprint = stamp(input), id = project.id;
     invalidate(); running = true; refreshControls();
-    $("proof-status").textContent = action === "preview" ? "Compiling and shaping saved ink locally… Cancel stops this review; compiler work may finish in the background." : "Checking exact-text sample coverage…";
+    $("proof-status").textContent = action === "preview" ? "Building preview…" : "Checking required forms…";
     await requests.run(async signal => (await api(`/api/projects/${id}/proof/${action}?include_fixture=${fixture()}&include_generated=${$("generated-export").checked}`, {method: "POST", json: input, signal})).json(),
       result => {
         if (project.id !== id || result.revision !== project.revision || stamp(input) !== fingerprint) return;
@@ -122,8 +121,8 @@
           draw(result);
           const safe = result.coverage.supported && !result.preview.has_notdef && !result.preview.diagnostics.some(d => d.code === "vertical_clipping");
           reviewed = safe ? fingerprint : null;
-          $("proof-status").textContent = safe ? "Current proof shaped successfully. Review the ink and spacing; this exact text and these settings can be exported." : "Proof drawn for inspection. Missing samples or unsupported text block final export.";
-        } else $("proof-status").textContent = "Sample check complete. Build the compiled preview to verify actual glyph selection and positions.";
+          $("proof-status").textContent = safe ? "Review the shapes and spacing before export." : "Preview needs review. Missing or unsupported forms block export.";
+        } else $("proof-status").textContent = "Check complete. Build the preview to review the shapes and spacing.";
         if (!busy) message(action === "preview" ? "Proof preview ready. Review its coverage and diagnostics below." : "Proof sample check complete.");
       }, error => { $("proof-status").textContent = error.message + " Retry after correcting the input, or reload the saved page if it changed."; $("proof-status").classList.add("error"); });
     // A new request owns its own controls; a canceled request never re-enables it.

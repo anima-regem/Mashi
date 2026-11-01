@@ -16,7 +16,7 @@ def tessdata_args():
 def capabilities():
     executable = shutil.which("tesseract")
     if not executable:
-        return {"available": False, "reason": "Tesseract is not installed. Manual labels work."}
+        return {"available": False, "reason": "Word suggestions are unavailable. Label crops manually."}
     try:
         result = subprocess.run(
             [executable, *tessdata_args(), "--list-langs"],
@@ -29,11 +29,11 @@ def capabilities():
         if "mal" not in langs:
             return {
                 "available": False,
-                "reason": "Install Malayalam data with python -m mashi.ocr_setup, then reload Mashi.",
+                "reason": "Malayalam word suggestions are unavailable. Label crops manually.",
             }
     except (subprocess.SubprocessError, OSError):
-        return {"available": False, "reason": "Tesseract could not be started."}
-    return {"available": True, "reason": "Local Tesseract mal; word suggestions need correction."}
+        return {"available": False, "reason": "Word recognition could not start. Label crops manually."}
+    return {"available": True, "reason": "Review suggested words before confirming them."}
 
 
 def recognize(path):
@@ -60,14 +60,14 @@ def recognize(path):
             check=True,
         )
     except (subprocess.SubprocessError, OSError) as error:
-        raise ValueError("Local OCR failed or exceeded 60 seconds; use manual crops") from error
+        raise ValueError("Word recognition could not finish. Try again or label crops manually.") from error
     suggestions = []
     rows = csv.DictReader(io.StringIO(result.stdout), delimiter="\t")
     if not {"level", "left", "top", "width", "height", "conf", "text"}.issubset(
         rows.fieldnames or []
     ):
         raise ValueError(
-            "Tesseract did not return TSV word boxes. Check the local OCR installation."
+            "Word recognition returned no usable crop positions. Try again or label crops manually."
         )
     for row in rows:
         if row["level"] == "5" and row.get("text", "").strip():

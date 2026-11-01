@@ -865,9 +865,8 @@ main {padding-bottom: 40px;}
 .completion-panel {border-top: 1px solid var(--line); padding: 22px 0;}
 .completion-panel > summary {font-weight: 600; font-size: 18px;}
 .completion-panel .actions {flex-wrap: wrap; align-items: end;}
-.completion-panel .actions label {max-width: 100%; min-width: 0;}
-.completion-panel select {max-width: 100%;}
 .completion-panel p {overflow-wrap: anywhere;}
+.completion-panel p:empty {display: none;}
 .completion-panel h3 {font-size: 15px; margin-top: 24px;}
 .completion-references, .candidate-comparison {display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0;}
 .reference-choice {display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 8px; border: 1px solid var(--line); border-radius: 6px;}

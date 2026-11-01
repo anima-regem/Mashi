@@ -23,11 +23,14 @@
     const targets = targetValues(), labels = capability?.model?.labels || [];
     const present = new Set(project.regions.filter(r => r.active && r.confirmed).map(r => r.label));
     (project.completion_suggestions || []).filter(r => r.review_state !== "rejected").forEach(r => present.add(r.label));
-    $("completion-target-note").textContent = targets.map(s => `${s} · ${!labels.includes(s) ? "not supported by this checkpoint" : present.has(s) ? "already captured or awaiting review" : "missing, supported"} · ${[...s].map(c => "U+" + c.codePointAt(0).toString(16).toUpperCase().padStart(4,"0")).join(" ")}`).join("; ");
+    $("completion-target-note").textContent = targets.map(s => `${s} · ${!labels.includes(s) ? "not supported by this model" : present.has(s) ? "already captured or awaiting review" : "missing, supported"} · ${[...s].map(c => "U+" + c.codePointAt(0).toString(16).toUpperCase().padStart(4,"0")).join(" ")}`).join("; ");
   }
   function refreshControls() {
     $("completion-load").disabled = busy || running || !capability?.available || capability.loaded;
-    $("completion-profile").disabled = busy || running || !capability?.configured;
+    $("completion-actions").hidden = !capability?.available && !running;
+    $("completion-load").hidden = !capability?.available || capability.loaded || running;
+    $("completion-unload").hidden = !capability?.loaded || running;
+    $("completion-cancel").hidden = !running;
     $("completion-unload").disabled = busy || running || !capability?.loaded;
     $("completion-cancel").disabled = busy || !running;
     $("completion-align").disabled = busy || running || !chosen.size || !capability?.loaded;
@@ -49,25 +52,25 @@
     if (previous) {
       api(`/api/projects/${previous.project}/completion/cancel`, {method:"POST", json:{revision:previous.revision, job_id:previous.id}}).then(() => {if (previous.action === "load") fetchCapability();}).catch(() => status("Cancel could not be confirmed. Reload the page before reviewing any late candidates.", true));
     }
-    status("Request canceled. Late results will not be accepted by this view."); refreshControls();
+    status("Request canceled. You can retry."); refreshControls();
   }
   async function fetchCapability() {
     if (loadingCaps) return;
     loadingCaps = true;
     try { capability = await (await api("/api/completion/capabilities")).json(); }
-    catch { capability = {available:false, configured:false, loaded:false, reason:"Completion is unavailable. Manual capture and export still work."}; }
+    catch { capability = {available:false, configured:false, loaded:false, reason:"Suggestions are unavailable. You can still capture missing forms."}; }
     finally { loadingCaps = false; if (project) sync(true); }
   }
   async function run(action, body, accept) {
     if (busy || running) return;
     const snapshot = {id:crypto.randomUUID(), project:project.id, revision:project.revision, action};
     requests.cancel(); job = snapshot; running = true; refreshControls();
-    status(action === "load" ? "Validating the configured checkpoint…" : "Generating local candidates from the confirmed alignments…");
+    status(action === "load" ? "Loading model…" : "Generating suggestions…");
     await requests.run(async signal => (await api(`/api/projects/${snapshot.project}/completion/${action}`, {method:"POST", json:{...body, revision:snapshot.revision, job_id:snapshot.id}, signal})).json(), async result => {
       if (!project || project.id !== snapshot.project || project.revision !== snapshot.revision) return;
       job = null; running = false;
       await accept(result);
-    }, error => {status(error.message + " Manual capture/export remain available.", true);});
+    }, error => {status(action === "load" ? "Could not load the model. Check model setup or continue with captured forms." : error.message, true);});
     if (job?.id === snapshot.id) {job = null; running = false;}
     refreshControls();
   }
@@ -89,6 +92,7 @@
   function renderSuggestions() {
     const list = $("completion-suggestions"); list.replaceChildren();
     const suggestions = project.completion_suggestions || [];
+    $("completion-quality").hidden = !capability?.available && !suggestions.length;
     $("completion-review-title").hidden = !suggestions.length;
     const accepted = suggestions.filter(s => s.review_state === "accepted");
     $("generated-export-option").hidden = !accepted.length;
@@ -109,16 +113,19 @@
       });
       if (item.trace_error) node("p", `No usable outline: ${item.trace_error}. Capture this form manually.`, card);
       if (stale) node("p", "Reference crops changed after this prediction. Reject and regenerate it before font export.", card);
-      if (item.vectorization.method === "pixel-boundary/v1") node("p", "Pixel-edge outline: the curve tracer could not handle this low-resolution candidate. Review the blocky contours before using it.", card);
+      if (item.vectorization.method === "pixel-boundary/v1") node("p", "This outline has rough pixel edges. Review or edit it before use.", card);
       const actions = node("div", "", card); actions.className = "actions";
-      const review = (state) => work(async () => update(`${url()}/completion/suggestions/${item.id}/review`, {method:"POST", json:{revision:project.revision, suggestion_revision:item.revision, state}}, `Generated ${item.label}: ${state}. Its generated origin is retained.`));
+      const review = (state) => work(async () => update(`${url()}/completion/suggestions/${item.id}/review`, {method:"POST", json:{revision:project.revision, suggestion_revision:item.revision, state}}, `${item.label}: ${state}.`));
       const accept = node("button", "Accept candidate", actions); accept.disabled = stale || item.empty_prediction || !item.vector || item.review_state === "accepted"; accept.onclick = () => review("accepted");
       const edit = node("button", "Edit candidate outline", actions); edit.disabled = !item.vector || item.review_state === "rejected"; edit.onclick = () => {selected = item.id; render(); $("vector-preview").scrollIntoView({behavior:"smooth",block:"center"});};
+      accept.hidden = accept.disabled || item.review_state === "rejected";
+      edit.hidden = edit.disabled;
       [accept, edit].forEach(button => button.dataset.disabled = button.disabled ? "1" : "0");
       const reject = node("button", item.review_state === "rejected" ? "Review again" : "Reject candidate", actions); reject.onclick = () => review(item.review_state === "rejected" ? "pending" : "rejected");
-      const details = node("details", "", card); node("summary", "Model, references and font-output terms", details);
-      node("p", `Checkpoint ${item.generation.model.sha256}; engine ${item.generation.model.engine_commit}. Uncertainty is uncalibrated. Initial spacing estimates use reference metrics and ink width, not model-predicted bearings.`, details);
-      node("p", "Generated fonts require OFL-1.1 and retained source notices. Checkpoint redistribution remains unresolved. " + (item.generation.model.terms.checkpoint_source_known ? "Source notices are available for this checkpoint." : "This checkpoint has no verified source-notice mapping; font export is blocked."), details);
+      if (item.generation.model.terms.checkpoint_source_known) {
+        const details = node("details", "", card); node("summary", "Font terms", details);
+        node("p", "Fonts containing this form use OFL-1.1 and retain source notices.", details);
+      } else node("p", "Font export is blocked because this model's source rights are unverified.", card);
     });
   }
   function sync(force = false) {
@@ -129,10 +136,9 @@
     if (identity.split(":")[0] !== project.id) chosen.clear();
     identity = next; clearAlignment();
     if (!capability) fetchCapability();
-    $("completion-capability").textContent = capability?.loaded ? "Checkpoint loaded. Choose and align references before requesting missing forms." : capability?.reason || "Checking local completion capability…";
-    $("completion-profile").options[0].textContent = capability?.filename || "No checkpoint configured";
+    $("completion-capability").textContent = !capability ? "Checking suggestions…" : capability.loaded ? "Choose reference forms to guide the suggestions." : capability.available ? "Suggestions are off. Load the model to continue." : "Suggestions are unavailable. You can still capture missing forms.";
+    $("completion-capability").hidden = !!capability?.loaded;
     $("completion-request").hidden = !capability?.loaded;
-    $("completion-model-info").textContent = capability?.model ? `Mashi-ML ${capability.model.engine_commit}; ${capability.model.labels.length} supported sequences; ${capability.model.profile}; SHA-256 ${capability.model.sha256}. PCA/mean only; template retrieval and diagnostics are disabled.` : "No checkpoint is loaded. Manual capture, tracing and observed-only export do not require a model.";
     renderReferences(); renderSuggestions(); targetNote(); refreshControls();
   }
   async function loadEditor(item) {
@@ -153,8 +159,8 @@
       outlineReady = true; refreshControls();
     }, error => {editorKey = ""; message("Generated raster could not load. Select the candidate again to retry. " + error.message, true);});
   }
-  $("completion-load").onclick = () => run("load", {}, result => {capability = result; sync(true); status("Checkpoint loaded. Review reference alignment; no source templates will be imported.");});
-  $("completion-unload").onclick = async () => {cancel(); try {capability = await (await api("/api/completion/unload", {method:"POST"})).json(); sync(true); status("Completion turned off. Saved candidates retain their generated origin.");} catch(e) {status(e.message,true);}};
+  $("completion-load").onclick = () => run("load", {}, result => {capability = result; sync(true); status("Model ready.");});
+  $("completion-unload").onclick = async () => {cancel(); try {capability = await (await api("/api/completion/unload", {method:"POST"})).json(); sync(true); status("");} catch(e) {status(e.message,true);}};
   $("completion-cancel").onclick = cancel;
   $("completion-align").onclick = async () => {
     if (chosen.size > 20) {status("Choose at most 20 references.",true);return;}
@@ -163,9 +169,9 @@
     await alignmentLoads.run(async signal => (await api(`${url()}/completion/references`, {method:"POST", json:{revision, ids}, signal})).json(), result => {
       if (project.id !== pid || project.revision !== revision || JSON.stringify([...chosen]) !== fingerprint) return;
       references = result.references; $("completion-aligned").replaceChildren();
-      references.forEach(ref => {const figure = node("figure", "", $("completion-aligned")); figure.className = "aligned-reference"; image("data:image/png;base64," + ref.png, `Canonical reference ${ref.label}`, figure); node("figcaption", `${ref.label} · 96 × 64 · baseline 45 · 32 px/em`, figure);});
+      references.forEach(ref => {const figure = node("figure", "", $("completion-aligned")); figure.className = "aligned-reference"; image("data:image/png;base64," + ref.png, `Aligned reference ${ref.label}`, figure); node("figcaption", ref.label, figure);});
       $("completion-alignment-confirmed").checked = false;
-      status("Inspect all aligned references. Horizontal centering is applied; baseline and shared scale come from your saved metrics."); refreshControls();
+      status("Check that the references sit on the baseline and keep a consistent size."); refreshControls();
     }, error => {clearAlignment(); status(error.message,true);});
   };
   $("completion-alignment-confirmed").onchange = refreshControls;
@@ -176,7 +182,7 @@
     if (!targets.length || targets.length > 8) {status("Choose 1–8 supported missing sequences.",true);return;}
     run("generate", {ids:[...chosen], targets, reference_hashes:Object.fromEntries(references.map(r=>[r.id,r.sha256])), alignment_confirmed:$("completion-alignment-confirmed").checked}, async doc => {
       if (!await setProject(doc)) return;
-      render(); await renderCoverage(); status("Candidates generated. Inspect each beside its references, then accept, edit or reject. Normal export still excludes them.");
+      render(); await renderCoverage(); status("Suggestions ready for review.");
     });
   };
   window.MashiCompletion = {sync, refreshControls, loadEditor, cancel, clearEditorIdentity: () => {editorKey = ""; editorLoads.cancel();}};
