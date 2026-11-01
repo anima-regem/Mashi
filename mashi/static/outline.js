@@ -398,7 +398,9 @@
     }
     key = nextKey;
     draftKey = `mashi:outline-draft:${doc.id}:${region.id}`;
-    identity = { revision: region.revision, image: doc.image.canonical_sha256 };
+    identity = { revision: region.revision, image: doc.image.canonical_sha256,
+      provenance: region.provenance, input_kind: doc.source_kind,
+      ...(region.generation ? {generation:region.generation, vectorization:region.vectorization, not_observed_in_photo:true} : {}) };
     vector = region.vector;
     initial = {
       paths: clone(vector.paths),
@@ -635,5 +637,5 @@
   window.addEventListener("resize", () => {
     if (svg?.isConnected) draw();
   });
-  if (project && current()?.vector) load(current(), project, pageImage);
+  if (project && current()?.vector && !generatedSelection(current())) load(current(), project, pageImage);
 })();

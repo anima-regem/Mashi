@@ -101,8 +101,14 @@ class DesktopServer:
 
         self.server = uvicorn.Server(
             uvicorn.Config(
-                app, host="127.0.0.1", log_config=None, access_log=False,
-                loop="asyncio", http="h11", ws="none", timeout_graceful_shutdown=3,
+                app,
+                host="127.0.0.1",
+                log_config=None,
+                access_log=False,
+                loop="asyncio",
+                http="h11",
+                ws="none",
+                timeout_graceful_shutdown=3,
             )
         )
         self.thread = threading.Thread(target=self._serve, name="mashi-api", daemon=True)
@@ -142,7 +148,19 @@ class DesktopServer:
         self.socket.close()
 
 
-def write_diagnostics(state, root, url):
+def completion_diagnostics(server):
+    component = getattr(server.server.config.app.state, "completion", None)
+    status = component.capabilities() if component else {}
+    return {
+        "available": status.get("available", False),
+        "configured": status.get("configured", False),
+        "loaded": status.get("loaded", False),
+        "weights_bundled": False,
+        "reason": status.get("reason", "No local completion checkpoint is configured."),
+    }
+
+
+def write_diagnostics(state, root, url, completion_status=None):
     from . import ocr
 
     document = {
@@ -153,7 +171,8 @@ def write_diagnostics(state, root, url):
         "server_url": url,
         "pid": os.getpid(),
         "ocr": ocr.capabilities(),
-        "completion": {
+        "completion": completion_status
+        or {
             "available": False,
             "reason": "This desktop package does not bundle an ML model or download weights.",
         },
@@ -173,13 +192,15 @@ def alert(title, message):
         print(f"{title}: {message}", file=sys.stderr)
     if sys.platform == "darwin":
         script = (
-            'on run argv\ndisplay alert (item 1 of argv) message (item 2 of argv) '
+            "on run argv\ndisplay alert (item 1 of argv) message (item 2 of argv) "
             'buttons {"OK"} default button "OK"\nend run'
         )
         try:
             subprocess.run(
                 ["/usr/bin/osascript", "-e", script, title, message],
-                check=False, capture_output=True, timeout=120,
+                check=False,
+                capture_output=True,
+                timeout=120,
             )
         except (OSError, subprocess.TimeoutExpired):
             pass
@@ -187,9 +208,10 @@ def alert(title, message):
 
 def frozen_tool_dispatch(argv):
     """Existing exporter uses sys.executable -m fontmake; a frozen exe is not Python."""
-    if argv[:2] == ["-m", "fontmake"]:
+    if argv[:2] in (["-m", "fontmake"], ["-m", "mashi.ml_engine"]):
         owner = os.environ.get("MASHI_DESKTOP_OWNER_PID")
         if owner == str(os.getppid()):
+
             def watch_parent():
                 while owner == str(os.getppid()):
                     time.sleep(0.25)
@@ -197,6 +219,10 @@ def frozen_tool_dispatch(argv):
                 os._exit(1)
 
             threading.Thread(target=watch_parent, name="mashi-compiler-owner", daemon=True).start()
+        if argv[1] == "mashi.ml_engine":
+            from .ml_engine import main as completion_main
+
+            raise SystemExit(completion_main())
         from fontmake.__main__ import main as fontmake_main
 
         fontmake_main(argv[2:])
@@ -212,7 +238,11 @@ def run_window(server, root, state):
 
     webview.settings["ALLOW_DOWNLOADS"] = True
     window = webview.create_window(
-        "Mashi", server.url, width=1280, height=860, min_size=(960, 640),
+        "Mashi",
+        server.url,
+        width=1280,
+        height=860,
+        min_size=(960, 640),
         background_color="#f5f1e8",
     )
     closed = threading.Event()
@@ -246,12 +276,13 @@ def run_window(server, root, state):
             finished.wait(120)
 
     def diagnostics():
-        document = write_diagnostics(state, root, server.url)
+        document = write_diagnostics(state, root, server.url, completion_diagnostics(server))
         status = "Available" if document["ocr"]["available"] else document["ocr"]["reason"]
         window_alert(
             "Mashi desktop diagnostics",
             f"Projects: {root}\nLogs: {state / 'desktop.log'}\nOCR: {status}\n"
-            "ML suggestions: no model bundled. Manual labels, tracing and export work offline.",
+            f"ML suggestions: {'Loaded' if document['completion'].get('loaded') else 'Not loaded'}. "
+            "No weights bundled; manual labels, tracing and export work offline.",
         )
 
     def watch_server():
@@ -267,8 +298,12 @@ def run_window(server, root, state):
     # The default macOS application menu supplies standard Quit/Hide actions.
     menu = [Menu("Help", [MenuAction("Desktop diagnostics", diagnostics)])]
     webview.start(
-        watch_server, gui="cocoa", debug=False, private_mode=False,
-        storage_path=str(state / "WebKit"), menu=menu,
+        watch_server,
+        gui="cocoa",
+        debug=False,
+        private_mode=False,
+        storage_path=str(state / "WebKit"),
+        menu=menu,
     )
 
 
@@ -303,7 +338,7 @@ def main(argv=None):
             pass
         server = DesktopServer(create_app(root), preferred_port=port)
         server.start()
-        write_diagnostics(state, root, server.url)
+        write_diagnostics(state, root, server.url, completion_diagnostics(server))
         LOG.info("Desktop started (packaged=%s)", bool(getattr(sys, "frozen", False)))
         if args.headless:
             stopped = threading.Event()

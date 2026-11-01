@@ -29,9 +29,15 @@ class PreviewCache:
         self.entries = OrderedDict()
         self.lock = threading.Lock()
 
-    def get(self, project, text, options, include_fixture, compute):
+    def get(self, project, text, options, include_fixture, compute, *, include_generated=False):
         identity = (project["id"], project["revision"])
-        key = (*identity, text, include_fixture, json.dumps(asdict(options), sort_keys=True))
+        key = (
+            *identity,
+            text,
+            include_fixture,
+            json.dumps(asdict(options), sort_keys=True),
+            include_generated,
+        )
         with self.lock:
             for old in list(self.entries):
                 if old[0] == identity[0] and old[1] != identity[1]:

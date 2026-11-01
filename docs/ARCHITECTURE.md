@@ -25,6 +25,10 @@ The integrated typography V1 backend supplies a bounded mlm2 repertoire, HarfBuz
 
 `proofing.py` caches bounded exact-text previews by revision/options/provenance; the proof UI draws positioned outlines from the actual compiled TTF. Required proof text/settings enter UI exports, and stale compilation results are rejected. See [PROOFING.md](PROOFING.md) for cancellation, diagnostics and API compatibility.
 
+## Optional completion boundary
+
+`ml_engine.py` validates NPZ headers/hash/schema without pickle and runs only the pinned PCA/mean arithmetic; template payloads are never loaded. `ml_capture.py` rasterizes approved vector geometry into a declared baseline-aware canvas with retained transforms; no crop stretching is used. `ml_service.py` accepts only operator-configured checkpoint paths, owns bounded cancelable worker processes and tracks explicit loading. Normal capture/OCR/trace paths do not need SciPy or any checkpoint. `completion_suggestions` is a separate document collection, never page-coordinate regions. Its own raster canvas, vector edits, review revision/history, model/reference hashes and source terms persist. Accepted suggestions remain model-generated. The exporter only includes them under a separate explicit generated-font choice with the current reference and source-notice gates. See [LOCAL_COMPLETION.md](LOCAL_COMPLETION.md).
+
 ## Local security and privacy
 
 The provided CLI binds `127.0.0.1`. Host validation allows localhost/127.0.0.1, same-origin checks reject external Origins, and every mutation needs a random process token read from the same-origin session endpoint. There is no permissive CORS. CSP restricts resources to this app, disallows embedding and plugins, and the app loads no remote scripts, fonts or analytics. No cloud provider is called by the application. Loopback is not a defence against other programs running as the same local user.

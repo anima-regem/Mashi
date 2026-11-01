@@ -1,0 +1,795 @@
+{
+  "schema": 1,
+  "acquired_utc": "2026-11-01",
+  "fonts": [
+    {
+      "family": "anekmalayalam",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "font_filenames": [
+        "AnekMalayalam[wdth,wght].ttf"
+      ],
+      "source_paths": [
+        "ofl/anekmalayalam/AnekMalayalam[wdth,wght].ttf",
+        "ofl/anekmalayalam/OFL.txt",
+        "ofl/anekmalayalam/METADATA.pb",
+        "ofl/anekmalayalam/upstream_info.md"
+      ],
+      "license_filename": "OFL.txt",
+      "split": "train",
+      "lineage_group": "ektype-anek-malayalam",
+      "lineage_evidence": "Official family identity and upstream metadata; all Noto Malayalam variants conservatively grouped. Anek/Baloo are separate design families.",
+      "assets": [
+        {
+          "source_path": "ofl/anekmalayalam/AnekMalayalam[wdth,wght].ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/anekmalayalam/AnekMalayalam[wdth,wght].ttf",
+          "local_path": "data/fonts/anekmalayalam/AnekMalayalam[wdth,wght].ttf",
+          "sha256": "319ccd3dc61afce2a5f2e5f3ce16f555c1f385390e80d12af7b9d017dd4993fe",
+          "bytes": 668244
+        },
+        {
+          "source_path": "ofl/anekmalayalam/OFL.txt",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/anekmalayalam/OFL.txt",
+          "local_path": "data/fonts/anekmalayalam/OFL.txt",
+          "sha256": "de62be758bba267e653a5f457dfebb4680957e2c343eb3e7de15aff4746bed05",
+          "bytes": 4379
+        },
+        {
+          "source_path": "ofl/anekmalayalam/METADATA.pb",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/anekmalayalam/METADATA.pb",
+          "local_path": "data/fonts/anekmalayalam/METADATA.pb",
+          "sha256": "ec77c4072e62355bc1d100acce4ab8a42405f91623dea15d35284dc257debe66",
+          "bytes": 1086
+        },
+        {
+          "source_path": "ofl/anekmalayalam/upstream_info.md",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/anekmalayalam/upstream_info.md",
+          "local_path": "data/fonts/anekmalayalam/upstream_info.md",
+          "sha256": "c753787e1b6e990da80f7df0ecfb4820da545a08fdf8270806af47970166e8be",
+          "bytes": 2842
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "﻿Copyright 2021 The Anek Project Authors (https://github.com/EkType/Anek)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "baloochettan2",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "font_filenames": [
+        "BalooChettan2[wght].ttf"
+      ],
+      "source_paths": [
+        "ofl/baloochettan2/BalooChettan2[wght].ttf",
+        "ofl/baloochettan2/OFL.txt",
+        "ofl/baloochettan2/METADATA.pb",
+        "ofl/baloochettan2/upstream_info.md"
+      ],
+      "license_filename": "OFL.txt",
+      "split": "validation",
+      "lineage_group": "ektype-baloo-chettan",
+      "lineage_evidence": "Official family identity and upstream metadata; all Noto Malayalam variants conservatively grouped. Anek/Baloo are separate design families.",
+      "assets": [
+        {
+          "source_path": "ofl/baloochettan2/BalooChettan2[wght].ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/baloochettan2/BalooChettan2[wght].ttf",
+          "local_path": "data/fonts/baloochettan2/BalooChettan2[wght].ttf",
+          "sha256": "8f0de4f81b40d314a129c55a3a9e58411868ca9a452edb57537488853f46db86",
+          "bytes": 339860
+        },
+        {
+          "source_path": "ofl/baloochettan2/OFL.txt",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/baloochettan2/OFL.txt",
+          "local_path": "data/fonts/baloochettan2/OFL.txt",
+          "sha256": "ad09b05dc8bc678c9daf7c4c5f7ef1f55e5726127f4330b2e98e40b9dffcb860",
+          "bytes": 4384
+        },
+        {
+          "source_path": "ofl/baloochettan2/METADATA.pb",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/baloochettan2/METADATA.pb",
+          "local_path": "data/fonts/baloochettan2/METADATA.pb",
+          "sha256": "e06b899f72e9e4d1a62086170e9abd85ed69dcc52f6c72e7c03a29438cbc0dcb",
+          "bytes": 1079
+        },
+        {
+          "source_path": "ofl/baloochettan2/upstream_info.md",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/baloochettan2/upstream_info.md",
+          "local_path": "data/fonts/baloochettan2/upstream_info.md",
+          "sha256": "0090b443edd19a700cadda2574135e2c7f2d54aa8ec806f78dfc2196322a0bac",
+          "bytes": 3134
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "﻿Copyright 2019 The Baloo 2 Project Authors (https://github.com/EkType/Baloo2)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "chilanka",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "font_filenames": [
+        "Chilanka-Regular.ttf"
+      ],
+      "source_paths": [
+        "ofl/chilanka/Chilanka-Regular.ttf",
+        "ofl/chilanka/OFL.txt",
+        "ofl/chilanka/METADATA.pb",
+        "ofl/chilanka/upstream_info.md"
+      ],
+      "license_filename": "OFL.txt",
+      "split": "test",
+      "lineage_group": "smc-chilanka",
+      "lineage_evidence": "Official family identity and upstream metadata; all Noto Malayalam variants conservatively grouped. Anek/Baloo are separate design families.",
+      "assets": [
+        {
+          "source_path": "ofl/chilanka/Chilanka-Regular.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/chilanka/Chilanka-Regular.ttf",
+          "local_path": "data/fonts/chilanka/Chilanka-Regular.ttf",
+          "sha256": "c6ce47d1a8d387310469c8e355351ff2bd4106030c2a45f1cef0c93215075ed7",
+          "bytes": 352832
+        },
+        {
+          "source_path": "ofl/chilanka/OFL.txt",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/chilanka/OFL.txt",
+          "local_path": "data/fonts/chilanka/OFL.txt",
+          "sha256": "f7516c3dde20383922ee27750d432cc2b95b4ba275204d374b7305ef95ed2d14",
+          "bytes": 4389
+        },
+        {
+          "source_path": "ofl/chilanka/METADATA.pb",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/chilanka/METADATA.pb",
+          "local_path": "data/fonts/chilanka/METADATA.pb",
+          "sha256": "04ea606d56058daf74b99e154258b0045df7be580b773372d00d1b08539e35c4",
+          "bytes": 781
+        },
+        {
+          "source_path": "ofl/chilanka/upstream_info.md",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/chilanka/upstream_info.md",
+          "local_path": "data/fonts/chilanka/upstream_info.md",
+          "sha256": "b8fca54c2357aff64a43de8887b517bd39f0ca5b7e68cca7928c1f1557e6a551",
+          "bytes": 3294
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Copyright 2023 The Chilanka Project Authors (https://gitlab.com/smc/fonts/chilanka/)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttps://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "gayathri",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "font_filenames": [
+        "Gayathri-Thin.ttf",
+        "Gayathri-Regular.ttf",
+        "Gayathri-Bold.ttf"
+      ],
+      "source_paths": [
+        "ofl/gayathri/Gayathri-Thin.ttf",
+        "ofl/gayathri/Gayathri-Regular.ttf",
+        "ofl/gayathri/Gayathri-Bold.ttf",
+        "ofl/gayathri/OFL.txt",
+        "ofl/gayathri/METADATA.pb",
+        "ofl/gayathri/upstream_info.md"
+      ],
+      "license_filename": "OFL.txt",
+      "split": "train",
+      "lineage_group": "smc-gayathri",
+      "lineage_evidence": "Official family identity and upstream metadata; all Noto Malayalam variants conservatively grouped. Anek/Baloo are separate design families.",
+      "assets": [
+        {
+          "source_path": "ofl/gayathri/Gayathri-Thin.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/Gayathri-Thin.ttf",
+          "local_path": "data/fonts/gayathri/Gayathri-Thin.ttf",
+          "sha256": "5c60a888ea5c0d1d259a1803fdbe9d7fa5c8ef9edce952482efa9f59dde4519d",
+          "bytes": 163828
+        },
+        {
+          "source_path": "ofl/gayathri/Gayathri-Regular.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/Gayathri-Regular.ttf",
+          "local_path": "data/fonts/gayathri/Gayathri-Regular.ttf",
+          "sha256": "c4fab5d994518247f78d96bf212a7d5b36563b60663136765fbaebd33a74d4f9",
+          "bytes": 162884
+        },
+        {
+          "source_path": "ofl/gayathri/Gayathri-Bold.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/Gayathri-Bold.ttf",
+          "local_path": "data/fonts/gayathri/Gayathri-Bold.ttf",
+          "sha256": "ad62d4ab2990d5bba9203c205513a8e162a44a03c58269f9a8b138cad9c0d5e3",
+          "bytes": 163828
+        },
+        {
+          "source_path": "ofl/gayathri/OFL.txt",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/OFL.txt",
+          "local_path": "data/fonts/gayathri/OFL.txt",
+          "sha256": "b2cc52a7162f0c8f71924211d040de37b19894f563a0190a75c017e2dc28d08a",
+          "bytes": 4386
+        },
+        {
+          "source_path": "ofl/gayathri/METADATA.pb",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/METADATA.pb",
+          "local_path": "data/fonts/gayathri/METADATA.pb",
+          "sha256": "e31952ee30273ea9f6766871b29ca2d3ad9d35270372544e8535bae1e4772c9e",
+          "bytes": 1132
+        },
+        {
+          "source_path": "ofl/gayathri/upstream_info.md",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/gayathri/upstream_info.md",
+          "local_path": "data/fonts/gayathri/upstream_info.md",
+          "sha256": "a424c5d6ab2810813b82f0c84a72283f5577818df70efc33ffa4ea4e867ca03c",
+          "bytes": 5400
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Copyright 2019 The Gayathri Project Authors (https://gitlab.com/smc/fonts/gayathri)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "manjari",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "font_filenames": [
+        "Manjari-Thin.ttf",
+        "Manjari-Regular.ttf",
+        "Manjari-Bold.ttf"
+      ],
+      "source_paths": [
+        "ofl/manjari/Manjari-Thin.ttf",
+        "ofl/manjari/Manjari-Regular.ttf",
+        "ofl/manjari/Manjari-Bold.ttf",
+        "ofl/manjari/OFL.txt",
+        "ofl/manjari/METADATA.pb",
+        "ofl/manjari/upstream_info.md"
+      ],
+      "license_filename": "OFL.txt",
+      "split": "validation",
+      "lineage_group": "smc-manjari",
+      "lineage_evidence": "Official family identity and upstream metadata; all Noto Malayalam variants conservatively grouped. Anek/Baloo are separate design families.",
+      "assets": [
+        {
+          "source_path": "ofl/manjari/Manjari-Thin.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/Manjari-Thin.ttf",
+          "local_path": "data/fonts/manjari/Manjari-Thin.ttf",
+          "sha256": "0eab2fd482b2b0e6cd469c53d09513a2303ff91c86dc8c1ba42acfc73242bd72",
+          "bytes": 152332
+        },
+        {
+          "source_path": "ofl/manjari/Manjari-Regular.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/Manjari-Regular.ttf",
+          "local_path": "data/fonts/manjari/Manjari-Regular.ttf",
+          "sha256": "16460924696bfea2a2f71b4201d8786867c6413b548ecbd22bc6bfe55be90f95",
+          "bytes": 151056
+        },
+        {
+          "source_path": "ofl/manjari/Manjari-Bold.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/Manjari-Bold.ttf",
+          "local_path": "data/fonts/manjari/Manjari-Bold.ttf",
+          "sha256": "f19fef695b28e5448ae87451dfbab426676cadf4b59340558a157c0071b69d26",
+          "bytes": 151864
+        },
+        {
+          "source_path": "ofl/manjari/OFL.txt",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/OFL.txt",
+          "local_path": "data/fonts/manjari/OFL.txt",
+          "sha256": "2e144823e28b854ff5e1d41db9a2180fdb1d8e44a71c2ae4fca5c4b2a5adde4c",
+          "bytes": 4378
+        },
+        {
+          "source_path": "ofl/manjari/METADATA.pb",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/METADATA.pb",
+          "local_path": "data/fonts/manjari/METADATA.pb",
+          "sha256": "d74e454215a47f514d4998353960798294e4d07605ae7e7b9cc1213ba41f35c4",
+          "bytes": 1435
+        },
+        {
+          "source_path": "ofl/manjari/upstream_info.md",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/manjari/upstream_info.md",
+          "local_path": "data/fonts/manjari/upstream_info.md",
+          "sha256": "26a25a3f721f19a85cd8147d557714d66612c1274f66c9a28daad63c3a8cc93f",
+          "bytes": 6202
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Copyright 2018 The Manjari Project Authors (https://github.com/smc/manjari\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "notosansmalayalam",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "font_filenames": [
+        "NotoSansMalayalam[wdth,wght].ttf"
+      ],
+      "source_paths": [
+        "ofl/notosansmalayalam/NotoSansMalayalam[wdth,wght].ttf",
+        "ofl/notosansmalayalam/OFL.txt",
+        "ofl/notosansmalayalam/METADATA.pb",
+        "ofl/notosansmalayalam/upstream_info.md"
+      ],
+      "license_filename": "OFL.txt",
+      "split": "test",
+      "lineage_group": "noto-malayalam",
+      "lineage_evidence": "Official family identity and upstream metadata; all Noto Malayalam variants conservatively grouped. Anek/Baloo are separate design families.",
+      "assets": [
+        {
+          "source_path": "ofl/notosansmalayalam/NotoSansMalayalam[wdth,wght].ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notosansmalayalam/NotoSansMalayalam[wdth,wght].ttf",
+          "local_path": "data/fonts/notosansmalayalam/NotoSansMalayalam[wdth,wght].ttf",
+          "sha256": "312e0e7c3cc15fa09eb42a8f749eeb246b593ed420e3c81aafe8d910c3a6fb56",
+          "bytes": 504204
+        },
+        {
+          "source_path": "ofl/notosansmalayalam/OFL.txt",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notosansmalayalam/OFL.txt",
+          "local_path": "data/fonts/notosansmalayalam/OFL.txt",
+          "sha256": "1df18163a0bf60f02131401ba1609df90051f40c4047684dda1c8a2e9586f7f2",
+          "bytes": 4385
+        },
+        {
+          "source_path": "ofl/notosansmalayalam/METADATA.pb",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notosansmalayalam/METADATA.pb",
+          "local_path": "data/fonts/notosansmalayalam/METADATA.pb",
+          "sha256": "04c0c4f45bfd7eade8ee48dd6dc56586eda3e3514c355fc078cef966bc47cc1d",
+          "bytes": 1420
+        },
+        {
+          "source_path": "ofl/notosansmalayalam/upstream_info.md",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notosansmalayalam/upstream_info.md",
+          "local_path": "data/fonts/notosansmalayalam/upstream_info.md",
+          "sha256": "69c96354080099662772a64784b4c46d5112902811970100e506bcc378b11244",
+          "bytes": 685
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/malayalam)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttps://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "notoserifmalayalam",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "font_filenames": [
+        "NotoSerifMalayalam[wght].ttf"
+      ],
+      "source_paths": [
+        "ofl/notoserifmalayalam/NotoSerifMalayalam[wght].ttf",
+        "ofl/notoserifmalayalam/OFL.txt",
+        "ofl/notoserifmalayalam/METADATA.pb",
+        "ofl/notoserifmalayalam/upstream_info.md"
+      ],
+      "license_filename": "OFL.txt",
+      "split": "test",
+      "lineage_group": "noto-malayalam",
+      "lineage_evidence": "Official family identity and upstream metadata; all Noto Malayalam variants conservatively grouped. Anek/Baloo are separate design families.",
+      "assets": [
+        {
+          "source_path": "ofl/notoserifmalayalam/NotoSerifMalayalam[wght].ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notoserifmalayalam/NotoSerifMalayalam[wght].ttf",
+          "local_path": "data/fonts/notoserifmalayalam/NotoSerifMalayalam[wght].ttf",
+          "sha256": "eed354cadb35992df6e8b32fdb7edb399989b165f0f25e7a921009683db26e8e",
+          "bytes": 242048
+        },
+        {
+          "source_path": "ofl/notoserifmalayalam/OFL.txt",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notoserifmalayalam/OFL.txt",
+          "local_path": "data/fonts/notoserifmalayalam/OFL.txt",
+          "sha256": "1df18163a0bf60f02131401ba1609df90051f40c4047684dda1c8a2e9586f7f2",
+          "bytes": 4385
+        },
+        {
+          "source_path": "ofl/notoserifmalayalam/METADATA.pb",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notoserifmalayalam/METADATA.pb",
+          "local_path": "data/fonts/notoserifmalayalam/METADATA.pb",
+          "sha256": "3fca3bf0fb5820674912694d72e59d5d6fa90ca1f9bca8b891617ba483fd150c",
+          "bytes": 1351
+        },
+        {
+          "source_path": "ofl/notoserifmalayalam/upstream_info.md",
+          "url": "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/notoserifmalayalam/upstream_info.md",
+          "local_path": "data/fonts/notoserifmalayalam/upstream_info.md",
+          "sha256": "cbf4b37c4be023c5ab4dc081e57752239f737a70e6cda6223534b135518b4327",
+          "bytes": 851
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/malayalam)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttps://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "anjalioldlipi",
+      "repository": "smc/AnjaliOldLipi",
+      "commit": "924e6bafca7c636869d2d6163f74ac945cff8e1f",
+      "font_filenames": [
+        "AnjaliOldLipi-Regular.ttf"
+      ],
+      "source_paths": [
+        "ttf/AnjaliOldLipi-Regular.ttf",
+        "LICENSE.txt",
+        "README.md"
+      ],
+      "license_filename": "LICENSE.txt",
+      "split": "train",
+      "lineage_group": "kevin-siji-designs",
+      "lineage_evidence": "Official README; AnjaliOldLipi/Karumbi share Kevin & Siji and are grouped conservatively; Meera is Rachana sans counterpart and grouped conservatively; Uroob/Bahadur would share a group. Different glyph designs are not grouped solely because they share shaping rules.",
+      "assets": [
+        {
+          "source_path": "ttf/AnjaliOldLipi-Regular.ttf",
+          "url": "https://raw.githubusercontent.com/smc/AnjaliOldLipi/924e6bafca7c636869d2d6163f74ac945cff8e1f/ttf/AnjaliOldLipi-Regular.ttf",
+          "local_path": "data/fonts/anjalioldlipi/AnjaliOldLipi-Regular.ttf",
+          "sha256": "2b449727f8bf1a7f687216a091494bd42b0d722990016d9e3298fe1372a0b3e2",
+          "bytes": 331100
+        },
+        {
+          "source_path": "LICENSE.txt",
+          "url": "https://raw.githubusercontent.com/smc/AnjaliOldLipi/924e6bafca7c636869d2d6163f74ac945cff8e1f/LICENSE.txt",
+          "local_path": "data/fonts/anjalioldlipi/LICENSE.txt",
+          "sha256": "b3aac4ebf174f704a70a79e6525d496a6afed169da08afd9de4aeed4823c908c",
+          "bytes": 4609
+        },
+        {
+          "source_path": "README.md",
+          "url": "https://raw.githubusercontent.com/smc/AnjaliOldLipi/924e6bafca7c636869d2d6163f74ac945cff8e1f/README.md",
+          "local_path": "data/fonts/anjalioldlipi/README.md",
+          "sha256": "74025d3dc46e99b7626067958683b26346faea829f9216639655cbd44f9c987d",
+          "bytes": 874
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Digitized data copyright (c) 2004,2016, Kevin & Siji,\n                             2008, Hiran Venugopalan.\n                             2014, Rajeesh K Nambiar \n                             2016, Santhosh Thottingal\n                             2008-2016 Swathanthra Malayalam Computing, http://smc.org.in\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "karumbi",
+      "repository": "smc/Karumbi",
+      "commit": "3fd416e6aa0f55a1db00d2c973f04943a398e67f",
+      "font_filenames": [
+        "Karumbi.ttf"
+      ],
+      "source_paths": [
+        "ttf/Karumbi.ttf",
+        "LICENSE.txt",
+        "README.md"
+      ],
+      "license_filename": "LICENSE.txt",
+      "split": "train",
+      "lineage_group": "kevin-siji-designs",
+      "lineage_evidence": "Official README; AnjaliOldLipi/Karumbi share Kevin & Siji and are grouped conservatively; Meera is Rachana sans counterpart and grouped conservatively; Uroob/Bahadur would share a group. Different glyph designs are not grouped solely because they share shaping rules.",
+      "assets": [
+        {
+          "source_path": "ttf/Karumbi.ttf",
+          "url": "https://raw.githubusercontent.com/smc/Karumbi/3fd416e6aa0f55a1db00d2c973f04943a398e67f/ttf/Karumbi.ttf",
+          "local_path": "data/fonts/karumbi/Karumbi.ttf",
+          "sha256": "f7f0933f010c599bd13ee3249dfce471377aadd10a91e5489a97dafd9d187e0d",
+          "bytes": 475372
+        },
+        {
+          "source_path": "LICENSE.txt",
+          "url": "https://raw.githubusercontent.com/smc/Karumbi/3fd416e6aa0f55a1db00d2c973f04943a398e67f/LICENSE.txt",
+          "local_path": "data/fonts/karumbi/LICENSE.txt",
+          "sha256": "48fe3b4f7d6cee2b51ca9254228edb3128f3e06d04f7743d19400187d18639b5",
+          "bytes": 4500
+        },
+        {
+          "source_path": "README.md",
+          "url": "https://raw.githubusercontent.com/smc/Karumbi/3fd416e6aa0f55a1db00d2c973f04943a398e67f/README.md",
+          "local_path": "data/fonts/karumbi/README.md",
+          "sha256": "84920d7a20f041e9e4d77e63de1041a4c1d5407ad12f8a45339f58782e048ad4",
+          "bytes": 883
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Digitized data copyright (c) 2005-2016 Kevin & Siji\n                         (c) 2016 Santhosh Thottingal\n                         (c) 2015-2016 Swathanthra Malayalam Computing(http://smc.org.in)\n\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "dyuthi",
+      "repository": "smc/Dyuthi",
+      "commit": "2484364a8813a06098f4e6db552d48d2f4f5da29",
+      "font_filenames": [
+        "Dyuthi.ttf"
+      ],
+      "source_paths": [
+        "ttf/Dyuthi.ttf",
+        "LICENSE.txt",
+        "README.md"
+      ],
+      "license_filename": "LICENSE.txt",
+      "split": "train",
+      "lineage_group": "smc-dyuthi",
+      "lineage_evidence": "Official README; AnjaliOldLipi/Karumbi share Kevin & Siji and are grouped conservatively; Meera is Rachana sans counterpart and grouped conservatively; Uroob/Bahadur would share a group. Different glyph designs are not grouped solely because they share shaping rules.",
+      "assets": [
+        {
+          "source_path": "ttf/Dyuthi.ttf",
+          "url": "https://raw.githubusercontent.com/smc/Dyuthi/2484364a8813a06098f4e6db552d48d2f4f5da29/ttf/Dyuthi.ttf",
+          "local_path": "data/fonts/dyuthi/Dyuthi.ttf",
+          "sha256": "9ae2b8bf5a873eb8fc8a37f98bd340c2b3b7375f743a1bd736a3295a0688dd50",
+          "bytes": 233124
+        },
+        {
+          "source_path": "LICENSE.txt",
+          "url": "https://raw.githubusercontent.com/smc/Dyuthi/2484364a8813a06098f4e6db552d48d2f4f5da29/LICENSE.txt",
+          "local_path": "data/fonts/dyuthi/LICENSE.txt",
+          "sha256": "3c039a91d61ba6b48397d0c1b1af9306686c79cfd0bd0735089b8499955a3e30",
+          "bytes": 40752
+        },
+        {
+          "source_path": "README.md",
+          "url": "https://raw.githubusercontent.com/smc/Dyuthi/2484364a8813a06098f4e6db552d48d2f4f5da29/README.md",
+          "local_path": "data/fonts/dyuthi/README.md",
+          "sha256": "752803160361fefedb35df0b3eb742bd89bfb607f42d05814edbed87fbbcd235",
+          "bytes": 1012
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Digitized data copyright(c) 2007-2016 Hiran Venugopalan, Hussain K H, Swathanthra Malayalam Computing (http://smc.org.in)\n                        (c) 2007 Suresh P, \n                        (c) 2016 Santhosh Thottingal, Rajeesh K Nambiar, Kavya Manohar \n\n  \n\n    This program is free software: you can redistribute it and/or modify\n    it under the terms of  SIL Open Font License, Version 1.1  or the \n    GNU General Public License as published by the Free Software Foundation,\n    either version 3 of the License, or (at your option) any later version \n    with Font Exception.\n\n  \n    This Font Software is duel licensed under the SIL Open Font License,\n    Version 1.1 and GPLV3+ Licence with Font Exception.  These Licenses are\n    copied below\n\n\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "rachana",
+      "repository": "smc/Rachana",
+      "commit": "1eb2feae74a9245afc16e43799be8c8e9a98e609",
+      "font_filenames": [
+        "Rachana-Bold.ttf",
+        "Rachana-Regular.ttf"
+      ],
+      "source_paths": [
+        "ttf/Rachana-Bold.ttf",
+        "ttf/Rachana-Regular.ttf",
+        "LICENSE.txt",
+        "README.md"
+      ],
+      "license_filename": "LICENSE.txt",
+      "split": "train",
+      "lineage_group": "rachana-meera-related",
+      "lineage_evidence": "Official README; AnjaliOldLipi/Karumbi share Kevin & Siji and are grouped conservatively; Meera is Rachana sans counterpart and grouped conservatively; Uroob/Bahadur would share a group. Different glyph designs are not grouped solely because they share shaping rules.",
+      "assets": [
+        {
+          "source_path": "ttf/Rachana-Bold.ttf",
+          "url": "https://raw.githubusercontent.com/smc/Rachana/1eb2feae74a9245afc16e43799be8c8e9a98e609/ttf/Rachana-Bold.ttf",
+          "local_path": "data/fonts/rachana/Rachana-Bold.ttf",
+          "sha256": "b4ec5fae2950825a6f807afdd05edf3dd4aaf6519e4641e21c8567cbf1ede7b8",
+          "bytes": 320040
+        },
+        {
+          "source_path": "ttf/Rachana-Regular.ttf",
+          "url": "https://raw.githubusercontent.com/smc/Rachana/1eb2feae74a9245afc16e43799be8c8e9a98e609/ttf/Rachana-Regular.ttf",
+          "local_path": "data/fonts/rachana/Rachana-Regular.ttf",
+          "sha256": "b20cde573e9a5cba55492915156f715bd75cff9897fd50d220fbc8d52256e90b",
+          "bytes": 296904
+        },
+        {
+          "source_path": "LICENSE.txt",
+          "url": "https://raw.githubusercontent.com/smc/Rachana/1eb2feae74a9245afc16e43799be8c8e9a98e609/LICENSE.txt",
+          "local_path": "data/fonts/rachana/LICENSE.txt",
+          "sha256": "8454343e7d16a7b4ee5ddc594ee67761531a4ca84cb47cf2a8196223b3d568ac",
+          "bytes": 41926
+        },
+        {
+          "source_path": "README.md",
+          "url": "https://raw.githubusercontent.com/smc/Rachana/1eb2feae74a9245afc16e43799be8c8e9a98e609/README.md",
+          "local_path": "data/fonts/rachana/README.md",
+          "sha256": "eaa0e0c77da270ebb541c05c3ca7db182f146a5a34d549e4a345fcf1a43c8566",
+          "bytes": 4566
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Rachana \n========\nDigitized data copyright (c) 2004-2005 Rachana Akshara Vedi (Chitrajakumar R, Hussain KH, Gangadharan N, Vijayakumaran Nair, Subash Kuraiakose), \n                         (c) 2006-2016 Hussain K H, Suresh P, Santhosh Thottingal, Rajeesh K Nambiar, Swathanthra Malayalam Computing (http://smc.org.in)\n\n    This program is free software: you can redistribute it and/or modify\n    it under the terms of  SIL Open Font License, Version 1.1  or the \n    GNU General Public License as published by the Free Software Foundation,\n    either version 3 of the License, or (at your option) any later version.\n\n  \n    This Font Software is dual licensed under the SIL Open Font License,\n    Version 1.1 and GPLV3+ Licence with Font Exception.These licenses are\n    copied below\n\nRachana Bold\n============\nDigitized data copyright (c) 2015-2016 Hussain KH, Rajeesh K Nambiar, Santhosh Thottingal, Swathanthra Malayalam Computing (http://smc.org.in)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "meera",
+      "repository": "smc/Meera",
+      "commit": "aebe37081332d93e02a83a8649120401967fc379",
+      "font_filenames": [
+        "Meera.ttf"
+      ],
+      "source_paths": [
+        "ttf/Meera.ttf",
+        "LICENSE.txt",
+        "README.md"
+      ],
+      "license_filename": "LICENSE.txt",
+      "split": "train",
+      "lineage_group": "rachana-meera-related",
+      "lineage_evidence": "Official README; AnjaliOldLipi/Karumbi share Kevin & Siji and are grouped conservatively; Meera is Rachana sans counterpart and grouped conservatively; Uroob/Bahadur would share a group. Different glyph designs are not grouped solely because they share shaping rules.",
+      "assets": [
+        {
+          "source_path": "ttf/Meera.ttf",
+          "url": "https://raw.githubusercontent.com/smc/Meera/aebe37081332d93e02a83a8649120401967fc379/ttf/Meera.ttf",
+          "local_path": "data/fonts/meera/Meera.ttf",
+          "sha256": "2ed5284289a42168dfac3227dc3d6c8da7169249dc5f822f8b4424fd5731bf67",
+          "bytes": 301880
+        },
+        {
+          "source_path": "LICENSE.txt",
+          "url": "https://raw.githubusercontent.com/smc/Meera/aebe37081332d93e02a83a8649120401967fc379/LICENSE.txt",
+          "local_path": "data/fonts/meera/LICENSE.txt",
+          "sha256": "6e2243d6c1de055b8e625b6c33a6c29880e56df33b601482d9856562ff9b95a1",
+          "bytes": 41424
+        },
+        {
+          "source_path": "README.md",
+          "url": "https://raw.githubusercontent.com/smc/Meera/aebe37081332d93e02a83a8649120401967fc379/README.md",
+          "local_path": "data/fonts/meera/README.md",
+          "sha256": "41042d3781afdac127590aabb244b647c0f6d3c1e97cf6e32e2c2c64bde1e125",
+          "bytes": 1752
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "\nDigitized data copyright (C) 2007-2016 Hussain K.H, Suresh P, Santhosh Thottingal, Rajeesh Nambiar, Swathanthra Malayalam Computing(http://smc.org.in)\n    \n    \n\n    This program is free software: you can redistribute it and/or modify\n    it under the terms of  SIL Open Font License, Version 1.1  or the \n    GNU General Public License as published by the Free Software Foundation,\n    either version 3 of the License, or (at your option) any later version.\n\n  \n    This Font Software is duel licensed under the SIL Open Font License,\n    Version 1.1 and GPLV3+ Licence with Font Exception.These licenses are\n    copied below\n\n\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "uroob",
+      "repository": "smc/Uroob",
+      "commit": "16de2527b2efbdd4b6ca0b4e402a91b5653595b4",
+      "font_filenames": [
+        "Uroob.ttf"
+      ],
+      "source_paths": [
+        "ttf/Uroob.ttf",
+        "LICENSE.txt",
+        "README.md"
+      ],
+      "license_filename": "LICENSE.txt",
+      "split": "validation",
+      "lineage_group": "uroob-related",
+      "lineage_evidence": "Official README; AnjaliOldLipi/Karumbi share Kevin & Siji and are grouped conservatively; Meera is Rachana sans counterpart and grouped conservatively; Uroob/Bahadur would share a group. Different glyph designs are not grouped solely because they share shaping rules.",
+      "assets": [
+        {
+          "source_path": "ttf/Uroob.ttf",
+          "url": "https://raw.githubusercontent.com/smc/Uroob/16de2527b2efbdd4b6ca0b4e402a91b5653595b4/ttf/Uroob.ttf",
+          "local_path": "data/fonts/uroob/Uroob.ttf",
+          "sha256": "45a29966508be9dd27c8925f72547201b49361529e64bc084efe5ff9371fd4f4",
+          "bytes": 178520
+        },
+        {
+          "source_path": "LICENSE.txt",
+          "url": "https://raw.githubusercontent.com/smc/Uroob/16de2527b2efbdd4b6ca0b4e402a91b5653595b4/LICENSE.txt",
+          "local_path": "data/fonts/uroob/LICENSE.txt",
+          "sha256": "1c159bbe7fd3a06208958ee9b4138caa97ea5506ceb3856dffb6fd10952b763b",
+          "bytes": 4460
+        },
+        {
+          "source_path": "README.md",
+          "url": "https://raw.githubusercontent.com/smc/Uroob/16de2527b2efbdd4b6ca0b4e402a91b5653595b4/README.md",
+          "local_path": "data/fonts/uroob/README.md",
+          "sha256": "b48af93e0248a29d20ded570e0de589130fe2664e19582ff27cfcc3f4856d7f0",
+          "bytes": 1056
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Digitized data copyright (c) 2015-2016 Hussain KH, Kavya Manohar, Rajeesh K Nambiar, Santhosh Thottingal, Swathanthra Malayalam Computing (http://smc.org.in)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    },
+    {
+      "family": "malini",
+      "repository": "smc/Malini",
+      "commit": "cd65132475eb84e90c1c6b52054b7512cf7b06f6",
+      "font_filenames": [
+        "Malini-VF.ttf"
+      ],
+      "source_paths": [
+        "tests/Malini-VF.ttf",
+        "OFL.txt",
+        "README.md"
+      ],
+      "license_filename": "OFL.txt",
+      "split": "train",
+      "lineage_group": "smc-malini",
+      "lineage_evidence": "Official README; AnjaliOldLipi/Karumbi share Kevin & Siji and are grouped conservatively; Meera is Rachana sans counterpart and grouped conservatively; Uroob/Bahadur would share a group. Different glyph designs are not grouped solely because they share shaping rules.",
+      "assets": [
+        {
+          "source_path": "tests/Malini-VF.ttf",
+          "url": "https://raw.githubusercontent.com/smc/Malini/cd65132475eb84e90c1c6b52054b7512cf7b06f6/tests/Malini-VF.ttf",
+          "local_path": "data/fonts/malini/Malini-VF.ttf",
+          "sha256": "5b8dece409970b9def3c1e8a42e69f14a19440b5d961a8f88befa593463c375c",
+          "bytes": 874732
+        },
+        {
+          "source_path": "OFL.txt",
+          "url": "https://raw.githubusercontent.com/smc/Malini/cd65132475eb84e90c1c6b52054b7512cf7b06f6/OFL.txt",
+          "local_path": "data/fonts/malini/OFL.txt",
+          "sha256": "3767d366c05981a4206afe9866f94e0f6f30cd0492a0190c1b0359b4845c46dc",
+          "bytes": 4384
+        },
+        {
+          "source_path": "README.md",
+          "url": "https://raw.githubusercontent.com/smc/Malini/cd65132475eb84e90c1c6b52054b7512cf7b06f6/README.md",
+          "local_path": "data/fonts/malini/README.md",
+          "sha256": "164c34bae2eee03ee5a879eb952c80e47932abd4312c269ea6638b1c8280b1d5",
+          "bytes": 13855
+        }
+      ],
+      "license_selected": "OFL-1.1",
+      "notice_header": "Copyright 2024 The Malini Project Authors (https://gitlab.com/smc/fonts/Malini)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttps://openfontlicense.org\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\n",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font.",
+      "approved_usage": {
+        "local_rendering_and_research": true,
+        "redistribute_original_font_binary": "Only together with retained copyright/licence notices under OFL; binaries excluded from Git.",
+        "derivative_fonts": "OFL conditions and any reserved names apply; Mashi-generated font naming must not reuse source family names.",
+        "model_weights": "Local research only in this campaign. OFL does not explicitly resolve ML-weight distribution; no unrestricted model licence asserted and no weights published."
+      }
+    }
+  ],
+  "split_policy": "Frozen family/derivative-group assignment before rendering or tuning; all weights, variable instances and augmentation inherit family split. Same-name SMC/RIT derivatives would share a group; no RIT binary acquired.",
+  "licence_policy": "Exact per-asset notices retained. Dual licences use the offered OFL option. No font binaries in Git; no assertion of unrestricted weight/output licensing."
+}

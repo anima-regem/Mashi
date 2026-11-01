@@ -2,6 +2,10 @@ import os
 import secrets
 import time
 import io
+import base64
+import hashlib
+import json
+from statistics import median
 from copy import deepcopy
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -17,6 +21,8 @@ from . import ocr
 from .exporting import export_bundle, export_preflight, preview_project
 from .font_metrics import TypographyOptions
 from .proofing import PreviewCache, bounded_diagnostics
+from .ml_capture import aligned_reference, references_current, pixel_boundaries
+from .ml_service import CompletionService, decode_prediction, source_terms, LICENSE_ROOT
 from .imaging import MAX_BYTES, decode, propose_regions, validate_box
 from .models import (
     MergeInput,
@@ -31,6 +37,11 @@ from .models import (
     RevisionInput,
     RegionRestoreInput,
     ProofInput,
+    CompletionJob,
+    CompletionReferences,
+    CompletionGenerate,
+    CompletionReview,
+    CompletionVector,
 )
 from .preparation import prepare, source_polygons, suggest_corners
 from .predictors import coverage
@@ -76,6 +87,9 @@ def create_app(root=None, *, testing=False):
     app.state.store = store
     previews = PreviewCache()
     app.state.previews = previews
+    completion = CompletionService()
+    app.state.completion = completion
+    app.add_event_handler("shutdown", completion.unload)
     token = secrets.token_urlsafe(32)
     app.add_middleware(BodyLimit)
     hosts = ["localhost", "127.0.0.1"] + (["testserver"] if testing else [])
@@ -506,12 +520,302 @@ def create_app(root=None, *, testing=False):
     def get_coverage(project_id: str):
         return coverage(project(project_id))
 
+    @app.get("/api/completion/capabilities")
+    def completion_capabilities():
+        return completion.capabilities()
+
+    @app.post("/api/projects/{project_id}/completion/load")
+    def completion_load(project_id: str, data: CompletionJob):
+        check_revision(project(project_id), data.revision)
+        result = completion.load(project_id, data.job_id)
+        check_revision(project(project_id), data.revision)
+        return result
+
+    @app.post("/api/completion/unload")
+    def completion_unload():
+        completion.unload()
+        return completion.capabilities()
+
+    @app.post("/api/projects/{project_id}/completion/cancel")
+    def completion_cancel(project_id: str, data: CompletionJob):
+        completion.cancel(project_id, data.job_id)
+        doc = project(project_id)
+        changed = []
+        for item in doc.get("completion_suggestions", []):
+            if item["generation"]["job_id"] == data.job_id and item["review_state"] == "pending":
+                item.update(review_state="rejected", canceled=True, revision=item["revision"] + 1)
+                changed.append(item["id"])
+        if changed:
+            event(doc, "cancel-generated-suggestions", changed)
+        return {"canceled": True}
+
+    def completion_references(doc, ids):
+        if completion.model is None:
+            raise ValueError("Load the configured local checkpoint first")
+        if len(set(ids)) != len(ids):
+            raise ValueError("Choose distinct reference crops")
+        results, labels = [], set()
+        for rid in ids:
+            item = region(doc, rid)
+            allowed = item["provenance"] == "observed" or (
+                doc.get("source_kind") == "synthetic-fixture"
+                and item["provenance"] == "synthetic-fixture"
+            )
+            if (
+                not allowed
+                or not item["confirmed"]
+                or not item.get("vector")
+                or item["label"] not in completion.model["labels"]
+                or item["label"] in labels
+            ):
+                raise ValueError(
+                    "Choose one confirmed, traced, supported reference per exact sequence; generated forms cannot be references"
+                )
+            labels.add(item["label"])
+            results.append(aligned_reference(item))
+        return results
+
+    @app.post("/api/projects/{project_id}/completion/references")
+    def preview_completion_references(project_id: str, data: CompletionReferences):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        results = completion_references(doc, data.ids)
+        check_revision(project(project_id), data.revision)
+        return {"revision": data.revision, "references": results}
+
+    def suggestion(doc, suggestion_id, revision=None):
+        item = next(
+            (r for r in doc.get("completion_suggestions", []) if r["id"] == suggestion_id), None
+        )
+        if item is None:
+            raise KeyError(suggestion_id)
+        if revision is not None and item["revision"] != revision:
+            raise HTTPException(409, "Suggestion changed; reload before reviewing")
+        return item
+
+    @app.post("/api/projects/{project_id}/completion/generate")
+    def generate_completion(project_id: str, data: CompletionGenerate):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        if len(doc.get("completion_suggestions", [])) + len(data.targets) > 200:
+            raise ValueError("This page has 200 suggestions. Use manual capture or another page.")
+        refs = completion_references(doc, data.ids)
+        if not data.alignment_confirmed or data.reference_hashes != {
+            r["id"]: r["sha256"] for r in refs
+        }:
+            raise ValueError(
+                "Preview and confirm these exact reference alignments before generation"
+            )
+        present = {r["label"] for r in doc["regions"] if r["active"] and r["confirmed"]}
+        present |= {
+            r["label"]
+            for r in doc.get("completion_suggestions", [])
+            if r["review_state"] != "rejected"
+        }
+        if len(set(data.targets)) != len(data.targets) or any(
+            t not in completion.model["labels"] or t in present for t in data.targets
+        ):
+            raise ValueError(
+                "Request only unique, supported missing sequences. Review/reject an existing candidate before regenerating it."
+            )
+        result = completion.generate(project_id, data.job_id, refs, data.targets)
+        check_revision(project(project_id), data.revision)
+        if [s["label"] for s in result["suggestions"]] != data.targets or result["model"][
+            "sha256"
+        ] != completion.digest:
+            raise ValueError("Completion output does not match the requested model/targets")
+        observations = []
+        for ref in refs:
+            asset = f"reference-{uid()}.png"
+            store.asset(project_id, asset).write_bytes(base64.b64decode(ref["png"], validate=True))
+            observations.append({k: v for k, v in ref.items() if k != "png"} | {"asset": asset})
+        generation = {
+            "job_id": data.job_id,
+            "project_id": project_id,
+            "project_revision": data.revision,
+            "image_sha256": doc["image"]["canonical_sha256"],
+            "model": result["model"],
+            "observations": observations,
+            "uncertainty": "uncalibrated",
+            "method": "pca-or-mean; template inference and diagnostics disabled",
+            "request_sha256": hashlib.sha256(
+                json.dumps(data.model_dump(), sort_keys=True).encode()
+            ).hexdigest(),
+        }
+        new = []
+        for output in result["suggestions"]:
+            payload = decode_prediction(output)
+            sid = uid()
+            asset = "generated-" + sid + ".png"
+            store.asset(project_id, asset).write_bytes(payload)
+            vector = None
+            error = ""
+            ink_box = [0, 0, 96, 64]
+            try:
+                with Image.open(io.BytesIO(payload)) as image:
+                    if image.size != (96, 64):
+                        raise ValueError("Generated canvas has unexpected dimensions")
+                    bounds = (
+                        image.convert("L").point(lambda value: 255 if value < 180 else 0).getbbox()
+                    )
+                    if bounds is None:
+                        raise ValueError("Prediction has no ink")
+                    ink_box = list(bounds)
+                    cropped = image.crop(bounds)
+                    try:
+                        vector = trace(cropped.convert("RGB"), 180)
+                    except ValueError:
+                        vector = pixel_boundaries(cropped, 180)
+                vector.update(
+                    baseline=45 - ink_box[1],
+                    scale=1000 / 32,
+                    advance=max(
+                        100.0,
+                        min(
+                            5000.0,
+                            max(
+                                float(median(r["advance"] for r in refs)),
+                                vector["width"] * 31.25 + 100,
+                            ),
+                        ),
+                    ),
+                )
+            except ValueError as exception:
+                error = str(exception)
+            item = {
+                "id": sid,
+                "label": output["label"],
+                "revision": 1,
+                "active": True,
+                "confirmed": False,
+                "review_state": "pending",
+                "provenance": "model-generated",
+                "not_observed_in_photo": True,
+                "coordinate_space": "generated-canvas",
+                "box": ink_box,
+                "raster_asset": asset,
+                "raster_sha256": output["sha256"],
+                "empty_prediction": output["empty"],
+                "trace_error": error,
+                "vector": vector,
+                "generation": deepcopy(generation),
+                "history": [],
+                "vectorization": {
+                    "method": vector["tracer"] if vector else "failed",
+                    "threshold": 180,
+                    "canvas": [96, 64],
+                    "canonical_to_vector": [[1, 0, -ink_box[0]], [0, 1, -ink_box[1]], [0, 0, 1]],
+                    "ink_box": ink_box,
+                    "left_bearing_estimate": 50,
+                },
+            }
+            item["generation"].update(
+                target_sequence=output["label"],
+                raster_sha256=output["sha256"],
+                vectorization=deepcopy(item["vectorization"]),
+            )
+            new.append(item)
+        with completion.guard:
+            if (project_id, data.job_id) in completion.canceled:
+                raise ValueError("Completion request canceled")
+            doc.setdefault("completion_suggestions", []).extend(new)
+            return event(doc, "model-generated-proposals", [r["id"] for r in new])
+
+    @app.get("/api/projects/{project_id}/completion/suggestions/{suggestion_id}/raster")
+    def suggestion_raster(project_id: str, suggestion_id: str):
+        item = suggestion(project(project_id), suggestion_id)
+        return FileResponse(store.asset(project_id, item["raster_asset"]), media_type="image/png")
+
+    @app.get(
+        "/api/projects/{project_id}/completion/suggestions/{suggestion_id}/reference/{reference_id}"
+    )
+    def suggestion_reference(project_id: str, suggestion_id: str, reference_id: str):
+        item = suggestion(project(project_id), suggestion_id)
+        ref = next((r for r in item["generation"]["observations"] if r["id"] == reference_id), None)
+        if not ref:
+            raise KeyError(reference_id)
+        return FileResponse(store.asset(project_id, ref["asset"]), media_type="image/png")
+
+    @app.get("/api/projects/{project_id}/completion/suggestions/{suggestion_id}/svg")
+    def suggestion_svg(project_id: str, suggestion_id: str):
+        doc = project(project_id)
+        item = suggestion(doc, suggestion_id)
+        terms = source_terms(item["generation"]["model"]["sha256"])
+        if (
+            not item["vector"]
+            or item["review_state"] != "accepted"
+            or not terms["checkpoint_source_known"]
+            or not references_current(doc, item)
+        ):
+            raise ValueError(
+                "Accept a usable suggestion with known source terms before downloading generated geometry"
+            )
+        metadata = deepcopy(item["generation"])
+        metadata["vector_edited"] = item["vector"]["edited"]
+        metadata["source_license_texts"] = {
+            record["notice"]: (LICENSE_ROOT / record["notice"]).read_text(encoding="utf-8-sig")
+            for record in terms["notices"]
+        }
+        metadata["output_license"] = (LICENSE_ROOT / "OFL.txt").read_text()
+        return Response(
+            svg(item["vector"], "model-generated", generation=metadata),
+            media_type="image/svg+xml",
+        )
+
+    @app.post("/api/projects/{project_id}/completion/suggestions/{suggestion_id}/review")
+    def review_completion(project_id: str, suggestion_id: str, data: CompletionReview):
+        doc = project(project_id)
+        check_revision(doc, data.revision)
+        item = suggestion(doc, suggestion_id, data.suggestion_revision)
+        if data.state == "accepted" and (
+            item["empty_prediction"] or not item["vector"] or not references_current(doc, item)
+        ):
+            raise ValueError(
+                "Empty, untraced or stale-reference proposals cannot be accepted. Capture the form or generate again."
+            )
+        item["history"].append(
+            {"state": item["review_state"], "revision": item["revision"], "at": time.time()}
+        )
+        item.update(
+            review_state=data.state,
+            confirmed=data.state == "accepted",
+            revision=item["revision"] + 1,
+        )
+        return event(doc, "review-generated-" + data.state, [suggestion_id])
+
+    @app.put("/api/projects/{project_id}/completion/suggestions/{suggestion_id}/vector")
+    def edit_completion_vector(project_id: str, suggestion_id: str, data: CompletionVector):
+        doc = project(project_id)
+        check_revision(doc, data.project_revision)
+        item = suggestion(doc, suggestion_id, data.revision)
+        if not item["vector"]:
+            raise ValueError("This suggestion has no usable outline; capture the form manually")
+        validate_paths(data.paths)
+        item["history"].append(
+            {
+                "state": item["review_state"],
+                "vector": deepcopy(item["vector"]),
+                "revision": item["revision"],
+                "at": time.time(),
+            }
+        )
+        item["vector"].update(
+            paths=data.paths,
+            baseline=data.baseline,
+            scale=data.scale,
+            advance=data.advance,
+            edited=True,
+        )
+        item.update(review_state="pending", confirmed=False, revision=item["revision"] + 1)
+        return event(doc, "edit-generated-outline-review-again", [suggestion_id])
+
     @app.post("/api/projects/{project_id}/proof/{action}")
     def proof(
         project_id: str,
         action: Literal["preflight", "preview"],
         data: ProofInput,
         include_fixture: bool = False,
+        include_generated: bool = False,
     ):
         doc = project(project_id)
         check_revision(doc, data.revision)
@@ -520,7 +824,10 @@ def create_app(root=None, *, testing=False):
         if action == "preflight":
             result = {
                 "coverage": bounded_diagnostics(
-                    export_preflight(doc, data.text, include_fixture), "issues"
+                    export_preflight(
+                        doc, data.text, include_fixture, include_generated=include_generated
+                    ),
+                    "issues",
                 )
             }
         else:
@@ -529,18 +836,33 @@ def create_app(root=None, *, testing=False):
                 data.text,
                 options,
                 include_fixture,
-                lambda: preview_project(doc, data.text, include_fixture, options=options),
+                lambda: preview_project(
+                    doc,
+                    data.text,
+                    include_fixture,
+                    options=options,
+                    include_generated=include_generated,
+                ),
+                include_generated=include_generated,
             )
         check_revision(project(project_id), data.revision)
         return {**result, "project_id": project_id, "revision": data.revision}
 
     @app.post("/api/projects/{project_id}/export/{kind}")
     def export(
-        project_id: str, kind: str, include_fixture: bool = False, data: ProofInput | None = None
+        project_id: str,
+        kind: str,
+        include_fixture: bool = False,
+        data: ProofInput | None = None,
+        include_generated: bool = False,
     ):
         if kind not in {"ufo", "ttf"}:
             raise ValueError("Choose ufo or ttf")
         doc = project(project_id)
+        if include_generated and data is None:
+            raise ValueError(
+                "Generated fonts require an explicit proof body and generated-output choice"
+            )
         if data is not None:
             check_revision(doc, data.revision)
         archive = export_bundle(
@@ -549,9 +871,12 @@ def create_app(root=None, *, testing=False):
             include_fixture=include_fixture,
             options=TypographyOptions(**data.options.model_dump()) if data else None,
             required_text=data.text if data else None,
+            include_generated=include_generated,
         )
         check_revision(project(project_id), doc["revision"])
         prefix = "Mashi-SYNTHETIC" if doc.get("source_kind") == "synthetic-fixture" else "Mashi"
+        if include_generated:
+            prefix += "-GENERATED"
         return Response(
             archive,
             media_type="application/zip",

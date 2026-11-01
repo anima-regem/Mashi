@@ -10,12 +10,13 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - run: uv sync --locked --no-editable --extra dev --python 3.12
+      - run: uv sync --locked --no-editable --extra dev --extra completion --python 3.12
       - run: uv run --no-sync ruff check mashi scripts tests
       - run: uv run --no-sync pytest -q
       - run: node --check mashi/static/app.js
       - run: node --check mashi/static/capture.js
       - run: node --check mashi/static/outline.js
       - run: node --check mashi/static/proof.js
+      - run: node --check mashi/static/completion.js
       - run: node --check mashi/static/review-state.js
       - run: node --test tests/*.test.cjs

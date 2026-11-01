@@ -8,6 +8,8 @@ V1 targets HarfBuzz's `mlm2` Malayalam shaping path. `mlm2` and `mlym` are engin
 
 Every form below is conditional on confirmed, traced, eligible samples being present. A codepoint, Unicode sequence and glyph are different objects. The existing broad predictor inventory is a capture wish list, **not** a shaping support claim.
 
+Normal eligibility uses observed ink, with a separate synthetic-test opt-in. The optional [local completion adapter](LOCAL_COMPLETION.md) adds a distinct `include_generated=True` choice for accepted proposals with current references and verified source terms. Those forms retain generated provenance and OFL output terms; they must meet the same sequence dependencies, geometry, metrics and actual HarfBuzz checks. They do not extend this repertoire or establish letterform quality.
+
 | Input class | V1 behavior | Required samples |
 | --- | --- | --- |
 | Independent vowels | Direct cmap | `അആഇഈഉഊഋഌഎഏഐഒഓഔൠൡ` as needed |

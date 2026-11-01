@@ -1,0 +1,190 @@
+{
+  "scope": "Software integration using original synthetic ink; no handwriting or readability evaluation",
+  "executed_on": "2026-11-01",
+  "final_template_free_smoke": {
+    "synthetic_only": true,
+    "fixture": "original drawn ring assigned a Malayalam label for plumbing, not glyph/handwriting accuracy",
+    "checkpoint_sha256": "b5975fc1e9923e2ef460ebe2084c2c12e485008ddae17d5914ac06e2c7226d95",
+    "format_version": 3,
+    "capabilities": {
+      "pca_inference": true,
+      "mean_inference": true,
+      "template_baselines": false,
+      "nearest_template_diagnostic": false
+    },
+    "template_diagnostics_used": false,
+    "suggestions": [
+      {
+        "label": "ഖ",
+        "raster_sha256": "554f34bbd4dd73275d7ecca9f69d329c158f45e0acd3fa928872b45cc0270c97",
+        "empty": false,
+        "trace_error": "",
+        "vectorized": true,
+        "provenance": "model-generated",
+        "vectorization": {
+          "method": "pixel-boundary/v1",
+          "threshold": 180,
+          "canvas": [
+            96,
+            64
+          ],
+          "canonical_to_vector": [
+            [
+              1,
+              0,
+              -35
+            ],
+            [
+              0,
+              1,
+              -26
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ],
+          "ink_box": [
+            35,
+            26,
+            61,
+            45
+          ],
+          "left_bearing_estimate": 50
+        }
+      },
+      {
+        "label": "മ",
+        "raster_sha256": "0ed3faccdb6ff96df2c42a3e686ca0af074e46812dba02faae5d1cc8409b0d46",
+        "empty": false,
+        "trace_error": "",
+        "vectorized": true,
+        "provenance": "model-generated",
+        "vectorization": {
+          "method": "vtracer-0.6.12",
+          "threshold": 180,
+          "canvas": [
+            96,
+            64
+          ],
+          "canonical_to_vector": [
+            [
+              1,
+              0,
+              -41
+            ],
+            [
+              0,
+              1,
+              -26
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ],
+          "ink_box": [
+            41,
+            26,
+            55,
+            45
+          ],
+          "left_bearing_estimate": 50
+        }
+      },
+      {
+        "label": "ഗ",
+        "raster_sha256": "38ebf1f42f22e7db684d4f94b3c6662a08a0b35646d421c408caeb853159dc49",
+        "empty": false,
+        "trace_error": "",
+        "vectorized": true,
+        "provenance": "model-generated",
+        "vectorization": {
+          "method": "pixel-boundary/v1",
+          "threshold": 180,
+          "canvas": [
+            96,
+            64
+          ],
+          "canonical_to_vector": [
+            [
+              1,
+              0,
+              -37
+            ],
+            [
+              0,
+              1,
+              -26
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ],
+          "ink_box": [
+            37,
+            26,
+            59,
+            45
+          ],
+          "left_bearing_estimate": 50
+        }
+      }
+    ],
+    "font_exported": true,
+    "selected_for_export": "ഖ",
+    "selection_policy": "first vectorizable candidate, software smoke only; not quality selection",
+    "generated_font_license": "OFL-1.1; source notices retained"
+  },
+  "upstream_arithmetic_parity": {
+    "synthetic_only": true,
+    "upstream_commit": "7b3f65680fb66be27a4c57593848fef75b884e76",
+    "upstream_model_py_sha256": "4e56adfb23ad4d984dbdfb48302322a3d98afd74d19bd30298f49d49158f705f",
+    "reference": "original synthetic ring; not handwriting accuracy",
+    "template_arrays_loaded": false,
+    "comparisons": [
+      {
+        "format": 2,
+        "checkpoint_sha256": "0165690674d47818bd66055cf66f7b8861bdbb557f964bea56154b33180ea045",
+        "sequences": 698,
+        "bit_exact": true,
+        "maximum_absolute_difference": 0.0,
+        "prediction_float32_sha256": "bc3bb3a13d1bbb7ac21d85cc8b9c88b985050865ae005c7ce11eaef2ebdcacab"
+      },
+      {
+        "format": 3,
+        "checkpoint_sha256": "b5975fc1e9923e2ef460ebe2084c2c12e485008ddae17d5914ac06e2c7226d95",
+        "sequences": 698,
+        "bit_exact": true,
+        "maximum_absolute_difference": 0.0,
+        "prediction_float32_sha256": "bc3bb3a13d1bbb7ac21d85cc8b9c88b985050865ae005c7ce11eaef2ebdcacab"
+      }
+    ]
+  },
+  "legacy_format_2_smoke": {
+    "checkpoint_sha256": "0165690674d47818bd66055cf66f7b8861bdbb557f964bea56154b33180ea045",
+    "format_version": 2,
+    "capabilities": {
+      "pca_inference": true,
+      "mean_inference": true,
+      "template_baselines": true,
+      "nearest_template_diagnostic": true
+    },
+    "template_diagnostics_used": false,
+    "font_exported": true,
+    "selected_for_export": "ഖ",
+    "selection_policy": "first vectorizable candidate, software smoke only; not quality selection",
+    "generated_font_license": "OFL-1.1; source notices retained"
+  },
+  "limitations": [
+    "No new training or model selection",
+    "One deliberately non-linguistic synthetic reference; not a fidelity metric",
+    "Two of three final candidates required explicitly labelled unsmoothed pixel-edge fallback",
+    "Native bundle not rebuilt for this source milestone",
+    "No checkpoint or source font binaries published"
+  ]
+}

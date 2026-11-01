@@ -31,6 +31,7 @@ def coverage(project):
     generated = [
         r["id"] for r in regions if r["provenance"] not in {"observed", "synthetic-fixture"}
     ]
+    generated += [r["id"] for r in project.get("completion_suggestions", [])]
     return {
         "observed": sorted(observed),
         "missing": [s for s in COMMON if s not in observed],
@@ -43,6 +44,8 @@ def coverage(project):
             if r["provenance"] == "synthetic-fixture" and r["confirmed"] and r["vector"]
         ],
         "predictor": {
+            "scope": "bundled fallback only; optional local completion has its own capability endpoint",
+            "capabilities_endpoint": "/api/completion/capabilities",
             "available": False,
             "trained": False,
             "reason": "No trained model or reference-font assets are bundled.",

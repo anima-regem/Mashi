@@ -12,6 +12,7 @@
     <script src="/static/outline-geometry.js" defer></script>
     <script src="/static/outline.js" defer></script>
     <script src="/static/proof.js" defer></script>
+    <script src="/static/completion.js" defer></script>
   </head>
   <body>
     <header>
@@ -305,9 +306,10 @@
         <section id="vectors" class="vector-section" hidden>
           <div>
             <h2>Edit outline</h2>
+            <p id="outline-origin" class="hint" hidden></p>
             <p class="hint">
-              Closed contours from your selected pixels. Adjust the baseline and
-              spacing before export.
+              Edit closed contours, then adjust the baseline and spacing before
+              export.
             </p>
             <div
               class="outline-toolbar"
@@ -342,7 +344,7 @@
                 ><input id="outline-overlay" type="checkbox" checked /> Compare
                 source ink</label
               ><label
-                >Photo opacity<input
+                >Source opacity<input
                   id="outline-opacity"
                   type="range"
                   min="0"
@@ -482,6 +484,36 @@
               Proofs draw compiled glyphs at HarfBuzz positions without a fallback font.
               The V1 repertoire is limited; reader review and broader platform testing are still needed.</p></details>
         </section>
+        <details id="completion-panel" class="completion-panel">
+          <summary>Suggestions for missing forms</summary>
+          <p class="hint">Optional local research model. Its predictions underperformed nearest-font retrieval on rendered-font tests; handwriting accuracy is unmeasured. Generated forms need review and remain distinct from captured ink.</p>
+          <p id="completion-capability" role="status" class="hint"></p>
+          <div class="actions">
+            <label>Configured checkpoint<select id="completion-profile"><option value="configured-local-checkpoint">No checkpoint configured</option></select></label>
+            <button id="completion-load" type="button">Load local checkpoint</button>
+            <button id="completion-unload" type="button">Turn completion off</button>
+            <button id="completion-cancel" type="button" disabled>Cancel request</button>
+          </div>
+          <p class="hint">Generated-font outputs use OFL-1.1 and retain source notices. Checkpoint redistribution remains unresolved; no weights are included in exports.</p>
+          <details><summary>Model source and setup</summary><p id="completion-model-info" class="hint"></p>
+            <p class="hint">Configuration is set outside the browser. <a href="https://github.com/anima-regem/Mashi/blob/main/docs/LOCAL_COMPLETION.md" target="_blank" rel="noopener noreferrer">Local completion setup</a>. The studio never downloads a model.</p></details>
+          <div id="completion-request" hidden>
+            <h3>1. Choose reference crops</h3>
+            <p class="hint">Select up to 20 confirmed, traced forms with distinct supported labels. Save their baseline and shared scale in the outline editor first.</p>
+            <div id="completion-references" class="completion-references"></div>
+            <button id="completion-align" type="button">Preview reference alignment</button>
+            <div id="completion-aligned" class="completion-references"></div>
+            <label class="check"><input id="completion-alignment-confirmed" type="checkbox" /> I checked the reference baselines and scale on these canvases</label>
+            <h3>2. Choose missing sequences</h3>
+            <label class="field">Missing sequences, separated by commas<input id="completion-targets" lang="ml" placeholder="e.g. ഖ, ക്ക" autocomplete="off" /></label>
+            <button id="completion-use-proof" type="button">Use missing samples from proof text</button>
+            <p id="completion-target-note" class="hint"></p>
+            <button id="completion-generate" type="button" class="primary">Generate review candidates</button>
+          </div>
+          <p id="completion-status" role="status" class="hint"></p>
+          <h3 id="completion-review-title" hidden>3. Review each candidate</h3>
+          <div id="completion-suggestions"></div>
+        </details>
         <section id="export-tools" class="export-section">
           <div>
             <h2>Export font</h2>
@@ -495,6 +527,8 @@
             </details>
           </div>
           <div class="export-actions">
+            <label id="generated-export-option" class="check" hidden><input id="generated-export" type="checkbox" /> Include accepted generated glyphs in an OFL font</label>
+            <p id="generated-export-terms" class="fine" hidden>Generated font: OFL-1.1, retained source notices and a distinct family name. Review rights in your captured forms before distributing this combined font. This does not license checkpoint redistribution.</p>
             <label id="fixture-export-option" class="check" hidden
               ><input id="fixture-export" type="checkbox" /> Create an
               explicitly labelled synthetic test export</label

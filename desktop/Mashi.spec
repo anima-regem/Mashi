@@ -7,7 +7,7 @@ root = Path(SPECPATH).parent
 datas = collect_data_files("mashi") + collect_data_files("webview")
 datas += [(str(root / "build" / "desktop-notices"), "notices")]
 datas += copy_metadata("pywebview")
-hidden = ["webview.platforms.cocoa", "uvicorn.loops.asyncio", "uvicorn.protocols.http.h11_impl"]
+hidden = ["webview.platforms.cocoa", "uvicorn.loops.asyncio", "uvicorn.protocols.http.h11_impl", "mashi.ml_engine"]
 for package in ("fontmake", "fontTools", "ufo2ft", "ufoLib2", "fontMath"):
     hidden += collect_submodules(package)
 a = Analysis(

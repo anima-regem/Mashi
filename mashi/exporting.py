@@ -32,13 +32,33 @@ from .shaping import (
     text_coverage,
 )
 from .tracing import svg, validate_paths
+from .ml_capture import references_current
+from .ml_service import source_terms, LICENSE_ROOT
 
 
-def eligible(project, include_fixture=False):
+def regions_metadata(project):
+    return [
+        {
+            key: item[key]
+            for key in [
+                "id",
+                "label",
+                "generation",
+                "vectorization",
+                "review_state",
+                "provenance",
+                "not_observed_in_photo",
+            ]
+        }
+        for item in project.get("completion_suggestions", [])
+    ]
+
+
+def eligible(project, include_fixture=False, *, include_generated=False):
     fixture = project.get("source_kind") == "synthetic-fixture"
     if fixture and not include_fixture:
         return []
-    return [
+    regions = [
         r
         for r in project["regions"]
         if r["active"]
@@ -50,27 +70,56 @@ def eligible(project, include_fixture=False):
             or (fixture and include_fixture and r["provenance"] == "synthetic-fixture")
         )
     ]
+    if include_generated:
+        candidates = [
+            r
+            for r in project.get("completion_suggestions", [])
+            if r["active"] and r["confirmed"] and r["review_state"] == "accepted" and r["vector"]
+        ]
+        if not candidates:
+            raise ValueError(
+                "Accept at least one generated suggestion before choosing a generated-font output"
+            )
+        for item in candidates:
+            terms = source_terms(item["generation"]["model"]["sha256"])
+            if (
+                not terms["checkpoint_source_known"]
+                or item["generation"]["model"]["terms"]["source_manifest_sha256"]
+                != terms["source_manifest_sha256"]
+            ):
+                raise ValueError(
+                    "This checkpoint has no verified source-notice mapping for font export"
+                )
+            if not references_current(project, item):
+                raise ValueError(
+                    "Generated references changed. Reject and regenerate the affected suggestions."
+                )
+        regions += candidates
+    return regions
 
 
-def export_preflight(project, text="", include_fixture=False):
+def export_preflight(project, text="", include_fixture=False, *, include_generated=False):
     """Cheap read-only coverage for a caller's live preview; never compiles a font.
 
     Use make_ufo for geometry/metadata validation and preview_project for actual
     shaping. Synthetic practice data is never treated as observed handwriting.
     """
-    regions = eligible(project, include_fixture)
+    regions = eligible(project, include_fixture, include_generated=include_generated)
     labels = [r["label"] for r in regions]
     result = text_coverage(text, labels)
     result.update(make_plan(labels))
     result["profile"] = "malayalam-v1"
     result["duplicate_labels"] = sorted({s for s in labels if labels.count(s) > 1})
     result["synthetic_test_export"] = project.get("source_kind") == "synthetic-fixture"
+    result["generated_font"] = include_generated
     if result["duplicate_labels"] or not regions:
         result["supported"] = False
     return result
 
 
-def make_ufo(project, include_fixture=False, *, options=None, required_text=None):
+def make_ufo(
+    project, include_fixture=False, *, options=None, required_text=None, include_generated=False
+):
     options = options or TypographyOptions()
     options.validate()
     fixture = project.get("source_kind") == "synthetic-fixture"
@@ -78,7 +127,7 @@ def make_ufo(project, include_fixture=False, *, options=None, required_text=None
         raise ValueError(
             "Synthetic practice shapes are excluded from handwriting exports. Explicitly enable a synthetic test export."
         )
-    regions = eligible(project, include_fixture)
+    regions = eligible(project, include_fixture, include_generated=include_generated)
     if not regions:
         raise ValueError("Confirm and trace at least one labelled crop before exporting")
     labels = [r["label"] for r in regions]
@@ -97,7 +146,9 @@ def make_ufo(project, include_fixture=False, *, options=None, required_text=None
             raise ValueError("Joiners are engine controls, not standalone ink samples")
     plan = make_plan(labels)
     required = (
-        export_preflight(project, required_text, include_fixture)
+        export_preflight(
+            project, required_text, include_fixture, include_generated=include_generated
+        )
         if required_text is not None
         else None
     )
@@ -107,6 +158,37 @@ def make_ufo(project, include_fixture=False, *, options=None, required_text=None
         )
     font = Font()
     font.info.familyName = "Mashi Synthetic Fixture" if fixture else options.family_name
+    if include_generated:
+        forbidden = {
+            "anekmalayalam",
+            "anjalioldlipi",
+            "dyuthi",
+            "gayathri",
+            "karumbi",
+            "malini",
+            "meera",
+            "rachana",
+            "baloochettan2",
+            "chilanka",
+            "manjari",
+            "notosansmalayalam",
+            "notoserifmalayalam",
+            "uroob",
+        }
+        requested = "".join(c for c in options.family_name.lower() if c.isalpha())
+        if any(requested.startswith(name) for name in forbidden):
+            raise ValueError("Choose a generated font name distinct from the source font families")
+        font.info.familyName = (
+            "Mashi Synthetic Generated"
+            if fixture
+            else (
+                options.family_name
+                if options.family_name.lower().endswith("generated")
+                else options.family_name + " Generated"
+            )
+        )
+        font.info.openTypeNameLicense = (LICENSE_ROOT / "OFL.txt").read_text()
+        font.info.openTypeNameLicenseURL = "https://openfontlicense.org"
     font.info.styleName = options.style_name
     font.info.postscriptFontName = postscript_name(font.info.familyName, options.style_name)
     font.info.styleMapStyleName = "regular"
@@ -117,6 +199,16 @@ def make_ufo(project, include_fixture=False, *, options=None, required_text=None
         if fixture
         else "Outlines from locally confirmed image ink. Rights remain with their owners."
     )
+    if include_generated:
+        notices = []
+        for record in source_terms(regions[-1]["generation"]["model"]["sha256"])["notices"]:
+            notice = (LICENSE_ROOT / record["notice"]).read_text(encoding="utf-8-sig")
+            notices.append(notice.split("SIL OPEN FONT LICENSE")[0].strip()[:2000])
+        font.info.copyright = (
+            ("Synthetic test inputs; not handwriting. " if fixture else "")
+            + "Contains reviewed model-generated geometry and captured contributions. Generated font: SIL OFL-1.1. Source notices:\n"
+            + "\n".join(notices)
+        )
     missing = font.newGlyph(".notdef")
     missing.width = 600
     pen = missing.getPen()
@@ -149,7 +241,9 @@ def make_ufo(project, include_fixture=False, *, options=None, required_text=None
         if any(abs(v) > 16000 for v in bounds[label]):
             raise ValueError("Font outline exceeds 16,000 units. Reduce scale or path coordinates.")
         glyph.lib["org.mashi.provenance"] = {
-            "state": "synthetic-fixture" if fixture else region["provenance"],
+            "state": "model-generated"
+            if region["provenance"] == "model-generated"
+            else ("synthetic-fixture" if fixture else region["provenance"]),
             "inputKind": project.get("source_kind", "user-upload"),
             "region": region["id"],
             "revision": region["revision"],
@@ -158,6 +252,16 @@ def make_ufo(project, include_fixture=False, *, options=None, required_text=None
             "crop": region["box"],
             "vectorEdited": vector["edited"],
         }
+        if region["provenance"] == "model-generated":
+            glyph.lib["org.mashi.provenance"]["canonicalImageSHA256"] = region["raster_sha256"]
+            glyph.lib["org.mashi.provenance"]["referencePageSHA256"] = project["image"][
+                "canonical_sha256"
+            ]
+            glyph.lib["org.mashi.provenance"]["coordinateSpace"] = "generated-canvas"
+            glyph.lib["org.mashi.provenance"]["generation"] = region["generation"]
+            glyph.lib["org.mashi.provenance"]["vectorization"] = region["vectorization"]
+            glyph.lib["org.mashi.provenance"]["reviewState"] = region["review_state"]
+            glyph.lib["org.mashi.provenance"]["notObservedInPhoto"] = True
     bases, mark = {}, None
     anchor_report = {}
     for label, (x0, y0, x1, y1) in bounds.items():
@@ -224,7 +328,11 @@ def make_ufo(project, include_fixture=False, *, options=None, required_text=None
             "shaping_profile": "malayalam-v1",
             "input_kind": project.get("source_kind", "user-upload"),
             "synthetic_test_export": fixture,
-            "synthetic_included": [r["id"] for r in regions] if fixture else [],
+            "synthetic_included": [
+                r["id"] for r in regions if r["provenance"] == "synthetic-fixture"
+            ]
+            if fixture
+            else [],
             "fixtures_excluded": [] if fixture else report["fixtures_excluded"],
             "encoded_codepoints": [f"U+{ord(c):04X}" for c in singles],
             "engine_controls": ["U+200C", "U+200D"],
@@ -236,6 +344,21 @@ def make_ufo(project, include_fixture=False, *, options=None, required_text=None
             "required_text": required,
             "typography_options": asdict(options),
             "font_family": font.info.familyName,
+            "generated_font": include_generated,
+            "included_generated": [
+                r["id"] for r in regions if r["provenance"] == "model-generated"
+            ],
+            "generated_excluded": [
+                r["id"] for r in project.get("completion_suggestions", []) if r not in regions
+            ]
+            + [
+                r["id"]
+                for r in project["regions"]
+                if r["provenance"] not in {"observed", "synthetic-fixture"}
+            ],
+            "generated_font_terms": source_terms(regions[-1]["generation"]["model"]["sha256"])
+            if include_generated
+            else None,
             "metrics": {
                 "units_per_em": 1000,
                 "ascender": top,
@@ -330,14 +453,18 @@ def _validate_ttf(data, report, *, require_shaping=False):
         report["warnings"].append(str(error))
 
 
-def preview_project(project, text, include_fixture=False, *, options=None):
+def preview_project(project, text, include_fixture=False, *, options=None, include_generated=False):
     """Backend live preview boundary; caller can cache by project revision/options.
 
     Returns coverage and real HarfBuzz glyph positions. Unsupported text is still
     shaped for inspection, with diagnostics; no substitute font masks missing ink.
     """
-    preflight = export_preflight(project, text, include_fixture)
-    font, report = make_ufo(project, include_fixture, options=options)
+    preflight = export_preflight(
+        project, text, include_fixture, include_generated=include_generated
+    )
+    font, report = make_ufo(
+        project, include_fixture, options=options, include_generated=include_generated
+    )
     with tempfile.TemporaryDirectory(prefix="mashi-preview-") as directory:
         root = Path(directory)
         font.save(root / "preview.ufo")
@@ -355,17 +482,43 @@ def preview_project(project, text, include_fixture=False, *, options=None):
         }
 
 
-def export_bundle(project, kind, include_fixture=False, *, options=None, required_text=None):
+def export_bundle(
+    project,
+    kind,
+    include_fixture=False,
+    *,
+    options=None,
+    required_text=None,
+    include_generated=False,
+):
     if kind not in {"ufo", "ttf"}:
         raise ValueError("Supported export formats are ufo and ttf")
-    font, report = make_ufo(project, include_fixture, options=options, required_text=required_text)
+    font, report = make_ufo(
+        project,
+        include_fixture,
+        options=options,
+        required_text=required_text,
+        include_generated=include_generated,
+    )
     fixture = project.get("source_kind") == "synthetic-fixture"
     with tempfile.TemporaryDirectory(prefix="mashi-export-") as directory:
         root = Path(directory)
-        font_path = root / ("Mashi-Synthetic.ufo" if fixture else "Mashi-Handwriting.ufo")
+        stem = (
+            ("Mashi-Synthetic-Generated" if fixture else "Mashi-Generated")
+            if include_generated
+            else ("Mashi-Synthetic" if fixture else "Mashi-Handwriting")
+        )
+        font_path = root / (stem + ".ufo")
         font.save(font_path)
         if kind == "ttf":
-            output = root / ("Mashi-Synthetic.ttf" if fixture else "Mashi-Experimental.ttf")
+            output = root / (
+                (
+                    stem
+                    if include_generated
+                    else ("Mashi-Synthetic" if fixture else "Mashi-Experimental")
+                )
+                + ".ttf"
+            )
             _compile(font_path, output)
             _validate_ttf(output.read_bytes(), report, require_shaping=required_text is not None)
         else:
@@ -381,7 +534,14 @@ def export_bundle(project, kind, include_fixture=False, *, options=None, require
         )
         (root / "READ-ME.txt").write_text(
             (
-                "SYNTHETIC TEST EXPORT. Practice geometry, not actual handwriting.\n"
+                "SYNTHETIC TEST INPUT. Not actual handwriting.\n"
+                if fixture and include_generated
+                else ""
+            )
+            + (
+                "GENERATED FONT. Contains accepted model-generated geometry, not reconstructed handwriting. SIL OFL-1.1 and retained source notices apply. Checkpoint distribution remains unresolved; no weights included.\n"
+                if include_generated
+                else "SYNTHETIC TEST EXPORT. Practice geometry, not actual handwriting.\n"
                 if fixture
                 else "Mashi experimental export. Confirmed observed image ink only.\n"
             )
@@ -390,11 +550,32 @@ def export_bundle(project, kind, include_fixture=False, *, options=None, require
             "Original photos are not included. project.json contains image hashes and crop metadata.\n",
             encoding="utf-8",
         )
+        if include_generated:
+            notices = root / "FONT-LICENSES"
+            notices.mkdir()
+            for source in LICENSE_ROOT.iterdir():
+                if source.is_file():
+                    payload = source.read_bytes()
+                    (notices / source.name).write_bytes(payload)
+            (root / "GENERATED-PROVENANCE.json").write_text(
+                json.dumps(
+                    {
+                        "font_license": "OFL-1.1",
+                        "sources": [
+                            r
+                            for r in regions_metadata(project)
+                            if r["id"] in report["included_generated"]
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
         svg_dir = root / "svg"
         svg_dir.mkdir()
-        for region in eligible(project, include_fixture):
+        for region in eligible(project, include_fixture, include_generated=include_generated):
             (svg_dir / (glyph_name(region["label"]) + ".svg")).write_bytes(
-                svg(region["vector"], region["provenance"])
+                svg(region["vector"], region["provenance"], generation=region.get("generation"))
             )
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:

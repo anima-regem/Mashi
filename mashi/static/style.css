@@ -862,5 +862,26 @@ main {padding-bottom: 40px;}
 #page-tools, #vectors, #proof-title, #export-tools {scroll-margin-top: 20px;}
 #proof-metadata, #proof-issues {font-size: 12px; overflow-wrap: anywhere;}
 .proof-actions button {min-height: 44px;}
+.completion-panel {border-top: 1px solid var(--line); padding: 22px 0;}
+.completion-panel > summary {font-weight: 600; font-size: 18px;}
+.completion-panel .actions {flex-wrap: wrap; align-items: end;}
+.completion-panel .actions label {max-width: 100%; min-width: 0;}
+.completion-panel select {max-width: 100%;}
+.completion-panel p {overflow-wrap: anywhere;}
+.completion-panel h3 {font-size: 15px; margin-top: 24px;}
+.completion-references, .candidate-comparison {display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0;}
+.reference-choice {display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 8px; border: 1px solid var(--line); border-radius: 6px;}
+.reference-choice img {width: 64px; height: 48px; object-fit: contain;}
+.completion-panel figure {margin: 0; max-width: 220px;}
+.completion-panel figure img {width: 192px; height: 128px; object-fit: contain; background: white; border: 1px solid var(--line);}
+.completion-panel figcaption {font-size: 11px; line-height: 1.5; max-width: 192px;}
+.aligned-reference {position: relative;}
+.aligned-reference::after {content: ""; position: absolute; top: 90px; left: 0; width: 192px; border-top: 1px dashed #b75175; pointer-events: none;}
+#completion-suggestions {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 14px; align-items: start;}
+.completion-card {min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 16px; background: var(--paper);}
+.completion-card h4 {margin: 0; font-size: 18px;}
+.completion-card details p {font-size: 11px; overflow-wrap: anywhere;}
+#completion-target-note {overflow-wrap: anywhere;}
+@media (max-width: 950px) {#completion-suggestions {grid-template-columns: 1fr;}}
 @media (max-width: 730px) {.actions button {font-size: 12px; min-height: 40px;} .workspace-nav {gap: 20px;}}
 @media (max-width: 730px) {.proof-options {grid-template-columns: repeat(2, minmax(0, 1fr));}}

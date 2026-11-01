@@ -2,7 +2,7 @@
 
 A local-first, open-source Malayalam handwriting-to-font studio. Photograph a page, correct the crops and labels, preserve the actual ink as closed vector outlines, and export editable font sources.
 
-**This is an experimental first skeleton.** It builds a real SVG/UFO/TTF subset, not a complete Malayalam text font. A small CPU completion research model has been trained and evaluated separately; it is not enabled in the studio and no checkpoint is bundled. See [the experiment](docs/COMPLETION.md) and [coverage and limitations](#font-coverage).
+**This remains a research-stage studio.** It builds a real SVG/UFO/TTF subset, not a complete Malayalam text font. Optional local completion now has an explicit alignment/review workflow; it stays off until a configured checkpoint is loaded. No weights are bundled and no handwriting accuracy is established. See [local completion](docs/LOCAL_COMPLETION.md), [the preserved pilot](docs/COMPLETION.md) and [coverage limits](#font-coverage).
 
 ## Run locally
 
@@ -60,9 +60,9 @@ The local integration check recognized മലയാളം, മഷി and കേ�
 
 ### Font coverage
 
-- Only active, confirmed, labelled, traced regions with `observed` provenance are exported. Generated suggestions and unconfirmed crops are excluded.
+- Normal exports include only active, confirmed, labelled, traced observed ink. Generated suggestions and unconfirmed crops are excluded. A separate explicit generated-font choice includes reviewed accepted proposals under OFL-1.1 with source notices; their generated provenance never becomes observed.
 - Built-in practice pages persist `synthetic-fixture` provenance across reload, crop edits, split/merge and OCR. They are excluded from normal font exports. An explicit test-export checkbox produces a synthetic-labelled ZIP, font family, glyph metadata and SVG metadata; it never claims the practice shapes are actual handwriting.
-- The integrated typography V1 backend targets a bounded HarfBuzz `mlm2` repertoire: direct characters/chillus/digits, selected captured conjuncts and attached-vowel forms, legacy chillu aliases, and explicit joiner handling. Every required observed sample must exist. See [the exact repertoire and limits](docs/TYPOGRAPHY.md).
+- The integrated typography V1 backend targets a bounded HarfBuzz `mlm2` repertoire: direct characters/chillus/digits, selected conjuncts and attached-vowel forms, legacy chillu aliases, and explicit joiner handling. Every required eligible sample must exist; generated samples require the separate reviewed-output option. See [the exact repertoire and limits](docs/TYPOGRAPHY.md).
 - HarfBuzz reorders pre-base and split vowels. Spacing vowel signs retain positive advance; the visible virama uses zero advance with adjustable estimated `abvm` anchors. These defaults require visual and Malayalam-reader review.
 - The proof panel reports missing samples and unsupported sequences without normalizing the original input. Its drawing uses paths and positions from the actual compiled font, with no fallback font. UI TTF export requires a current supported preview; the server rechecks revision, proof text, settings, glyph selection and clipping. See [proofing and concurrency behavior](docs/PROOFING.md).
 - General contextual consonant forms, mark stacks, historical repertoire and platform qualification remain incomplete. Compilation or passing synthetic tests does not establish reader-level quality or universal Malayalam support.
@@ -73,7 +73,7 @@ The local integration check recognized മലയാളം, മഷി and കേ�
 
 Built with Python/FastAPI, SQLite, Pillow/OpenCV, VTracer **0.6.12**, ufoLib2, fontTools and fontmake. A small plain-JavaScript UI keeps installation simple and avoids external assets, analytics, CDNs and cloud fallback.
 
-The workflow has three distinct stages: **capture** proposes image regions and OCR labels for human correction; **completion** is separate experimental research with explicit generated provenance; **font building** turns confirmed observed outlines into a dependency-checked font subset. Completion is not silently mixed into capture or export.
+The workflow has three distinct stages: **capture** proposes image regions and OCR labels for human correction; **completion** proposes missing appearances from aligned confirmed references; **font building** creates a dependency-checked subset. Optional completion has separate load, alignment, generation and per-candidate review controls. It never runs automatically or silently enters ordinary exports. The published model underperforms nearest-font retrieval on rendered-font tests; real handwriting quality is unmeasured. [Setup, provenance and output terms](docs/LOCAL_COMPLETION.md).
 
 Extensive completion research now lives in **[Mashi-ML](https://github.com/anima-regem/Mashi-ML)**. Its [application integration contract](https://github.com/anima-regem/Mashi-ML/blob/main/docs/APP_INTEGRATION.md) and [audit](https://github.com/anima-regem/Mashi-ML/blob/main/reports/AUDIT.md) describe the experimental interface and limitations. Weights are not bundled here; no unrestricted generated-font licence is implied. See [Mashi's current roadmap](docs/ROADMAP.md) for implemented, prototype and missing product workflows.
 
@@ -88,7 +88,7 @@ We studied actual sources from Swathanthra Malayalam Computing and Santhosh Thot
 ## Check the build
 
 ```sh
-uv sync --locked --no-editable --extra dev --python 3.12
+uv sync --locked --no-editable --extra dev --extra completion --python 3.12
 uv run --no-sync pytest -q
 uv run --no-sync ruff check mashi scripts tests
 node --check mashi/static/app.js

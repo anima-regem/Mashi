@@ -19,6 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest==8.3.5", "httpx==0.28.1", "ruff==0.11.10"]
 desktop = ["pywebview==6.1; sys_platform == 'darwin'", "pyinstaller==6.22.3"]
+completion = ["scipy==1.16.3"]
 
 [project.scripts]
 mashi = "mashi.__main__:main"
@@ -28,7 +29,7 @@ mashi-desktop = "mashi.desktop:main"
 packages = ["mashi"]
 
 [tool.setuptools.package-data]
-mashi = ["static/*"]
+mashi = ["static/*", "licenses/ml/*.txt", "licenses/ml/*.json"]
 
 [tool.ruff]
 line-length = 100
@@ -37,4 +38,4 @@ line-length = 100
 testpaths = ["tests"]
 
 [tool.uv]
-cache-keys = [{ file = "pyproject.toml" }, { file = "mashi/**/*.py" }, { file = "mashi/static/*" }]
+cache-keys = [{ file = "pyproject.toml" }, { file = "mashi/**/*.py" }, { file = "mashi/static/*" }, { file = "mashi/licenses/ml/*" }]

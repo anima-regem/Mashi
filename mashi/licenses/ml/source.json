@@ -1,0 +1,91 @@
+{
+  "repository": "https://github.com/anima-regem/Mashi-ML",
+  "commit": "7b3f65680fb66be27a4c57593848fef75b884e76",
+  "corpus_manifest_sha256": "950b8b0962fc1db2deb432ba7a627b24000989d1d88c284d71d7b9b93d14d9f1",
+  "checkpoints": {
+    "0165690674d47818bd66055cf66f7b8861bdbb557f964bea56154b33180ea045": {
+      "format": 2,
+      "profile": "full-v2"
+    },
+    "b5975fc1e9923e2ef460ebe2084c2c12e485008ddae17d5914ac06e2c7226d95": {
+      "format": 3,
+      "profile": "pca-inference-v1"
+    }
+  },
+  "fonts": [
+    {
+      "family": "anekmalayalam",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "lineage_group": "ektype-anek-malayalam",
+      "notice": "anekmalayalam.txt",
+      "notice_sha256": "de62be758bba267e653a5f457dfebb4680957e2c343eb3e7de15aff4746bed05",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font."
+    },
+    {
+      "family": "gayathri",
+      "repository": "google/fonts",
+      "commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+      "lineage_group": "smc-gayathri",
+      "notice": "gayathri.txt",
+      "notice_sha256": "b2cc52a7162f0c8f71924211d040de37b19894f563a0190a75c017e2dc28d08a",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font."
+    },
+    {
+      "family": "anjalioldlipi",
+      "repository": "smc/AnjaliOldLipi",
+      "commit": "924e6bafca7c636869d2d6163f74ac945cff8e1f",
+      "lineage_group": "kevin-siji-designs",
+      "notice": "anjalioldlipi.txt",
+      "notice_sha256": "b3aac4ebf174f704a70a79e6525d496a6afed169da08afd9de4aeed4823c908c",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font."
+    },
+    {
+      "family": "karumbi",
+      "repository": "smc/Karumbi",
+      "commit": "3fd416e6aa0f55a1db00d2c973f04943a398e67f",
+      "lineage_group": "kevin-siji-designs",
+      "notice": "karumbi.txt",
+      "notice_sha256": "48fe3b4f7d6cee2b51ca9254228edb3128f3e06d04f7743d19400187d18639b5",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font."
+    },
+    {
+      "family": "dyuthi",
+      "repository": "smc/Dyuthi",
+      "commit": "2484364a8813a06098f4e6db552d48d2f4f5da29",
+      "lineage_group": "smc-dyuthi",
+      "notice": "dyuthi.txt",
+      "notice_sha256": "3c039a91d61ba6b48397d0c1b1af9306686c79cfd0bd0735089b8499955a3e30",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font."
+    },
+    {
+      "family": "rachana",
+      "repository": "smc/Rachana",
+      "commit": "1eb2feae74a9245afc16e43799be8c8e9a98e609",
+      "lineage_group": "rachana-meera-related",
+      "notice": "rachana.txt",
+      "notice_sha256": "9b6c6ded2e902d97543cc4e999c13ddc6f0ed0a6640ce7dac2bb7eb210b8b909",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font."
+    },
+    {
+      "family": "meera",
+      "repository": "smc/Meera",
+      "commit": "aebe37081332d93e02a83a8649120401967fc379",
+      "lineage_group": "rachana-meera-related",
+      "notice": "meera.txt",
+      "notice_sha256": "7ba90dcd85632778363a268c2267076239ffe75881aeeebe60dd8f3d86e19c95",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font."
+    },
+    {
+      "family": "malini",
+      "repository": "smc/Malini",
+      "commit": "cd65132475eb84e90c1c6b52054b7512cf7b06f6",
+      "lineage_group": "smc-malini",
+      "notice": "malini.txt",
+      "notice_sha256": "3767d366c05981a4206afe9866f94e0f6f30cd0492a0190c1b0359b4845c46dc",
+      "reserved_font_names_review": "No project-specific Reserved Font Name declaration found before PREAMBLE; inspect retained notice and embedded name records before exporting a font."
+    }
+  ],
+  "output_license": "OFL-1.1",
+  "checkpoint_distribution": "unresolved; no weights distributed"
+}

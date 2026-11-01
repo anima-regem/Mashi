@@ -22,4 +22,4 @@ Crop creation now requires `project_revision`; OCR requires `{revision}`. A stal
 
 `POST /export/{ufo|ttf}` accepts that same proof body. Existing bodyless API calls remain available for source/export scripts; their report has `required_text: null` and does **not** claim arbitrary proof-text coverage. The studio always supplies a proof body, and gates TTF on actual compiled review. The backend Python interfaces remain keyword-only/backward-compatible. This does not establish Malayalam-reader quality, universal shaping or handwriting recognition accuracy.
 
-Optional Mashi-ML application review is a separate next milestone. No checkpoint was loaded, retrained or distributed in this proof/interface increment.
+The later optional [Mashi-ML review integration](LOCAL_COMPLETION.md) adds `include_generated` to the cache key and API query. It defaults false. Explicit generated-font proof/export requires accepted proposals with current references and verified source-notice mapping; normal proofs still exclude them. No new model training or weight redistribution is involved.

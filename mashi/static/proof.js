@@ -4,7 +4,7 @@
   const ids = ["text", "family", "ascender", "descender", "line-gap", "space", "mark-gap", "anchors"];
   const defaults = ["", "Mashi Handwriting", 1000, -400, 100, 300, 40, "{}"];
   const NS = "http://www.w3.org/2000/svg";
-  let identity = "", running = false, reviewed = null, anchors = null;
+  let identity = "", running = false, reviewed = null, anchors = null, lastCoverage = null;
   const storageKey = () => `mashi:proof:${project.id}`;
   const fixture = () => project?.source_kind === "synthetic-fixture" && $("fixture-export").checked;
   function text(tag, content, parent) {
@@ -22,7 +22,7 @@
       mark_gap: Number($("proof-mark-gap").value), anchors: anchorData,
     }};
   }
-  const stamp = (input) => JSON.stringify([project.id, input, fixture()]);
+  const stamp = (input) => JSON.stringify([project.id, input, fixture(), $("generated-export").checked]);
   function refreshControls() {
     $("proof-check").disabled = busy || running;
     $("proof-build").disabled = busy || running;
@@ -31,6 +31,7 @@
   }
   function invalidate(note = "Proof changed. Check samples or rebuild the preview before export.") {
     requests.cancel(); running = false; reviewed = anchors = null;
+    lastCoverage = null;
     $("proof-status").textContent = note;
     $("proof-status").classList.remove("error");
     ["coverage", "drawing", "diagnostics", "unicode", "issues", "metadata"].forEach(id => $("proof-" + id).replaceChildren());
@@ -55,9 +56,11 @@
     invalidate(`Saved page revision ${project.revision}. Build a fresh proof from its confirmed outlines.`);
   }
   function coverage(report) {
+    lastCoverage = report;
     const box = $("proof-coverage"); box.replaceChildren();
     text("h3", report.supported ? "Required samples are available in V1" : "This text needs attention", box);
     if (report.synthetic_test_export) text("p", "This proof uses synthetic sample shapes, not handwriting.", box);
+    if (report.generated_font) text("p", "Includes accepted model-generated forms. Font output is OFL-1.1 with retained source notices.", box);
     if (report.required_samples.length) text("p", "Capture and confirm: " + report.required_samples.join(" · "), box);
     if (report.duplicate_labels.length) text("p", "Choose one confirmed variant for duplicate labels: " + report.duplicate_labels.join(" · "), box);
     const list = document.createElement("ul");
@@ -111,7 +114,7 @@
     const fingerprint = stamp(input), id = project.id;
     invalidate(); running = true; refreshControls();
     $("proof-status").textContent = action === "preview" ? "Compiling and shaping saved ink locally… Cancel stops this review; compiler work may finish in the background." : "Checking exact-text sample coverage…";
-    await requests.run(async signal => (await api(`/api/projects/${id}/proof/${action}?include_fixture=${fixture()}`, {method: "POST", json: input, signal})).json(),
+    await requests.run(async signal => (await api(`/api/projects/${id}/proof/${action}?include_fixture=${fixture()}&include_generated=${$("generated-export").checked}`, {method: "POST", json: input, signal})).json(),
       result => {
         if (project.id !== id || result.revision !== project.revision || stamp(input) !== fingerprint) return;
         coverage(result.coverage);
@@ -131,8 +134,9 @@
   $("proof-check").onclick = () => run("preflight");
   $("proof-cancel").onclick = () => invalidate("Preview canceled. Its late result will not be shown. You can edit or retry.");
   $("fixture-export").onchange = () => invalidate("Export provenance changed. Build a fresh proof with this choice.");
+  $("generated-export").onchange = () => invalidate("Generated-font inclusion changed. Build a fresh proof with this choice.");
   $("proof-copy-anchors").onclick = () => { $("proof-anchors").value = JSON.stringify(anchors, null, 2); persist(); invalidate("Anchor estimates copied. Edit the pairs and rebuild to inspect positioning."); };
-  window.MashiProof = {sync, refreshControls, cancel: () => invalidate("Page closed. Late proof results are ignored."),
+  window.MashiProof = {sync, refreshControls, missingSamples: () => lastCoverage?.required_samples || [], cancel: () => invalidate("Page closed. Late proof results are ignored."),
     exportInput(kind) {
       const input = values();
       if (kind === "ttf" && reviewed !== stamp(input)) throw new Error("Build and review a current, supported proof preview before TTF export.");

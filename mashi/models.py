@@ -119,3 +119,38 @@ class ProofInput(RevisionInput):
         if not value.strip() or value.count("\n") >= 32:
             raise ValueError("Enter visible proof text, at most 1,000 codepoints and 32 lines")
         return value  # Preserve exact text, including joiners and decomposition.
+
+
+class CompletionJob(RevisionInput):
+    model_config = {"extra": "forbid"}
+    job_id: str = Field(pattern=r"^[a-f0-9-]{36}$")
+
+
+class CompletionReferences(RevisionInput):
+    model_config = {"extra": "forbid"}
+    ids: list[str] = Field(min_length=1, max_length=20)
+
+
+class CompletionGenerate(CompletionReferences):
+    job_id: str = Field(pattern=r"^[a-f0-9-]{36}$")
+    targets: list[str] = Field(min_length=1, max_length=8)
+    reference_hashes: dict[str, str] = Field(max_length=20)
+    alignment_confirmed: bool = False
+
+    @field_validator("targets")
+    @classmethod
+    def exact_targets(cls, values):
+        for value in values:
+            if not value or len(value) > 32:
+                raise ValueError("Choose exact Malayalam sequences up to 32 codepoints")
+            RegionInput.valid_label(value)
+        return values
+
+
+class CompletionReview(RevisionInput):
+    suggestion_revision: int = Field(ge=1)
+    state: Literal["pending", "accepted", "rejected"]
+
+
+class CompletionVector(VectorInput):
+    project_revision: int = Field(ge=1)

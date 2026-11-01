@@ -1,4 +1,5 @@
 import math
+import json
 import re
 import tempfile
 import xml.etree.ElementTree as ET
@@ -91,7 +92,7 @@ def trace(image, threshold):
     }
 
 
-def svg(vector, provenance=None):
+def svg(vector, provenance=None, *, generation=None):
     validate_paths(vector["paths"])
     root = ET.Element(
         "svg",
@@ -100,6 +101,15 @@ def svg(vector, provenance=None):
     )
     if provenance:
         ET.SubElement(root, "metadata").text = "Mashi source provenance: " + provenance
+    if generation is not None:
+        ET.SubElement(root, "metadata").text = json.dumps(
+            {
+                "provenance": "model-generated",
+                "not_observed_in_photo": True,
+                "generation": generation,
+            },
+            ensure_ascii=False,
+        )
     for path in vector["paths"]:
         ET.SubElement(root, "path", d=path, fill="black", **{"fill-rule": "nonzero"})
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)

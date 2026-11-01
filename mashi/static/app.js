@@ -4,6 +4,7 @@ let token = "",
   project = null,
   selected = null,
   pageImage = null,
+  outlineReady = false,
   busy = false;
 const checked = new Set();
 const pageLoads = new window.MashiReviewState.LatestRequest();
@@ -87,12 +88,15 @@ async function work(callback) {
     $("prep-restore").disabled = !project?.preparation_history?.length;
     window.MashiOutline?.refreshControls();
     window.MashiProof?.refreshControls();
+    window.MashiCompletion?.refreshControls();
     $("restore-state").disabled = !$("saved-history").value;
   }
 }
 const url = () => `/api/projects/${project.id}`;
 const current = () =>
-  project?.regions.find((r) => r.id === selected && r.active);
+  project?.regions.find((r) => r.id === selected && r.active) ||
+  project?.completion_suggestions?.find(r => r.id === selected && r.active && r.review_state !== "rejected");
+const generatedSelection = r => r?.coordinate_space === "generated-canvas";
 const cropDraftKey = () => `mashi:crop-draft:${project.id}:${selected}`;
 function saveCropDraft() {
   const r = current();
@@ -153,6 +157,7 @@ async function openProject(id) {
   selected = project.regions.find((r) => r.active)?.id || null;
   checked.clear();
   $("fixture-export").checked = false;
+  $("generated-export").checked = false;
   $("start").hidden = true;
   $("workspace").hidden = false;
   render();
@@ -209,6 +214,7 @@ function drawPage(drag = null) {
 }
 function render() {
   window.MashiProof?.sync();
+  window.MashiCompletion?.sync();
   const active = project.regions.filter((r) => r.active);
   const fixture = project.source_kind === "synthetic-fixture";
   $("fixture-note").hidden = !fixture;
@@ -256,10 +262,23 @@ function render() {
   });
   const r = current();
   $("no-selection").hidden = !!r;
+  $("no-selection").textContent = "Choose a crop to label and trace its ink.";
   $("region-form").hidden = !r;
   $("vectors").hidden = !r?.vector;
+  outlineReady = !generatedSelection(r);
+  $("outline-origin").hidden = !generatedSelection(r);
   drawPage();
   if (!r) return;
+  if (generatedSelection(r)) {
+    $("region-form").hidden = true;
+    $("no-selection").hidden = false;
+    $("no-selection").textContent = `Generated ${r.label}. Edit its outline below, then review it in Suggestions.`;
+    $("outline-origin").textContent = `Generated ${r.label} · ${r.review_state}. This geometry was not observed in the photograph.`;
+    window.MashiCompletion?.loadEditor(r);
+    return;
+  }
+  window.MashiCompletion?.clearEditorIdentity();
+  $("svg-download").hidden = false;
   ["x0", "y0", "x1", "y1"].forEach((key, i) => ($(key).value = r.box[i]));
   $("label").value = r.label;
   $("confirmed").checked = r.confirmed;
@@ -568,6 +587,7 @@ $("trace").onclick = () =>
   });
 $("vector-form").onsubmit = (event) => {
   event.preventDefault();
+  if (!outlineReady) {message("Wait for the selected generated raster to load, or select it again to retry.", true);return;}
   work(async () => {
     const r = current();
     let paths;
@@ -579,11 +599,12 @@ $("vector-form").onsubmit = (event) => {
       );
     }
     await update(
-      `${url()}/regions/${r.id}/vector`,
+      generatedSelection(r) ? `${url()}/completion/suggestions/${r.id}/vector` : `${url()}/regions/${r.id}/vector`,
       {
         method: "PUT",
         json: {
           revision: r.revision,
+          ...(generatedSelection(r) ? {project_revision: project.revision} : {}),
           paths,
           baseline: Number($("baseline").value),
           scale: Number($("scale").value),
@@ -606,14 +627,14 @@ async function download(kind, proof) {
       : "Packaging SVG outlines and UFO sources…",
   );
   const response = await api(
-    `${url()}/export/${kind}?include_fixture=${fixture && $("fixture-export").checked}`,
+    `${url()}/export/${kind}?include_fixture=${fixture && $("fixture-export").checked}&include_generated=${$("generated-export").checked}`,
     { method: "POST", json: proof },
   );
   const blob = await response.blob();
   const objectURL = URL.createObjectURL(blob),
     a = document.createElement("a");
   a.href = objectURL;
-  a.download = `Mashi-${fixture ? "SYNTHETIC-" : ""}${kind}.zip`;
+  a.download = `Mashi-${fixture ? "SYNTHETIC-" : ""}${$("generated-export").checked ? "GENERATED-" : ""}${kind}.zip`;
   document.body.append(a);
   a.click();
   a.remove();

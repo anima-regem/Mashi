@@ -1,2 +1,3 @@
 # Preserve reviewed upstream licence bytes, including original CRLF and spacing.
 docs/research-licenses/* -text -whitespace
+mashi/licenses/ml/* -text -whitespace
