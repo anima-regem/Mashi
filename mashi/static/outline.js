@@ -1,7 +1,9 @@
 "use strict";
 (() => {
   const G = window.MashiGeometry,
-    NS = "http://www.w3.org/2000/svg";
+    NS = "http://www.w3.org/2000/svg",
+    // Match the exporter's baseline metric bound, not the raster's ink bounds.
+    BASELINE_LIMIT = 100000;
   let key = "",
     draftKey = "",
     contours = [],
@@ -85,8 +87,10 @@
       vector.width,
       Math.min(vector.width * 2, (metrics.advance - 50) / metrics.scale),
     );
-    const margin = Math.max(vector.width, vector.height) * 0.12;
-    view = [-margin, -margin, width + margin * 2, vector.height + margin * 2];
+    const top = Math.min(0, metrics.baseline),
+      bottom = Math.max(vector.height, metrics.baseline),
+      margin = Math.max(vector.width, bottom - top) * 0.12;
+    view = [-margin, top - margin, width + margin * 2, bottom - top + margin * 2];
     draw();
   }
   function zoom(factor) {
@@ -254,8 +258,8 @@
       "data-testid": "outline-baseline",
       "aria-orientation": "vertical",
       "aria-valuenow": metrics.baseline,
-      "aria-valuemin": 0,
-      "aria-valuemax": vector.height,
+      "aria-valuemin": -BASELINE_LIMIT,
+      "aria-valuemax": BASELINE_LIMIT,
     });
     baseline.onpointerdown = (e) => {
       if (busy) return;
@@ -269,10 +273,10 @@
       e.preventDefault();
       const before = state();
       metrics.baseline = Math.max(
-        0,
+        -BASELINE_LIMIT,
         Math.min(
-          vector.height,
-          metrics.baseline + (e.key === "ArrowUp" ? -1 : 1),
+          BASELINE_LIMIT,
+          metrics.baseline + (e.key === "ArrowUp" ? -1 : 1) * (e.shiftKey ? 10 : e.altKey ? 0.1 : 1),
         ),
       );
       history(before);
@@ -477,7 +481,7 @@
         move(p[0] - drag.last[0], p[1] - drag.last[1]);
         drag.last = p;
       } else if (drag.kind === "baseline")
-        metrics.baseline = Math.max(0, Math.min(vector.height, p[1]));
+        metrics.baseline = Math.max(-BASELINE_LIMIT, Math.min(BASELINE_LIMIT, p[1]));
       else if (drag.kind === "advance")
         metrics.advance = Math.max(
           0,

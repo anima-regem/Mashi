@@ -7,6 +7,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 from dataclasses import asdict
+from copy import deepcopy
 
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.transformPen import TransformPen
@@ -96,6 +97,51 @@ def eligible(project, include_fixture=False, *, include_generated=False):
                 )
         regions += candidates
     return regions
+
+
+def export_project_snapshot(project, regions):
+    """Current exported forms only; never serialize the local project/history.
+
+    Font archives are not project backups. In particular, excluded suggestions
+    and their historical geometry must not escape the generated-font rights gate
+    through JSON, even when the compiler itself correctly excludes their glyphs.
+    """
+    snapshot = {
+        key: deepcopy(project[key])
+        for key in ["id", "name", "revision", "created", "source_kind", "image", "source_image", "preparation"]
+        if key in project
+    }
+    snapshot.update(
+        export_schema="mashi-font-snapshot/v1",
+        full_project_backup=False,
+        regions=[],
+        completion_suggestions=[],
+    )
+    fields = [
+        "id", "label", "revision", "active", "confirmed", "box", "provenance",
+        "source", "parents", "source_polygon", "original_polygon",
+    ]
+    generated_fields = [
+        "generation", "vectorization", "raster_sha256", "not_observed_in_photo",
+        "coordinate_space", "review_state",
+    ]
+    for region in regions:
+        generated = region["provenance"] == "model-generated"
+        item = {
+            key: deepcopy(region[key])
+            for key in fields + (generated_fields if generated else [])
+            if key in region
+        }
+        item["vector"] = {
+            key: deepcopy(region["vector"][key])
+            for key in [
+                "paths", "width", "height", "baseline", "scale", "advance",
+                "threshold", "tracer", "transform", "edited",
+            ]
+            if key in region["vector"]
+        }
+        snapshot["completion_suggestions" if generated else "regions"].append(item)
+    return snapshot
 
 
 def export_preflight(project, text="", include_fixture=False, *, include_generated=False):
@@ -529,8 +575,10 @@ def export_bundle(
         (root / "coverage.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
         )
+        exported_regions = eligible(project, include_fixture, include_generated=include_generated)
         (root / "project.json").write_text(
-            json.dumps(project, ensure_ascii=False, indent=2), encoding="utf-8"
+            json.dumps(export_project_snapshot(project, exported_regions), ensure_ascii=False, indent=2),
+            encoding="utf-8",
         )
         (root / "READ-ME.txt").write_text(
             (
@@ -547,7 +595,7 @@ def export_bundle(
             )
             + "Inspect coverage.json before use. Partial Malayalam V1, not a complete language font.\n"
             "Read docs/TYPOGRAPHY.md in the source repository for repertoire and limitations.\n"
-            "Original photos are not included. project.json contains image hashes and crop metadata.\n",
+            "Original photos are not included. project.json contains only the exported current forms, image hashes and coordinate metadata; it is not a full project backup. Excluded candidates and editing histories are omitted.\n",
             encoding="utf-8",
         )
         if include_generated:
@@ -573,7 +621,7 @@ def export_bundle(
             )
         svg_dir = root / "svg"
         svg_dir.mkdir()
-        for region in eligible(project, include_fixture, include_generated=include_generated):
+        for region in exported_regions:
             (svg_dir / (glyph_name(region["label"]) + ".svg")).write_bytes(
                 svg(region["vector"], region["provenance"], generation=region.get("generation"))
             )

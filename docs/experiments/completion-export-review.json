@@ -1,0 +1,47 @@
+{
+  "synthetic_only": true,
+  "model_loaded_for_this_check": false,
+  "project_unchanged": true,
+  "checks": [
+    {
+      "scope": "ordinary",
+      "sha256": "f97a3ac527a4223567a07c0b39fcb28ece591ec377a707d69f7cfd0f5b853ad9",
+      "family": "Mashi Synthetic Fixture",
+      "source_forms": 1,
+      "generated_forms": 0,
+      "omitted_candidate_count": 5,
+      "full_project_backup": false,
+      "source_notices": false
+    },
+    {
+      "scope": "generated",
+      "sha256": "d83811afe10adbd68c4122122dad4e84c92d9519437e2d71de53ee02c1a74bda",
+      "family": "Mashi Synthetic Generated",
+      "source_forms": 1,
+      "generated_forms": 2,
+      "omitted_candidate_count": 3,
+      "full_project_backup": false,
+      "source_notices": true
+    }
+  ],
+  "baseline_browser": {
+    "above_ink_keyboard": [
+      24,
+      23
+    ],
+    "above_ink_pointer": [
+      23,
+      24.287429809570312
+    ],
+    "below_ink_keyboard": [
+      -8,
+      -7
+    ],
+    "below_ink_pointer": [
+      -7,
+      -5.7398810386657715
+    ],
+    "ink_height": 19,
+    "console_warnings_errors": []
+  }
+}

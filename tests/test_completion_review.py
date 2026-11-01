@@ -9,6 +9,7 @@ import subprocess
 import struct
 import uuid
 import zipfile
+from copy import deepcopy
 
 import numpy as np
 import pytest
@@ -21,7 +22,7 @@ from mashi.ml_capture import aligned_reference
 from mashi.ml_capture import pixel_boundaries
 from mashi.ml_engine import checkpoint
 from mashi.ml_service import CompletionService
-from test_workflow import fixture_image, png
+from test_workflow import fixture_image, png, synthetic_project
 
 
 def fixture_checkpoint(path, version=3, **overrides):
@@ -302,6 +303,66 @@ def test_review_edit_reject_and_default_exclusion(ml_client):
     assert ml_client.post(base + "/export/ufo?include_fixture=true").status_code == 200
 
 
+@pytest.mark.parametrize("kind", ["ufo", "ttf"])
+def test_ordinary_archive_excludes_generated_geometry_from_every_member(kind):
+    from mashi.exporting import export_bundle
+
+    doc = synthetic_project(["ക"])
+    doc["revision"] = 1
+    unknown = "f" * 64
+    suggestions = []
+    for index, state in enumerate(["pending", "rejected", "accepted"]):
+        item = deepcopy(doc["regions"][0])
+        item.update(
+            id=f"candidate-{index}", label=["ഖ", "മ", "ഗ"][index],
+            provenance="model-generated", review_state=state,
+            confirmed=state == "accepted", not_observed_in_photo=True,
+            generation={"model": {"sha256": unknown, "terms": {"checkpoint_source_known": False}}},
+        )
+        item["vector"]["paths"] = [f"M0.123456{index} 0L2 0L2 2L0 2Z"]
+        item["vector"]["leak_marker"] = "FORBIDDEN-MODEL-GEOMETRY"
+        suggestions.append(item)
+    doc["completion_suggestions"] = suggestions
+    legacy = deepcopy(suggestions[0])
+    legacy.update(id="legacy-generated-region", label="ഘ", active=True, confirmed=True)
+    doc["regions"].append(legacy)
+    # History/snapshots can contain geometry even when current candidate lists
+    # are filtered. A font archive is not a full editable-project backup.
+    doc["history"] = [{"snapshot": deepcopy(suggestions)}]
+    doc["preparation_history"] = [{"regions": deepcopy(suggestions)}]
+    doc["regions"][0]["history"] = deepcopy(suggestions)
+    doc["regions"][0]["vector"]["history"] = deepcopy(suggestions)
+    before = deepcopy(doc)
+    output = export_bundle(doc, kind)
+    assert doc == before
+    with zipfile.ZipFile(io.BytesIO(output)) as archive:
+        names = archive.namelist()
+        exported = json.loads(archive.read("project.json"))
+        assert exported["completion_suggestions"] == []
+        assert exported["export_schema"] == "mashi-font-snapshot/v1"
+        assert not exported["full_project_backup"]
+        assert exported["image"] == doc["image"]
+        assert [r["id"] for r in exported["regions"]] == ["0"]
+        assert "history" not in exported and "preparation_history" not in exported
+        assert "history" not in exported["regions"][0]
+        assert "history" not in exported["regions"][0]["vector"]
+        assert not any(n.startswith("FONT-LICENSES/") for n in names)
+        for name in names:
+            payload = archive.read(name)
+            assert b"FORBIDDEN-MODEL-GEOMETRY" not in payload, name
+            assert b"0.123456" not in payload, name
+            assert unknown.encode() not in payload, name
+        contents = plistlib.loads(archive.read("Mashi-Handwriting.ufo/glyphs/contents.plist"))
+        assert not {"u0D16", "u0D2E", "u0D17", "u0D18"} & contents.keys()
+        assert [n for n in names if n.startswith("svg/")] == ["svg/u0D15.svg"]
+        if kind == "ttf":
+            tt = TTFont(io.BytesIO(archive.read("Mashi-Experimental.ttf")))
+            assert set(tt.getBestCmap()) & {0x0D15, 0x0D16, 0x0D2E, 0x0D17, 0x0D18} == {0x0D15}
+    # Accepting unknown-source geometry cannot bypass the explicit rights gate.
+    with pytest.raises(ValueError, match="no verified source-notice mapping"):
+        export_bundle(doc, kind, include_generated=True)
+
+
 def test_generated_font_notices_and_glyph_provenance(ml_client, monkeypatch):
     import mashi.ml_service as service
 
@@ -309,7 +370,10 @@ def test_generated_font_notices_and_glyph_provenance(ml_client, monkeypatch):
 
     # Explicit unit-only stand-in for the production hash-bound source registry.
     def fixture_terms(digest):
-        return original("0165690674d47818bd66055cf66f7b8861bdbb557f964bea56154b33180ea045")
+        return original(
+            "0165690674d47818bd66055cf66f7b8861bdbb557f964bea56154b33180ea045"
+            if digest == ml_client.app.state.completion.digest else digest
+        )
 
     monkeypatch.setattr(service, "source_terms", fixture_terms)
     monkeypatch.setattr("mashi.exporting.source_terms", fixture_terms)
@@ -326,6 +390,16 @@ def test_generated_font_notices_and_glyph_provenance(ml_client, monkeypatch):
             "state": "accepted",
         },
     ).json()
+    for index, state in enumerate(["pending", "rejected"]):
+        excluded = deepcopy(doc["completion_suggestions"][0])
+        excluded.update(id=f"excluded-{state}", label=["മ", "ഗ"][index], confirmed=False, review_state=state)
+        excluded["generation"]["model"]["sha256"] = "f" * 64
+        excluded["vector"]["paths"] = ["M0.654321 0L2 0L2 2L0 2Z"]
+        excluded["vector"]["leak_marker"] = "FORBIDDEN-MODEL-GEOMETRY"
+        doc["completion_suggestions"].append(excluded)
+    doc["completion_suggestions"][0]["history"] = deepcopy(doc["completion_suggestions"][1:])
+    doc["history"].append({"snapshot": deepcopy(doc["completion_suggestions"][1:])})
+    ml_client.app.state.store.save(doc)
     body = {"revision": doc["revision"], "text": "ഖ"}
     output = ml_client.post(
         base + "/export/ttf?include_fixture=true&include_generated=true", json=body
@@ -338,6 +412,18 @@ def test_generated_font_notices_and_glyph_provenance(ml_client, monkeypatch):
         assert "OFL-1.1" in archive.read("GENERATED-PROVENANCE.json").decode()
         assert archive.read("FONT-LICENSES/OFL.txt")
         assert b"SYNTHETIC TEST INPUT" in archive.read("READ-ME.txt")
+        exported = json.loads(archive.read("project.json"))
+        assert [r["id"] for r in exported["completion_suggestions"]] == [s["id"]]
+        current = exported["completion_suggestions"][0]
+        assert current["review_state"] == "accepted" and current["not_observed_in_photo"]
+        assert current["generation"] == doc["completion_suggestions"][0]["generation"]
+        assert current["vector"] == doc["completion_suggestions"][0]["vector"]
+        assert "history" not in current and "history" not in exported
+        for name in archive.namelist():
+            payload = archive.read(name)
+            assert b"FORBIDDEN-MODEL-GEOMETRY" not in payload, name
+            assert b"0.654321" not in payload, name
+            assert ("f" * 64).encode() not in payload, name
         tt = TTFont(io.BytesIO(archive.read("Mashi-Synthetic-Generated.ttf")))
         assert "Generated" in tt["name"].getDebugName(1)
         assert "OPEN FONT LICENSE" in tt["name"].getDebugName(13)

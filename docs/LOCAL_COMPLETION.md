@@ -48,6 +48,8 @@ The [official OFL FAQ 1.25–1.26](https://openfontlicense.org/ofl-faq/) disting
 
 Generated-font exports use OFL-1.1, retain the eight training-family notices and complete pinned corpus/source manifest, embed font licence/copyright metadata, and include `GENERATED-PROVENANCE.json`. Their filenames and effective family identify them as generated; source-family names are rejected as a conservative naming policy. Accepted generated glyphs retain their provenance in UFO glyph libs, SVG metadata and coverage/project reports. Synthetic tests retain synthetic identity as well. Generated SVG download requires accepted geometry with a known source mapping and embeds the source licence texts. Review rights in your own captured contributions before distributing the combined OFL font. The application licence remains MIT; it does not relicense model-derived fonts or weights.
 
+Font ZIPs contain only the current eligible forms. Ordinary `project.json` snapshots exclude every generated vector, including accepted suggestions, legacy generated regions and historical copies. Explicit generated output retains only eligible accepted suggestions and their current generation provenance; pending, rejected and historical geometry stays local. `project.json` declares its export schema and `full_project_backup=false`. Use local saved history for recovery; a font archive is not a project backup.
+
 ## Reproduce the software smoke
 
 ```sh
