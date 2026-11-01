@@ -48,7 +48,7 @@ The continuation installed official Homebrew Tesseract **5.5.4** and pinned offi
 
 The original known local practice project was corrected to synthetic provenance during this continuation. Legacy projects created before source tagging cannot be classified safely from an unknown image alone; recreate older practice pages rather than assume they are handwriting. The browser check reopened the corrected project, displayed its persistent synthetic banner and blocked a font export while synthetic opt-in was unchecked. Local OCR capability appeared available and browser diagnostics were clear. Evidence is saved in `output/browser/studio-provenance.jpg`.
 
-The small rendered-font completion pilot remains unchanged: see [COMPLETION.md](COMPLETION.md). No further corpus training was run during this continuation. It has no measured real-handwriting accuracy and is not enabled in the studio. Full Malayalam shaping, anchors and typographic quality remain unverified and incomplete.
+The small rendered-font completion pilot remains unchanged: see [COMPLETION.md](COMPLETION.md). No further corpus training was run during this continuation. It has no measured real-handwriting accuracy and is not enabled in the studio. At this historical checkpoint, shaping and anchors were incomplete; the later bounded typography integration is recorded below.
 
 ## Capture/editor increment: photo preparation
 
@@ -57,3 +57,13 @@ The small rendered-font completion pilot remains unchanged: see [COMPLETION.md](
 ## Capture/editor increment: visual editing and recovery
 
 23 Python tests and four Node geometry tests pass. The new cases verify saved-region history restoration, stale/cross-crop rejection, outer/counter grouping and winding, relative/smooth Bézier conversion, closing-anchor continuity and unsafe/open geometry rejection. Browser checks exercised a real Bézier-handle pointer drag; repeated arrow edits with focus retained; exact undo/redo; unsaved outline/crop recovery after reload; rejection of an older crop draft after a concurrent API save; decimal metric save/reopen; saved-history restoration; and zoom/pan without geometry changes. A synthetic TTF export retained two contours, an empty counter and filled ink at checked points. Evidence: `output/editor-smoke/report.json`, `output/browser/visual-outline-editor.jpg`, `output/browser/visual-outline-mobile.jpg`. The 390 px layout has document width 390, and browser diagnostics were empty. No real handwriting validation or model training was performed for this increment.
+
+This checkpoint is published as `a850a9964a4e50145ef3498a76b3d72d4caeaa8b`; [its exact CI run](https://github.com/anima-regem/Mashi/actions/runs/41309842438) passed. The earlier photo-preparation checkpoint `6028659fb43fa227cb29a987be91ac920dc9cd65` also [passed CI](https://github.com/anima-regem/Mashi/actions/runs/41307290746).
+
+## Application and reviewed typography integration
+
+Merged reviewed typography commit `a9403fe7db5f6180e6d25be52fd16efa5b4e7edc` while preserving the capture/editor work. The combined checkout passes **115 Python tests and four Node geometry tests**, Ruff and diff checks. The original typography branch's 107-test result is historical, not the combined application's count. Five dependency deprecation warnings remain. See [TYPOGRAPHY.md](TYPOGRAPHY.md) for the bounded repertoire, actual HarfBuzz checks and limits; these tests do not establish universal Malayalam support or reader-level quality.
+
+HarfBuzz is a pinned normal runtime dependency. A separate non-editable installation at `/tmp/mashi-runtime-venv`, without the dev extra, imported Mashi and `uharfbuzz==0.49.0` from `/tmp`, verified the packaged visual editor asset and confirmed pytest was absent. The installed `python -m mashi.ocr_setup` command verified the already-downloaded official Malayalam assets outside the source checkout. This setup command is now packaged with Mashi; it no longer depends on a checkout-only `scripts` module. No new OCR download or model training was needed for these checks.
+
+The exact-text preflight/positioned-preview APIs are integrated as backend functions. Their proof-text UI, preview cache and final-export required-text controls remain the next application increment. Existing exports run the backend's supported-observation validation; they do not establish coverage for arbitrary user proof text that has not been supplied.

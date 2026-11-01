@@ -29,7 +29,7 @@ def capabilities():
         if "mal" not in langs:
             return {
                 "available": False,
-                "reason": "Install Malayalam data with python -m scripts.setup_ocr, then reload Mashi.",
+                "reason": "Install Malayalam data with python -m mashi.ocr_setup, then reload Mashi.",
             }
     except (subprocess.SubprocessError, OSError):
         return {"available": False, "reason": "Tesseract could not be started."}

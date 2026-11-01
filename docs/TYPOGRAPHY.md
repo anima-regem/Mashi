@@ -62,7 +62,7 @@ archive_bytes = export_bundle(project, "ttf", options=options,
                               required_text="കൊക്ക്")
 ```
 
-The package's existing optional `dev` extra includes pinned `uharfbuzz==0.49.0`. Install with `uv sync --locked --extra dev` for preview and verified TTF text. This milestone adds no dependency changes. If HarfBuzz is absent, ordinary TTF export records `shaping_validation.status = not_run` and a warning. `preview_project` and TTF export with `required_text` fail clearly rather than pretending to have verified shaping. UFO archives always record shaping as `not_run`; their preflight is coverage and geometry validation only.
+Application integration makes pinned `uharfbuzz==0.49.0` a normal runtime dependency. The ordinary locked installation supports preview and verified TTF text without test tooling. If HarfBuzz is absent, ordinary TTF export records `shaping_validation.status = not_run` and a warning. `preview_project` and TTF export with `required_text` fail clearly rather than pretending to have verified shaping. UFO archives always record shaping as `not_run`; their preflight is coverage and geometry validation only.
 
 Minimal application integration, owned by the application task:
 

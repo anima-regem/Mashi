@@ -225,7 +225,9 @@ def shape_preview(font_bytes, text):
     try:
         import uharfbuzz as hb
     except ImportError as error:
-        raise ValueError("Install the dev extra (uharfbuzz) for verified text preview") from error
+        raise ValueError(
+            "HarfBuzz unavailable: reinstall Mashi's locked runtime dependencies for verified preview"
+        ) from error
     tt = TTFont(io.BytesIO(font_bytes))
     font = hb.Font(hb.Face(font_bytes))
     font.scale = (tt["head"].unitsPerEm,) * 2

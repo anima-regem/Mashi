@@ -20,7 +20,7 @@ Labels accept Malayalam block codepoints plus ZWJ/ZWNJ, up to 32 codepoints. No 
 
 Confirmed single-codepoint forms receive cmap entries. Whole-sequence observations may receive an `akhn` rule only when all referenced input glyphs exist. Longer sequences are ordered first. Every emitted glyph reference is locally constructed and validated. No complete FEA is borrowed from a reference font. `mlym` and `mlm2` identify shaping-system versions; they do not select traditional versus modern orthography.
 
-The current exporter cannot infer correct mark anchors, contextual forms or all script-specific reordering. Its coverage report is the source of truth; successful font compilation alone is insufficient evidence of usable Malayalam shaping.
+The integrated typography V1 backend supplies a bounded mlm2 repertoire, HarfBuzz reordering and adjustable geometry-estimated virama anchors. It does not infer reader-approved calligraphy or complete contextual/mark-stack behavior. See TYPOGRAPHY.md and exact-text preflight; successful compilation alone is insufficient evidence of usable Malayalam shaping.
 
 ## Local security and privacy
 

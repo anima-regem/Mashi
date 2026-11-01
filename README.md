@@ -11,13 +11,13 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.11–3.13; Python 3.12 is
 ```sh
 git clone https://github.com/anima-regem/Mashi.git
 cd Mashi
-uv sync --locked --no-editable --extra dev --python 3.12
+uv sync --locked --no-editable --python 3.12
 uv run --no-sync mashi
 ```
 
 Open **http://127.0.0.1:8000**. The server binds only to loopback. Use `uv run --no-sync mashi --port 8001` for another port. No deployment or cloud service is required.
 
-Without uv, create a Python 3.12 virtual environment and `python -m pip install '.[dev]'`, then `python -m mashi`. The uv lockfile is the reproducible installation path; pip uses the pinned direct requirements. This installs a normal package, including the UI assets. After editing source files, repeat `uv sync --locked --no-editable --extra dev` to rebuild the installed app.
+Without uv, create a Python 3.12 virtual environment and `python -m pip install .`, then `python -m mashi`. The uv lockfile is the reproducible installation path; pip uses the pinned direct requirements. This installs a normal package, including the UI assets. After editing source files, repeat `uv sync --locked --no-editable` to rebuild the installed app.
 
 ## What works
 
@@ -27,7 +27,7 @@ Without uv, create a Python 3.12 virtual environment and `python -m pip install 
 4. Trace the selected pixels with a controllable ink threshold. Inspect the closed contours, including counters. Edit SVG path geometry, baseline, scale and advance width.
 5. Export an SVG/UFO ZIP, or compile an experimental TTF ZIP. Each contains `coverage.json`, `project.json`, SVGs and reloadable UFO sources. Photos are not embedded in exports.
 
-Edits and original image bytes stay in `.mashi/` in the working directory (gitignored). Restarting preserves projects. Set `MASHI_DATA_DIR` to choose another directory. Back up this directory to preserve originals, canonical pages, SQLite project history and traced outlines. Exports contain metadata, not the original photos; they are not complete project backups. To remove local data, stop Mashi and delete its data directory.
+Saved edits and original image bytes stay in `.mashi/` in the working directory (gitignored). Restarting preserves projects. Set `MASHI_DATA_DIR` to choose another directory. Back up this directory to preserve originals, canonical pages, SQLite project history and traced outlines. Exports contain metadata, not the original photos; they are not complete project backups. To remove local data, stop Mashi and delete its data directory.
 
 ### Prepare a photographed page
 
@@ -48,7 +48,7 @@ Install [Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html), 
 ```sh
 # macOS engine installation; use your system package manager on Linux.
 brew install tesseract
-uv run --no-sync python -m scripts.setup_ocr
+uv run --no-sync python -m mashi.ocr_setup
 ```
 
 The setup command verifies SHA-256 hashes and preserves the Apache 2.0 licence in `.mashi/ocr/tessdata/`. The app detects this local folder, or uses `MASHI_TESSDATA_DIR` if set, then falls back to system data when no local folder exists. `MASHI_DATA_DIR` also controls the default local OCR location. The studio never installs or downloads models automatically. Reload after setup. Standard Tesseract models work best on printed text and often fail on handwriting.
@@ -61,9 +61,10 @@ The local integration check recognized മലയാളം, മഷി and കേ�
 
 - Only active, confirmed, labelled, traced regions with `observed` provenance are exported. Generated suggestions and unconfirmed crops are excluded.
 - Built-in practice pages persist `synthetic-fixture` provenance across reload, crop edits, split/merge and OCR. They are excluded from normal font exports. An explicit test-export checkbox produces a synthetic-labelled ZIP, font family, glyph metadata and SVG metadata; it never claims the practice shapes are actual handwriting.
-- One codepoint maps to a cmap entry. A multi-codepoint observation is an unencoded glyph unless all of its component codepoints were also captured separately; then a small, self-contained `akhn` substitution is built for `mlym`/`mlm2`/DFLT.
-- The tested conjunct is `ക്ക` with separately captured `ക` and `്`. Atomic chillu `ൻ` is also tested. These tests use synthetic outlines and verify plumbing, not handwriting recognition or typographic quality.
-- No complete contextual substitution system, mark anchors, vowel positioning/reordering, traditional conjunct inventory, or joiner-sensitive shaping is implemented. Combining-mark widths are zero, but positioning still needs design. Whole-word labels are useful records, not a promise that a font can shape them.
+- The integrated typography V1 backend targets a bounded HarfBuzz `mlm2` repertoire: direct characters/chillus/digits, selected captured conjuncts and attached-vowel forms, legacy chillu aliases, and explicit joiner handling. Every required observed sample must exist. See [the exact repertoire and limits](docs/TYPOGRAPHY.md).
+- HarfBuzz reorders pre-base and split vowels. Spacing vowel signs retain positive advance; the visible virama uses zero advance with adjustable estimated `abvm` anchors. These defaults require visual and Malayalam-reader review.
+- Backend exact-text preflight reports missing samples and unsupported sequences without normalizing the original input. Verified TTF export checks actual glyph selection, positions and clipping. HarfBuzz is a normal runtime dependency; no test tooling is needed to run the app. The proof-text/preflight UI is the next application increment.
+- General contextual consonant forms, mark stacks, historical repertoire and platform qualification remain incomplete. Compilation or passing synthetic tests does not establish reader-level quality or universal Malayalam support.
 - Initial baseline and scale are estimates. Outlines need visual review. Perspective/rotation and lighting/adaptive preparation are available, but need review; their synthetic fixture checks do not establish robustness on real handwriting photographs.
 - Duplicate confirmed labels must be resolved to one variant before export. Alternate forms and multi-page font assembly are future work.
 
@@ -86,9 +87,11 @@ We studied actual sources from Swathanthra Malayalam Computing and Santhosh Thot
 ## Check the build
 
 ```sh
+uv sync --locked --no-editable --extra dev --python 3.12
 uv run --no-sync pytest -q
 uv run --no-sync ruff check mashi scripts tests
 node --check mashi/static/app.js
+node --test tests/outline-geometry.test.cjs
 ```
 
 Tests cover EXIF orientation/hashes, half-open crop bounds, revisions and split/merge ancestry, exact Malayalam/joiner persistence, OCR suggestion handling, counters and orientation, full image-to-TTF export, UFO reload, cmap/contours, selective HarfBuzz shaping, excluded generated forms, local input protections, and completion-model fitting/checkpoint reload.

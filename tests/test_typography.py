@@ -305,7 +305,7 @@ def test_shaping_dependency_is_reported_honestly(compiled, monkeypatch):
     monkeypatch.setitem(__import__("sys").modules, "uharfbuzz", None)
     _validate_ttf(data, report)
     assert report["shaping_validation"]["status"] == "not_run"
-    with pytest.raises(ValueError, match="Install the dev extra"):
+    with pytest.raises(ValueError, match="HarfBuzz unavailable"):
         _validate_ttf(data, report, require_shaping=True)
 
 

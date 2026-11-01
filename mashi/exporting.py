@@ -321,7 +321,7 @@ def _validate_ttf(data, report, *, require_shaping=False):
                 raise ValueError("Required text produces missing glyphs or clipped marks")
             report["required_preview"] = required
     except ValueError as error:
-        if "Install the dev extra" not in str(error) or require_shaping:
+        if "HarfBuzz unavailable:" not in str(error) or require_shaping:
             raise
         report["shaping_validation"] = {"status": "not_run", "reason": str(error)}
         report["warnings"].append(str(error))
