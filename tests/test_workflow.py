@@ -237,8 +237,9 @@ def test_selected_shaping_and_honest_missing_marks():
     assert shape("ൻ") == [glyph_name("ൻ")]
     report = json.loads(bundle.read("coverage.json"))
     assert len(shape("കി")) >= 2
-    assert any("No mark anchors" in warning for warning in report["warnings"])
-    assert "GPOS" not in tt
+    assert any("anchors are geometry estimates" in warning for warning in report["warnings"])
+    assert "GPOS" in tt
+    assert report["shaping_validation"]["status"] == "passed"
 
 
 def test_input_security_and_bounds(client):

@@ -4,21 +4,33 @@ import math
 import subprocess
 import sys
 import tempfile
-import unicodedata
 import zipfile
 from pathlib import Path
 
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.svgLib.path import parse_path
+from fontTools.ttLib import TTFont
 from ufoLib2 import Font
 
+from .font_metrics import TypographyOptions, postscript_name, validate_vector_metrics
 from .predictors import coverage
+from .shaping import (
+    CHILLUS,
+    CONJUNCTS,
+    CONSONANTS,
+    INDEPENDENT,
+    SINGLE_REPERTOIRE,
+    VIRAMA,
+    ZWJ,
+    ZWNJ,
+    feature_text,
+    glyph_name,
+    make_plan,
+    shape_preview,
+    text_coverage,
+)
 from .tracing import svg, validate_paths
-
-
-def glyph_name(sequence):
-    return "u" + "_".join(f"{ord(c):04X}" for c in sequence)
 
 
 def eligible(project, include_fixture=False):
@@ -39,7 +51,27 @@ def eligible(project, include_fixture=False):
     ]
 
 
-def make_ufo(project, include_fixture=False):
+def export_preflight(project, text="", include_fixture=False):
+    """Cheap read-only coverage for a caller's live preview; never compiles a font.
+
+    Use make_ufo for geometry/metadata validation and preview_project for actual
+    shaping. Synthetic practice data is never treated as observed handwriting.
+    """
+    regions = eligible(project, include_fixture)
+    labels = [r["label"] for r in regions]
+    result = text_coverage(text, labels)
+    result.update(make_plan(labels))
+    result["profile"] = "malayalam-v1"
+    result["duplicate_labels"] = sorted({s for s in labels if labels.count(s) > 1})
+    result["synthetic_test_export"] = project.get("source_kind") == "synthetic-fixture"
+    if result["duplicate_labels"] or not regions:
+        result["supported"] = False
+    return result
+
+
+def make_ufo(project, include_fixture=False, *, options=None, required_text=None):
+    options = options or TypographyOptions()
+    options.validate()
     fixture = project.get("source_kind") == "synthetic-fixture"
     if fixture and not include_fixture:
         raise ValueError(
@@ -53,15 +85,32 @@ def make_ufo(project, include_fixture=False):
         raise ValueError(
             "Two confirmed crops have the same label. Keep one confirmed variant per label."
         )
-    font = Font()
-    font.info.familyName = (
-        "Mashi Synthetic Fixture" if fixture else "Mashi Handwriting Experimental"
+    if set(options.anchors) - set(labels):
+        raise ValueError("Anchor overrides reference labels excluded from this export")
+    for label in labels:
+        if len(label) > 32 or any(
+            not (0x0D00 <= ord(c) <= 0x0D7F or c in ZWJ + ZWNJ) for c in label
+        ):
+            raise ValueError("Use Malayalam labels with optional ZWJ/ZWNJ")
+        if label in {ZWJ, ZWNJ}:
+            raise ValueError("Joiners are engine controls, not standalone ink samples")
+    plan = make_plan(labels)
+    required = (
+        export_preflight(project, required_text, include_fixture)
+        if required_text is not None
+        else None
     )
-    font.info.styleName = "Regular"
+    if required is not None and not required["supported"]:
+        raise ValueError(
+            "Required text is unsupported: " + json.dumps(required["issues"], ensure_ascii=False)
+        )
+    font = Font()
+    font.info.familyName = "Mashi Synthetic Fixture" if fixture else options.family_name
+    font.info.styleName = options.style_name
+    font.info.postscriptFontName = postscript_name(font.info.familyName, options.style_name)
+    font.info.styleMapStyleName = "regular"
     font.info.unitsPerEm = 1000
-    font.info.ascender, font.info.descender = 1000, -400
-    font.info.openTypeOS2TypoAscender, font.info.openTypeOS2TypoDescender = 1000, -400
-    font.info.versionMajor, font.info.versionMinor = 0, 1
+    font.info.versionMajor, font.info.versionMinor = 0, 2
     font.info.copyright = (
         "Synthetic test geometry; not actual handwriting."
         if fixture
@@ -73,22 +122,31 @@ def make_ufo(project, include_fixture=False):
     for x, y in [(80, 0), (80, 700), (520, 700), (520, 0)]:
         (pen.moveTo if (x, y) == (80, 0) else pen.lineTo)((x, y))
     pen.closePath()
-    font.newGlyph("space").unicodes, font["space"].width = [32], 300
+    font.newGlyph("space").unicodes, font["space"].width = [32], options.space_advance
+    for control in (ZWJ, ZWNJ):
+        font.newGlyph(glyph_name(control)).unicodes = [ord(control)]
+        font[glyph_name(control)].width = 0
     singles = {r["label"]: glyph_name(r["label"]) for r in regions if len(r["label"]) == 1}
-    substitutions, unsupported = [], []
+    bounds = {}
     for region in regions:
         label, vector = region["label"], region["vector"]
         validate_paths(vector["paths"])
+        validate_vector_metrics(vector, spacing=label != VIRAMA)
         glyph = font.newGlyph(glyph_name(label))
         if len(label) == 1:
             glyph.unicodes = [ord(label)]
-        glyph.width = vector["advance"]
-        if len(label) == 1 and unicodedata.category(label).startswith("M"):
-            glyph.width = 0
+        glyph.width = 0 if label == VIRAMA else round(vector["advance"])
         scale, baseline = vector["scale"], vector["baseline"]
         pen = TransformPen(glyph.getPen(), (scale, 0, 0, -scale, 50, baseline * scale))
         for path in vector["paths"]:
             parse_path(path, pen)
+        bounds_pen = BoundsPen(font)
+        glyph.draw(bounds_pen)
+        if bounds_pen.bounds is None:
+            raise ValueError(f"Label {label!r} has no ink bounds")
+        bounds[label] = bounds_pen.bounds
+        if any(abs(v) > 16000 for v in bounds[label]):
+            raise ValueError("Font outline exceeds 16,000 units. Reduce scale or path coordinates.")
         glyph.lib["org.mashi.provenance"] = {
             "state": "synthetic-fixture" if fixture else region["provenance"],
             "inputKind": project.get("source_kind", "user-upload"),
@@ -99,104 +157,231 @@ def make_ufo(project, include_fixture=False):
             "crop": region["box"],
             "vectorEdited": vector["edited"],
         }
-        if len(label) > 1:
-            if all(c in singles for c in label):
-                substitutions.append(
-                    (
-                        label,
-                        "sub " + " ".join(singles[c] for c in label) + " by " + glyph.name + ";",
-                    )
-                )
+    bases, mark = {}, None
+    anchor_report = {}
+    for label, (x0, y0, x1, y1) in bounds.items():
+        default = None
+        if label == VIRAMA:
+            name, default = "_top", ((x0 + x1) / 2, y0)
+        elif label in CONSONANTS + CHILLUS + INDEPENDENT or label in CONJUNCTS:
+            name, default = "top", (x1, y1 + options.mark_gap)
+        if default:
+            overrides = options.anchors.get(label, {})
+            if set(overrides) - {name}:
+                raise ValueError(f"Label {label!r} accepts only the {name} anchor")
+            point = tuple(overrides.get(name, default))
+            # Integer anchor positions match the generated GPOS, diagnostics and metrics.
+            point = tuple(round(v) for v in point)
+            font[glyph_name(label)].appendAnchor({"name": name, "x": point[0], "y": point[1]})
+            anchor_report[label] = {
+                "name": name,
+                "point": point,
+                "estimated": name not in overrides,
+            }
+            if label == VIRAMA:
+                mark = point
             else:
-                unsupported.append(label)
-    # Whole-sequence observations only, all dependencies verified. No borrowed FEA.
-    if substitutions:
-        rules = "\n".join(rule for _, rule in sorted(substitutions, key=lambda v: -len(v[0])))
-        font.features.text = (
-            "languagesystem DFLT dflt;\nlanguagesystem mlym dflt;\nlanguagesystem mlm2 dflt;\n"
-            "feature akhn {\n" + rules + "\n} akhn;\n"
-        )
-    top, bottom = 1000, -400
-    for glyph in font:
-        bounds_pen = BoundsPen(font)
-        glyph.draw(bounds_pen)
-        if bounds_pen.bounds:
-            x0, y0, x1, y1 = bounds_pen.bounds
-            if any(abs(v) > 16000 for v in (x0, y0, x1, y1)):
-                raise ValueError(
-                    "Font outline exceeds 16,000 units. Reduce scale or path coordinates."
-                )
-            top, bottom = max(top, math.ceil(y1) + 20), min(bottom, math.floor(y0) - 20)
-    font.info.openTypeOS2WinAscent, font.info.openTypeOS2WinDescent = top, -bottom
+                bases[glyph_name(label)] = point
+        elif options.anchors.get(label):
+            raise ValueError(f"Label {label!r} has no V1 anchor role")
+    font.features.text = feature_text(plan, bases, mark)
+    top, bottom = max(options.ascender, 720), options.descender
+    for _, y0, _, y1 in bounds.values():
+        top, bottom = max(top, math.ceil(y1) + 20), min(bottom, math.floor(y0) - 20)
+    # Include the POSITIONED mark extent, rather than just its nominal glyph bounds.
+    if mark:
+        _, my0, _, my1 = bounds[VIRAMA]
+        for _, by in bases.values():
+            top = max(top, math.ceil(by - mark[1] + my1) + 20)
+            bottom = min(bottom, math.floor(by - mark[1] + my0) - 20)
+    if top > 16000 or bottom < -16000:
+        raise ValueError("Positioned marks exceed supported vertical metrics; adjust anchors/scale")
+    for key, value in {
+        "ascender": top,
+        "descender": bottom,
+        "openTypeOS2TypoAscender": top,
+        "openTypeOS2TypoDescender": bottom,
+        "openTypeOS2TypoLineGap": options.line_gap,
+        "openTypeHheaAscender": top,
+        "openTypeHheaDescender": bottom,
+        "openTypeHheaLineGap": options.line_gap,
+        "openTypeOS2WinAscent": top,
+        "openTypeOS2WinDescent": -bottom,
+    }.items():
+        setattr(font.info, key, value)
+    font.info.openTypeOS2Selection = [7]  # USE_TYPO_METRICS; hhea matches.
+    supported_forms = [
+        s
+        for s in sorted(set(labels) | {r["sequence"] for r in plan["rules"]})
+        if text_coverage(s, labels, plan)["supported"]
+    ]
     report = coverage(project)
     report.update(
         {
-            "format_version": 1,
+            "format_version": 2,
             "experimental": True,
+            "shaping_profile": "malayalam-v1",
             "input_kind": project.get("source_kind", "user-upload"),
             "synthetic_test_export": fixture,
             "synthetic_included": [r["id"] for r in regions] if fixture else [],
             "fixtures_excluded": [] if fixture else report["fixtures_excluded"],
             "encoded_codepoints": [f"U+{ord(c):04X}" for c in singles],
-            "sequence_substitutions": [s for s, _ in substitutions],
-            "unencoded_sequences": unsupported,
+            "engine_controls": ["U+200C", "U+200D"],
+            "sequence_substitutions": [r["sequence"] for r in plan["rules"]],
+            "shaping_plan": plan,
+            "unencoded_sequences": plan["unencoded_sequences"],
+            "unsupported_single_codepoints": sorted(set(singles) - SINGLE_REPERTOIRE),
+            "supported_forms": supported_forms,
+            "required_text": required,
+            "metrics": {
+                "units_per_em": 1000,
+                "ascender": top,
+                "descender": bottom,
+                "line_gap": options.line_gap,
+                "anchors": anchor_report,
+            },
             "warnings": [
-                "Not a complete Malayalam text font.",
-                "No mark anchors, contextual substitutions or vowel reordering rules.",
-                "Multi-codepoint forms need all component codepoints captured separately.",
-                "ZWJ/ZWNJ sequences require dedicated shaping work and testing.",
-                "Metrics are initial estimates; review baseline, scale and advance.",
+                "Partial Malayalam V1 font; supported_forms is conditional on these captured samples.",
+                "Only mlm2 shaping is tested; mlym is not a traditional/modern style selector.",
+                "Virama anchors are geometry estimates unless overridden; reader review is required.",
+                "Attached vowels need observed base+vowel forms; arbitrary contextual forms are unsupported.",
+                "Exact Unicode is preserved. HarfBuzz may canonically decompose text during shaping.",
+                "Per-crop baseline/scale/advance remain user-controlled 1000-UPM font units.",
             ],
         }
     )
+    if plan["unencoded_sequences"] or report["unsupported_single_codepoints"]:
+        report["warnings"].append(
+            "Some captured forms are outside V1 or lack input samples; see shaping_plan."
+        )
     return font, report
 
 
-def export_bundle(project, kind, include_fixture=False):
-    font, report = make_ufo(project, include_fixture)
+def _compile(font_path, output):
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "fontmake",
+                "-u",
+                str(font_path),
+                "-o",
+                "ttf",
+                "--output-path",
+                str(output),
+                "--no-production-names",
+            ],
+            capture_output=True,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise ValueError(
+            "Font compiler unavailable or timed out. Export UFO for review."
+        ) from error
+    if result.returncode:
+        raise ValueError("Font compiler rejected these outlines. Export UFO and review geometry.")
+
+
+def _validate_ttf(data, report, *, require_shaping=False):
+    with TTFont(io.BytesIO(data)) as tt:
+        cmap = tt.getBestCmap()
+        if any(
+            cmap.get(int(cp[2:], 16)) != glyph_name(chr(int(cp[2:], 16)))
+            for cp in report["encoded_codepoints"]
+        ):
+            raise ValueError("Compiled font cmap does not match the captured codepoints")
+        if (
+            tt["hhea"].ascent != report["metrics"]["ascender"]
+            or tt["hhea"].descent != report["metrics"]["descender"]
+        ):
+            raise ValueError("Compiled font line metrics do not match preflight")
+    try:
+        corpus = "\n".join(report["supported_forms"])
+        preview = shape_preview(data, corpus)
+        if preview["has_notdef"] or any(
+            p["code"] == "vertical_clipping" for p in preview["diagnostics"]
+        ):
+            raise ValueError("Declared V1 forms produce missing glyphs or clipped marks")
+        expected = {r["sequence"]: glyph_name(r["output"]) for r in report["shaping_plan"]["rules"]}
+        for text, line in zip(report["supported_forms"], preview["lines"]):
+            if text in expected and [g["name"] for g in line["glyphs"]] != [expected[text]]:
+                raise ValueError(f"Shaping did not select the captured form for {text!r}")
+        report["shaping_validation"] = {
+            "status": "passed",
+            "engine": preview["engine"],
+            "forms_tested": report["supported_forms"],
+            "diagnostics": preview["diagnostics"],
+        }
+        if report["required_text"] is not None:
+            required = shape_preview(data, report["required_text"]["text"])
+            if required["has_notdef"] or any(
+                p["code"] == "vertical_clipping" for p in required["diagnostics"]
+            ):
+                raise ValueError("Required text produces missing glyphs or clipped marks")
+            report["required_preview"] = required
+    except ValueError as error:
+        if "Install the dev extra" not in str(error) or require_shaping:
+            raise
+        report["shaping_validation"] = {"status": "not_run", "reason": str(error)}
+        report["warnings"].append(str(error))
+
+
+def preview_project(project, text, include_fixture=False, *, options=None):
+    """Backend live preview boundary; caller can cache by project revision/options.
+
+    Returns coverage and real HarfBuzz glyph positions. Unsupported text is still
+    shaped for inspection, with diagnostics; no substitute font masks missing ink.
+    """
+    preflight = export_preflight(project, text, include_fixture)
+    font, report = make_ufo(project, include_fixture, options=options)
+    with tempfile.TemporaryDirectory(prefix="mashi-preview-") as directory:
+        root = Path(directory)
+        font.save(root / "preview.ufo")
+        _compile(root / "preview.ufo", root / "preview.ttf")
+        data = (root / "preview.ttf").read_bytes()
+        _validate_ttf(data, report, require_shaping=True)
+        return {
+            "coverage": preflight,
+            "preview": shape_preview(data, text),
+            "metrics": report["metrics"],
+        }
+
+
+def export_bundle(project, kind, include_fixture=False, *, options=None, required_text=None):
+    if kind not in {"ufo", "ttf"}:
+        raise ValueError("Supported export formats are ufo and ttf")
+    font, report = make_ufo(project, include_fixture, options=options, required_text=required_text)
     fixture = project.get("source_kind") == "synthetic-fixture"
     with tempfile.TemporaryDirectory(prefix="mashi-export-") as directory:
         root = Path(directory)
         font_path = root / ("Mashi-Synthetic.ufo" if fixture else "Mashi-Handwriting.ufo")
         font.save(font_path)
         if kind == "ttf":
-            try:
-                result = subprocess.run(
-                    [
-                        sys.executable,
-                        "-m",
-                        "fontmake",
-                        "-u",
-                        str(font_path),
-                        "-o",
-                        "ttf",
-                        "--output-path",
-                        str(
-                            root / ("Mashi-Synthetic.ttf" if fixture else "Mashi-Experimental.ttf")
-                        ),
-                        "--no-production-names",
-                    ],
-                    capture_output=True,
-                    timeout=60,
-                )
-            except (OSError, subprocess.TimeoutExpired) as error:
-                raise ValueError(
-                    "Font compiler unavailable or timed out. Export UFO for review."
-                ) from error
-            if result.returncode:
-                raise ValueError(
-                    "Font compiler rejected these outlines. Export UFO and review geometry."
-                )
-        (root / "coverage.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
-        (root / "project.json").write_text(json.dumps(project, ensure_ascii=False, indent=2))
+            output = root / ("Mashi-Synthetic.ttf" if fixture else "Mashi-Experimental.ttf")
+            _compile(font_path, output)
+            _validate_ttf(output.read_bytes(), report, require_shaping=required_text is not None)
+        else:
+            report["shaping_validation"] = {
+                "status": "not_run",
+                "reason": "UFO source export; compile and shape before use",
+            }
+        (root / "coverage.json").write_text(
+            json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        (root / "project.json").write_text(
+            json.dumps(project, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         (root / "READ-ME.txt").write_text(
             (
                 "SYNTHETIC TEST EXPORT. Practice geometry, not actual handwriting.\n"
                 if fixture
                 else "Mashi experimental export. Confirmed observed image ink only.\n"
             )
-            + "Inspect coverage.json before use. This is not a complete Malayalam shaping font.\n"
-            "Original photos are not included. project.json contains image hashes and crop metadata.\n"
+            + "Inspect coverage.json before use. Partial Malayalam V1, not a complete language font.\n"
+            "Read docs/TYPOGRAPHY.md in the source repository for repertoire and limitations.\n"
+            "Original photos are not included. project.json contains image hashes and crop metadata.\n",
+            encoding="utf-8",
         )
         svg_dir = root / "svg"
         svg_dir.mkdir()
