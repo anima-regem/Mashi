@@ -52,6 +52,10 @@
         <div id="recent"></div>
       </section>
       <section id="workspace" hidden>
+        <p id="fixture-note" class="hint" hidden>
+          Synthetic practice page. These shapes are test input, not handwriting.
+          Normal handwriting export excludes them.
+        </p>
         <div class="workspace-bar">
           <div>
             <h2>Your page</h2>
@@ -242,13 +246,19 @@
           <div>
             <p class="eyebrow">BUILD YOUR FIRST GLYPHS</p>
             <h2 id="coverage-title">0 confirmed forms</h2>
-            <p>Only confirmed, traced handwriting enters your export.</p>
+            <p id="export-note">
+              Only confirmed, traced observed ink enters your export.
+            </p>
             <details>
               <summary>See forms still to capture</summary>
               <p id="missing" lang="ml"></p>
             </details>
           </div>
           <div class="export-actions">
+            <label id="fixture-export-option" class="check" hidden
+              ><input id="fixture-export" type="checkbox" /> Create an
+              explicitly labelled synthetic test export</label
+            >
             <button id="export-ufo" class="primary">Export SVG + UFO</button
             ><button id="export-ttf">Build experimental TTF</button>
             <p class="fine">

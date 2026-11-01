@@ -71,6 +71,7 @@ async function openProject(id) {
   project = await (await api(`/api/projects/${id}`)).json();
   selected = project.regions.find((r) => r.active)?.id || null;
   checked.clear();
+  $("fixture-export").checked = false;
   pageImage = new Image();
   pageImage.src = `${url()}/image`;
   await pageImage.decode();
@@ -82,10 +83,10 @@ async function openProject(id) {
     "Page ready. Review crop boxes and confirm each exact Malayalam sequence.",
   );
 }
-async function upload(blob) {
+async function upload(blob, source = "user-upload") {
   message("Reading the photograph and finding connected ink…");
   const doc = await (
-    await api("/api/projects", {
+    await api(`/api/projects?source=${source}`, {
       method: "POST",
       body: blob,
       headers: { "Content-Type": blob.type || "application/octet-stream" },
@@ -128,6 +129,12 @@ function drawPage(drag = null) {
 }
 function render() {
   const active = project.regions.filter((r) => r.active);
+  const fixture = project.source_kind === "synthetic-fixture";
+  $("fixture-note").hidden = !fixture;
+  $("fixture-export-option").hidden = !fixture;
+  $("export-note").textContent = fixture
+    ? "Practice shapes are excluded by default. Test exports are explicitly labelled synthetic."
+    : "Only confirmed, traced observed ink enters your export.";
   $("page-meta").textContent =
     `${project.image.width} × ${project.image.height} px · EXIF oriented · revision ${project.revision}`;
   $("count").textContent = `${active.length} crops`;
@@ -194,7 +201,11 @@ function render() {
       crop.height,
     );
   $("provenance").textContent =
-    r.provenance === "observed" ? "OBSERVED INK" : "GENERATED SUGGESTION";
+    r.provenance === "observed"
+      ? "OBSERVED INK"
+      : r.provenance === "synthetic-fixture"
+        ? "SYNTHETIC TEST INK"
+        : "GENERATED SUGGESTION";
   if (r.vector) {
     const v = r.vector;
     ["baseline", "scale", "advance"].forEach((k) => ($(k).value = v[k]));
@@ -237,7 +248,9 @@ function showCodepoints() {
 async function renderCoverage() {
   const data = await (await api(`${url()}/coverage`)).json();
   $("coverage-title").textContent =
-    `${data.observed.length} confirmed, traced forms`;
+    project.source_kind === "synthetic-fixture"
+      ? `${data.synthetic_confirmed.length} traced practice forms`
+      : `${data.observed.length} confirmed, traced forms`;
   $("missing").textContent = data.missing.join("  ");
 }
 $("file").onchange = (event) => {
@@ -270,7 +283,7 @@ $("demo").onclick = () =>
     ctx.bezierCurveTo(285, 580, 160, 530, 180, 460);
     ctx.stroke();
     const blob = await new Promise((resolve) => c.toBlob(resolve, "image/png"));
-    await upload(blob);
+    await upload(blob, "synthetic-fixture");
     message(
       "Synthetic practice shapes loaded. These are geometry fixtures, not real Malayalam handwriting. Assign labels only to explore the workflow.",
     );
@@ -422,17 +435,25 @@ $("vector-form").onsubmit = (event) => {
   });
 };
 async function download(kind) {
+  const fixture = project.source_kind === "synthetic-fixture";
+  if (fixture && !$("fixture-export").checked)
+    throw new Error(
+      "Practice shapes are excluded. Enable the explicitly labelled synthetic test export first.",
+    );
   message(
     kind === "ttf"
       ? "Compiling experimental TTF. This may take a minute…"
       : "Packaging SVG outlines and UFO sources…",
   );
-  const response = await api(`${url()}/export/${kind}`, { method: "POST" });
+  const response = await api(
+    `${url()}/export/${kind}?include_fixture=${fixture && $("fixture-export").checked}`,
+    { method: "POST" },
+  );
   const blob = await response.blob();
   const objectURL = URL.createObjectURL(blob),
     a = document.createElement("a");
   a.href = objectURL;
-  a.download = `Mashi-${kind}.zip`;
+  a.download = `Mashi-${fixture ? "SYNTHETIC-" : ""}${kind}.zip`;
   document.body.append(a);
   a.click();
   a.remove();

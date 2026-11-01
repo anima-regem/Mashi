@@ -28,12 +28,20 @@ def coverage(project):
         for r in regions
         if r["confirmed"] and r["vector"] and r["provenance"] == "observed"
     }
-    generated = [r["id"] for r in regions if r["provenance"] != "observed"]
+    generated = [
+        r["id"] for r in regions if r["provenance"] not in {"observed", "synthetic-fixture"}
+    ]
     return {
         "observed": sorted(observed),
         "missing": [s for s in COMMON if s not in observed],
         "inventory_size": len(COMMON),
         "generated_excluded": generated,
+        "fixtures_excluded": [r["id"] for r in regions if r["provenance"] == "synthetic-fixture"],
+        "synthetic_confirmed": [
+            r["label"]
+            for r in regions
+            if r["provenance"] == "synthetic-fixture" and r["confirmed"] and r["vector"]
+        ],
         "predictor": {
             "available": False,
             "trained": False,

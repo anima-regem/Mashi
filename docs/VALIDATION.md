@@ -4,7 +4,7 @@ Executed on 2026-11-01 on macOS arm64 with Python 3.12.13. The dependency set is
 
 ## Automated checks
 
-`uv run --no-sync pytest -q`: **11 passed**. These verify:
+The initial published commit `03e9b7b` passed **9 tests** in GitHub CI. The preserved pilot commit `6f2eb73` passed **11 tests** in GitHub CI. This continuation passes **15 tests** locally using `uv run --no-sync pytest -q`; its remote CI result is recorded separately by GitHub. These verify:
 
 - JPEG EXIF orientation, asymmetric pixel orientation and both image hashes;
 - corrected half-open crop bounds, stale revision rejection, split/merge ancestry and discarded parent state;
@@ -17,6 +17,9 @@ Executed on 2026-11-01 on macOS arm64 with Python 3.12.13. The dependency set is
 - HarfBuzz substitution of `ക്ക`, direct atomic chillu `ൻ`, and disclosure of missing GPOS mark anchors;
 - rejected invalid Hosts/Origins/tokens, oversized requests, unsafe SVG markup, open/nonfinite contours and out-of-page crops.
 - real model fitting, style inference, checkpoint reload without pickle, and counter-preserving research normalization.
+- persistent synthetic fixture provenance across split/merge, OCR, trace and reload; rejection of default fixture font exports and explicit labelling of test fonts, SVGs and metadata;
+- preservation of the latest edited outline/metrics in a `before-retrace` history snapshot;
+- explicit local tessdata configuration and actionable rejection of malformed/non-TSV OCR output.
 
 The geometry fixtures are synthetic; test labels are assigned to exercise Unicode and font plumbing. These results do not measure Malayalam handwriting OCR accuracy, style fidelity or complete shaping quality.
 
@@ -28,7 +31,7 @@ Built and installed the package through `uv sync --locked --no-editable --extra 
 
 Playwright CLI could not start Google Chrome because it is not installed at the standard path. Used the connected in-app browser instead and exercised the actual loopback service:
 
-1. Open studio; verify local OCR capability notice.
+1. Open studio; verify local OCR capability notice (initially unavailable; installed and tested during the continuation below).
 2. Load synthetic practice shapes; review three connected-ink boxes.
 3. Assign a test Malayalam label, confirm crop, save, trace ink and see the vector counter.
 4. Download `Mashi-ttf.zip` through the UI. Inspect the actual downloaded ZIP: UFO sources, SVG, project metadata, coverage report and compiled TTF; expected U+0D15 cmap entry present.
@@ -39,4 +42,10 @@ Local screenshots are in `output/browser/` (gitignored); they contain only synth
 
 ## Explicit limits
 
-Tesseract and `mal` are not installed on this Mac, so an actual Malayalam OCR inference was **not** run. The adapter's word-suggestion handling and unavailable-capability path were exercised; recognition accuracy is unknown. A small rendered-font completion model was trained and evaluated separately: see [COMPLETION.md](COMPLETION.md) and the recorded experiment assets. It has no measured real-handwriting accuracy and is not enabled in the studio. Full Malayalam shaping, anchors and typographic quality remain unverified and incomplete. The GitHub workflow runs the same automated checks on Linux; its result is recorded by GitHub separately from these local checks.
+The continuation installed official Homebrew Tesseract **5.5.4** and pinned official `tessdata_fast` Malayalam data at commit `87416418657359cb625c412a48b6e1d6d41c29bd`, verified by SHA-256. The model and licence remain in the gitignored `.mashi/ocr/tessdata/`; a reproducible explicit setup script, [source manifest](experiments/ocr-source-manifest.json), Apache licence and [actual smoke-test results](experiments/ocr-smoke-results.json) are published.
+
+`scripts/smoke_ocr.py` rendered മലയാളം, മഷി and കേരളം using HarfBuzz **15.0.0**, Noto Sans Malayalam default axes, 72 px text, 40 px margin and 20 px line space. The fixture font hash matches the audited pilot corpus. It uploaded this as a synthetic fixture and ran OCR through the local FastAPI endpoint: **3/3 expected printed words matched exactly**, with confidence values and half-open word boxes preserved. Every proposal remained unlabelled/unconfirmed and synthetic. This is one clean printed fixture; no handwriting/noise accuracy is established. `tessedit_create_tsv=1` is set explicitly so local language-only data folders need no separate `configs/tsv` file.
+
+The original known local practice project was corrected to synthetic provenance during this continuation. Legacy projects created before source tagging cannot be classified safely from an unknown image alone; recreate older practice pages rather than assume they are handwriting. The browser check reopened the corrected project, displayed its persistent synthetic banner and blocked a font export while synthetic opt-in was unchecked. Local OCR capability appeared available and browser diagnostics were clear. Evidence is saved in `output/browser/studio-provenance.jpg`.
+
+The small rendered-font completion pilot remains unchanged: see [COMPLETION.md](COMPLETION.md). No further corpus training was run during this continuation. It has no measured real-handwriting accuracy and is not enabled in the studio. Full Malayalam shaping, anchors and typographic quality remain unverified and incomplete.

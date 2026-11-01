@@ -21,7 +21,10 @@ def glyph_name(sequence):
     return "u" + "_".join(f"{ord(c):04X}" for c in sequence)
 
 
-def eligible(project):
+def eligible(project, include_fixture=False):
+    fixture = project.get("source_kind") == "synthetic-fixture"
+    if fixture and not include_fixture:
+        return []
     return [
         r
         for r in project["regions"]
@@ -29,12 +32,20 @@ def eligible(project):
         and r["confirmed"]
         and r["label"]
         and r["vector"]
-        and r["provenance"] == "observed"
+        and (
+            r["provenance"] == "observed"
+            or (fixture and include_fixture and r["provenance"] == "synthetic-fixture")
+        )
     ]
 
 
-def make_ufo(project):
-    regions = eligible(project)
+def make_ufo(project, include_fixture=False):
+    fixture = project.get("source_kind") == "synthetic-fixture"
+    if fixture and not include_fixture:
+        raise ValueError(
+            "Synthetic practice shapes are excluded from handwriting exports. Explicitly enable a synthetic test export."
+        )
+    regions = eligible(project, include_fixture)
     if not regions:
         raise ValueError("Confirm and trace at least one labelled crop before exporting")
     labels = [r["label"] for r in regions]
@@ -43,14 +54,18 @@ def make_ufo(project):
             "Two confirmed crops have the same label. Keep one confirmed variant per label."
         )
     font = Font()
-    font.info.familyName = "Mashi Handwriting Experimental"
+    font.info.familyName = (
+        "Mashi Synthetic Fixture" if fixture else "Mashi Handwriting Experimental"
+    )
     font.info.styleName = "Regular"
     font.info.unitsPerEm = 1000
     font.info.ascender, font.info.descender = 1000, -400
     font.info.openTypeOS2TypoAscender, font.info.openTypeOS2TypoDescender = 1000, -400
     font.info.versionMajor, font.info.versionMinor = 0, 1
     font.info.copyright = (
-        "Outlines from locally confirmed handwriting. Rights remain with their owners."
+        "Synthetic test geometry; not actual handwriting."
+        if fixture
+        else "Outlines from locally confirmed image ink. Rights remain with their owners."
     )
     missing = font.newGlyph(".notdef")
     missing.width = 600
@@ -75,7 +90,8 @@ def make_ufo(project):
         for path in vector["paths"]:
             parse_path(path, pen)
         glyph.lib["org.mashi.provenance"] = {
-            "state": "observed",
+            "state": "synthetic-fixture" if fixture else region["provenance"],
+            "inputKind": project.get("source_kind", "user-upload"),
             "region": region["id"],
             "revision": region["revision"],
             "label": label,
@@ -117,6 +133,10 @@ def make_ufo(project):
         {
             "format_version": 1,
             "experimental": True,
+            "input_kind": project.get("source_kind", "user-upload"),
+            "synthetic_test_export": fixture,
+            "synthetic_included": [r["id"] for r in regions] if fixture else [],
+            "fixtures_excluded": [] if fixture else report["fixtures_excluded"],
             "encoded_codepoints": [f"U+{ord(c):04X}" for c in singles],
             "sequence_substitutions": [s for s, _ in substitutions],
             "unencoded_sequences": unsupported,
@@ -132,11 +152,12 @@ def make_ufo(project):
     return font, report
 
 
-def export_bundle(project, kind):
-    font, report = make_ufo(project)
+def export_bundle(project, kind, include_fixture=False):
+    font, report = make_ufo(project, include_fixture)
+    fixture = project.get("source_kind") == "synthetic-fixture"
     with tempfile.TemporaryDirectory(prefix="mashi-export-") as directory:
         root = Path(directory)
-        font_path = root / "Mashi-Handwriting.ufo"
+        font_path = root / ("Mashi-Synthetic.ufo" if fixture else "Mashi-Handwriting.ufo")
         font.save(font_path)
         if kind == "ttf":
             try:
@@ -150,7 +171,9 @@ def export_bundle(project, kind):
                         "-o",
                         "ttf",
                         "--output-path",
-                        str(root / "Mashi-Experimental.ttf"),
+                        str(
+                            root / ("Mashi-Synthetic.ttf" if fixture else "Mashi-Experimental.ttf")
+                        ),
                         "--no-production-names",
                     ],
                     capture_output=True,
@@ -167,14 +190,20 @@ def export_bundle(project, kind):
         (root / "coverage.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
         (root / "project.json").write_text(json.dumps(project, ensure_ascii=False, indent=2))
         (root / "READ-ME.txt").write_text(
-            "Mashi experimental export. Actual confirmed handwriting only.\n"
-            "Inspect coverage.json before use. This is not a complete Malayalam shaping font.\n"
+            (
+                "SYNTHETIC TEST EXPORT. Practice geometry, not actual handwriting.\n"
+                if fixture
+                else "Mashi experimental export. Confirmed observed image ink only.\n"
+            )
+            + "Inspect coverage.json before use. This is not a complete Malayalam shaping font.\n"
             "Original photos are not included. project.json contains image hashes and crop metadata.\n"
         )
         svg_dir = root / "svg"
         svg_dir.mkdir()
-        for region in eligible(project):
-            (svg_dir / (glyph_name(region["label"]) + ".svg")).write_bytes(svg(region["vector"]))
+        for region in eligible(project, include_fixture):
+            (svg_dir / (glyph_name(region["label"]) + ".svg")).write_bytes(
+                svg(region["vector"], region["provenance"])
+            )
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
             for path in root.rglob("*"):

@@ -31,13 +31,24 @@ Edits and original image bytes stay in `.mashi/` in the working directory (gitig
 
 ### Optional Malayalam OCR
 
-Install [Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html) and the [`mal` language data](https://github.com/tesseract-ocr/tessdata_fast/blob/main/mal.traineddata), then restart Mashi. `tesseract --list-langs` must include `mal`. Mashi performs no automatic installation or download. Standard Tesseract models work best on printed text and often fail on handwriting.
+Install [Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html), then explicitly fetch the pinned official [`mal` data](https://github.com/tesseract-ocr/tessdata_fast/blob/87416418657359cb625c412a48b6e1d6d41c29bd/mal.traineddata) from the repository root:
+
+```sh
+# macOS engine installation; use your system package manager on Linux.
+brew install tesseract
+uv run --no-sync python -m scripts.setup_ocr
+```
+
+The setup command verifies SHA-256 hashes and preserves the Apache 2.0 licence in `.mashi/ocr/tessdata/`. The app detects this local folder, or uses `MASHI_TESSDATA_DIR` if set, then falls back to system data when no local folder exists. `MASHI_DATA_DIR` also controls the default local OCR location. The studio never installs or downloads models automatically. Reload after setup. Standard Tesseract models work best on printed text and often fail on handwriting.
 
 **Suggest words with OCR** runs the local CLI and adds TSV word boxes with confidence and untouched raw text. A word is not divided by character count. OCR never confirms or assigns a label automatically. Missing OCR produces an actionable message; manual selection and labeling remain available.
+
+The local integration check recognized മലയാളം, മഷി and കേരളം in a clean HarfBuzz-rendered Noto Sans Malayalam fixture. This verifies printed-text data flow, not handwriting accuracy. See [the recorded OCR check](docs/experiments/ocr-smoke-results.json).
 
 ### Font coverage
 
 - Only active, confirmed, labelled, traced regions with `observed` provenance are exported. Generated suggestions and unconfirmed crops are excluded.
+- Built-in practice pages persist `synthetic-fixture` provenance across reload, crop edits, split/merge and OCR. They are excluded from normal font exports. An explicit test-export checkbox produces a synthetic-labelled ZIP, font family, glyph metadata and SVG metadata; it never claims the practice shapes are actual handwriting.
 - One codepoint maps to a cmap entry. A multi-codepoint observation is an unencoded glyph unless all of its component codepoints were also captured separately; then a small, self-contained `akhn` substitution is built for `mlym`/`mlm2`/DFLT.
 - The tested conjunct is `ക്ക` with separately captured `ക` and `്`. Atomic chillu `ൻ` is also tested. These tests use synthetic outlines and verify plumbing, not handwriting recognition or typographic quality.
 - No complete contextual substitution system, mark anchors, vowel positioning/reordering, traditional conjunct inventory, or joiner-sensitive shaping is implemented. Combining-mark widths are zero, but positioning still needs design. Whole-word labels are useful records, not a promise that a font can shape them.
@@ -47,6 +58,8 @@ Install [Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html) a
 ## Engineering and research
 
 Built with Python/FastAPI, SQLite, Pillow/OpenCV, VTracer **0.6.12**, ufoLib2, fontTools and fontmake. A small plain-JavaScript UI keeps installation simple and avoids external assets, analytics, CDNs and cloud fallback.
+
+The workflow has three distinct stages: **capture** proposes image regions and OCR labels for human correction; **completion** is separate experimental research with explicit generated provenance; **font building** turns confirmed observed outlines into a dependency-checked font subset. Completion is not silently mixed into capture or export.
 
 We studied actual sources from Swathanthra Malayalam Computing and Santhosh Thottingal: [Chilanka](https://github.com/smc/Chilanka), [Manjari](https://github.com/santhoshtr/Manjari), and [Rachana](https://github.com/smc/Rachana). The findings separate editable source strokes, closed outlines, Unicode mapping, GSUB, GPOS and compilation. No reference font outlines or feature files are copied into generated fonts.
 

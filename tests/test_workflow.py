@@ -3,7 +3,6 @@ import json
 import zipfile
 
 import pytest
-from fastapi.testclient import TestClient
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.pointInsidePen import PointInsidePen
 from fontTools.svgLib.path import parse_path
@@ -11,19 +10,9 @@ from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw
 from ufoLib2 import Font
 
-from mashi.app import create_app
 from mashi.exporting import export_bundle, glyph_name, make_ufo
 from mashi.imaging import decode, sha
 from mashi.tracing import trace, validate_paths
-
-
-@pytest.fixture
-def client(tmp_path):
-    app = create_app(tmp_path / "data", testing=True)
-    with TestClient(app) as client:
-        session = client.get("/api/session").json()
-        client.headers["x-mashi-token"] = session["token"]
-        yield client
 
 
 def fixture_image():

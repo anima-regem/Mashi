@@ -91,13 +91,15 @@ def trace(image, threshold):
     }
 
 
-def svg(vector):
+def svg(vector, provenance=None):
     validate_paths(vector["paths"])
     root = ET.Element(
         "svg",
         xmlns="http://www.w3.org/2000/svg",
         viewBox=f"0 0 {vector['width']} {vector['height']}",
     )
+    if provenance:
+        ET.SubElement(root, "metadata").text = "Mashi source provenance: " + provenance
     for path in vector["paths"]:
         ET.SubElement(root, "path", d=path, fill="black", **{"fill-rule": "nonzero"})
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)

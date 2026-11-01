@@ -3,6 +3,7 @@ import secrets
 import time
 from pathlib import Path
 from urllib.parse import urlsplit
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -106,6 +107,9 @@ def create_app(root=None, *, testing=False):
             raise HTTPException(409, "Crop changed; reload before editing")
         return result
 
+    def input_provenance(doc):
+        return "synthetic-fixture" if doc.get("source_kind") == "synthetic-fixture" else "observed"
+
     def event(doc, operation, ids):
         doc["history"].append(
             {
@@ -127,7 +131,9 @@ def create_app(root=None, *, testing=False):
         return [{"id": p["id"], "created": p["created"], "image": p["image"]} for p in store.list()]
 
     @app.post("/api/projects")
-    async def upload(request: Request):
+    async def upload(
+        request: Request, source: Literal["user-upload", "synthetic-fixture"] = "user-upload"
+    ):
         chunks, size = [], 0
         async for chunk in request.stream():
             size += len(chunk)
@@ -140,9 +146,15 @@ def create_app(root=None, *, testing=False):
             "id": uid(),
             "revision": 1,
             "created": time.time(),
+            "source_kind": source,
             "image": metadata,
             "regions": [
-                new_region(box, source="connected-ink-proposal") for box in propose_regions(image)
+                new_region(
+                    box,
+                    source="connected-ink-proposal",
+                    provenance="synthetic-fixture" if source == "synthetic-fixture" else "observed",
+                )
+                for box in propose_regions(image)
             ],
             "history": [{"operation": "upload", "at": time.time()}],
         }
@@ -168,7 +180,7 @@ def create_app(root=None, *, testing=False):
         validate_box(data.box, doc["image"]["width"], doc["image"]["height"])
         if data.confirmed and not data.label:
             raise ValueError("Assign a label before confirming")
-        item = new_region(data.box, label=data.label)
+        item = new_region(data.box, label=data.label, provenance=input_provenance(doc))
         item["confirmed"] = data.confirmed
         doc["regions"].append(item)
         return event(doc, "add", [item["id"]])
@@ -209,7 +221,10 @@ def create_app(root=None, *, testing=False):
             raise ValueError("Split position must be strictly inside the crop")
         item["active"] = False
         item["revision"] += 1
-        children = [new_region(b, parents=[region_id], source="split") for b in boxes]
+        children = [
+            new_region(b, parents=[region_id], source="split", provenance=input_provenance(doc))
+            for b in boxes
+        ]
         doc["regions"].extend(children)
         return event(doc, "split", [region_id] + [c["id"] for c in children])
 
@@ -237,6 +252,7 @@ def create_app(root=None, *, testing=False):
             ],
             parents=data.ids,
             source="merge",
+            provenance=input_provenance(doc),
         )
         for item in items:
             item["active"] = False
@@ -253,7 +269,12 @@ def create_app(root=None, *, testing=False):
         for suggestion in suggestions:
             validate_box(suggestion["box"], doc["image"]["width"], doc["image"]["height"])
             doc["regions"].append(
-                new_region(suggestion["box"], suggestion=suggestion, source="ocr-word")
+                new_region(
+                    suggestion["box"],
+                    suggestion=suggestion,
+                    source="ocr-word",
+                    provenance=input_provenance(doc),
+                )
             )
         return event(doc, "ocr-word-proposals", [])
 
@@ -261,6 +282,10 @@ def create_app(root=None, *, testing=False):
     def trace_region(project_id: str, region_id: str, data: TraceInput):
         doc = project(project_id)
         item = region(doc, region_id, data.revision)
+        if item["vector"]:
+            doc["history"].append(
+                {"operation": "before-retrace", "snapshot": dict(item), "at": time.time()}
+            )
         with Image.open(store.asset(project_id, "page.png")) as page:
             item["vector"] = trace(page.crop(item["box"]), data.threshold)
         item["revision"] += 1
@@ -288,9 +313,13 @@ def create_app(root=None, *, testing=False):
         if not item["vector"]:
             raise ValueError("Trace this crop first")
         return Response(
-            svg(item["vector"]),
+            svg(item["vector"], item["provenance"]),
             media_type="image/svg+xml",
-            headers={"Content-Disposition": 'attachment; filename="mashi-glyph.svg"'},
+            headers={
+                "Content-Disposition": 'attachment; filename="mashi-synthetic-glyph.svg"'
+                if item["provenance"] == "synthetic-fixture"
+                else 'attachment; filename="mashi-glyph.svg"'
+            },
         )
 
     @app.get("/api/projects/{project_id}/coverage")
@@ -298,13 +327,15 @@ def create_app(root=None, *, testing=False):
         return coverage(project(project_id))
 
     @app.post("/api/projects/{project_id}/export/{kind}")
-    def export(project_id: str, kind: str):
+    def export(project_id: str, kind: str, include_fixture: bool = False):
         if kind not in {"ufo", "ttf"}:
             raise ValueError("Choose ufo or ttf")
+        doc = project(project_id)
+        prefix = "Mashi-SYNTHETIC" if doc.get("source_kind") == "synthetic-fixture" else "Mashi"
         return Response(
-            export_bundle(project(project_id), kind),
+            export_bundle(doc, kind, include_fixture=include_fixture),
             media_type="application/zip",
-            headers={"Content-Disposition": f'attachment; filename="Mashi-{kind}.zip"'},
+            headers={"Content-Disposition": f'attachment; filename="{prefix}-{kind}.zip"'},
         )
 
     static = Path(__file__).parent / "static"

@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-01",
+  "input_kind": "HarfBuzz-rendered printed font fixture, not handwriting",
+  "font_sha256": "312e0e7c3cc15fa09eb42a8f749eeb246b593ed420e3c81aafe8d910c3a6fb56",
+  "fixture_sha256": "523b8f724c31187fa04b6bd6bf89a65afd45db8c5253f386ee6511aa65e1bc48",
+  "expected_words": [
+    "മലയാളം",
+    "മഷി",
+    "കേരളം"
+  ],
+  "recognized_words": [
+    "മലയാളം",
+    "മഷി",
+    "കേരളം"
+  ],
+  "exact_word_matches": 3,
+  "expected_word_count": 3,
+  "recognized_word_count": 3,
+  "all_proposals_unconfirmed": true,
+  "all_proposals_synthetic": true,
+  "word_suggestions": [
+    {
+      "box": [
+        44,
+        61,
+        347,
+        117
+      ],
+      "raw_text": "മലയാളം",
+      "confidence": 96.322357,
+      "granularity": "word"
+    },
+    {
+      "box": [
+        44,
+        151,
+        186,
+        212
+      ],
+      "raw_text": "മഷി",
+      "confidence": 95.636482,
+      "granularity": "word"
+    },
+    {
+      "box": [
+        43,
+        281,
+        293,
+        336
+      ],
+      "raw_text": "കേരളം",
+      "confidence": 94.95916,
+      "granularity": "word"
+    }
+  ],
+  "ocr_engine": "tesseract 5.5.4",
+  "renderer": "hb-view (HarfBuzz) 15.0.0",
+  "render_parameters": {
+    "font_size": 72,
+    "margin": 40,
+    "line_space": 20,
+    "language": "ml"
+  },
+  "limitations": [
+    "One clean printed fixture; no handwriting/noise benchmark.",
+    "Word regions only; no inferred character segmentation or automatic confirmation."
+  ]
+}

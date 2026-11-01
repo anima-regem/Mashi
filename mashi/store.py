@@ -57,7 +57,9 @@ class Store:
         return directory / filename
 
 
-def new_region(box, *, parents=None, label="", suggestion=None, source="manual"):
+def new_region(
+    box, *, parents=None, label="", suggestion=None, source="manual", provenance="observed"
+):
     return {
         "id": uid(),
         "box": list(box),
@@ -65,7 +67,7 @@ def new_region(box, *, parents=None, label="", suggestion=None, source="manual")
         "confirmed": False,
         "suggestion": suggestion,
         "source": source,
-        "provenance": "observed",
+        "provenance": provenance,
         "parents": parents or [],
         "revision": 1,
         "active": True,

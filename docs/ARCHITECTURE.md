@@ -10,7 +10,8 @@
 - Splitting creates two unconfirmed, unlabelled children. Merging creates an unconfirmed, unlabelled bounding-box union. A bounding-box union can include neighboring ink; the user must inspect and correct it. Neither operation reuses a possibly misleading vector or inferred label.
 - Crop edits invalidate traced vectors. Label changes are explicitly saved with confirmation. Re-tracing replaces the active vector; earlier edit snapshots remain in history. Concurrent project updates use optimistic revision checks.
 - Geometry is local crop coordinates. Export applies `x_font = x_crop * scale + 50`, `y_font = (baseline - y_crop) * scale`. The explicit Y flip maps image-down to font-up. The baseline remains adjustable in crop pixels; scale is font units per pixel; advance is font units. UPM is 1,000.
-- Trace provenance includes threshold, VTracer version and edited status. Font glyph libs include region/revision, exact sequence, canonical image hash, crop and edit status.
+- Trace provenance includes threshold, VTracer version and edited status. A retrace saves the entire previous region/vector/metrics as a `before-retrace` history snapshot before replacing the current outline. It can be recovered from exported `project.json` history and pasted into the vector editor. Font glyph libs include region/revision, exact sequence, canonical image hash, crop and edit status.
+- Built-in practice pages persist project `source_kind=synthetic-fixture` and matching region provenance through all crop operations and OCR. Default font export rejects them. An explicit synthetic test export uses a separate font family/filenames and writes the source into coverage, glyph libs, SVG metadata and the export readme. Synthetic glyphs never count as observed handwriting coverage.
 
 ## Unicode and shaping
 
