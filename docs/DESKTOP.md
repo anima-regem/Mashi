@@ -51,12 +51,20 @@ on Finder's working directory and does not move, replace or import any existing
 source checkout's `.mashi` folder. Projects are stored in `mashi.sqlite3`, with
 their original images and prepared images in adjacent project directories.
 
-For a backup, quit Mashi and copy the **entire** data folder, including the database
-and image directories. For an existing source studio, quit it first and back up
-its entire `.mashi` folder. Copy that complete folder to the desktop data location
-only when the destination is new/empty; do not merge databases or overwrite a
-desktop data folder. Keep the original backup. Automatic import/backup UI remains
-future product work.
+The current source studio has **Project backup → Back up project** and **Import
+backup**. The editable `.mashi.zip` includes source photos, all pages and saved
+history/settings; import creates a fresh project instead of overwriting one.
+See [project backups and migration](PROJECTS_BACKUPS.md). Verify these controls
+and their round trip in the exact native build before claiming that artifact
+supports them; an older already-built `.app` does not update with source changes.
+
+For a whole-folder recovery copy, quit Mashi and copy the **entire** data folder,
+including its database and image directories. Quit an existing source studio
+before copying its `.mashi` folder. Copy a complete folder to the desktop data
+location only when the destination is new/empty; do not merge databases or
+overwrite an existing desktop data folder. Keep the original copy, and quit older
+Mashi versions before a newer version edits the same folder. Schema migration is
+not an automatic downgrade path.
 
 An explicit alternate folder can be selected at launch:
 
@@ -164,4 +172,5 @@ Primary implementation references:
 Still needed for a public desktop release: Apple Developer signing/notarization,
 architecture/minimum-macOS qualification on clean machines, dependency licence
 clearance for binary distribution, app icon/installer and update UX, optional OCR
-installation UX, full accessibility QA, and explicit project migration/backup UX.
+installation UX, full accessibility QA, and qualification of project
+migration/backups in the exact distributed bundle.

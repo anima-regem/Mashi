@@ -2,6 +2,8 @@
 
 A local-first, open-source Malayalam handwriting-to-font studio. Photograph a page, correct the crops and labels, preserve the actual ink as closed vector outlines, and export editable font sources.
 
+**[Product task board →](docs/TASK_BOARD.md)** — priorities, acceptance checks, verified work, blockers and the next implementation task.
+
 **This remains a research-stage studio.** It builds a real SVG/UFO/TTF subset, not a complete Malayalam text font. Optional local completion now has an explicit alignment/review workflow; it stays off until a configured checkpoint is loaded. No weights are bundled and no handwriting accuracy is established. See [local completion](docs/LOCAL_COMPLETION.md), [the preserved pilot](docs/COMPLETION.md) and [coverage limits](#font-coverage).
 
 ## Run locally

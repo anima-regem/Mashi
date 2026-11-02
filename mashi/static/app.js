@@ -93,6 +93,7 @@ async function work(callback) {
     window.MashiCompletion?.refreshControls();
     window.MashiProjects?.refreshControls();
     window.MashiCapture?.refreshControls();
+    refreshTraceControls();
     $("restore-state").disabled = !$("saved-history").value;
   }
 }
@@ -109,18 +110,32 @@ const cropDraftKey = () => `mashi:crop-draft:${project.id}:${project.page_id || 
 const legacyCropKey = () => !project.page_id || project.page_id === project.id ? `mashi:crop-draft:${project.id}:${selected}` : "";
 const cropDraft = () => recall(cropDraftKey()) || (legacyCropKey() ? recall(legacyCropKey()) : null);
 function clearCropDraft() {forget(cropDraftKey()); if (legacyCropKey()) forget(legacyCropKey());}
+function cropInputs() {
+  return {label:$("label").value, confirmed:$("confirmed").checked,
+    box:["x0", "y0", "x1", "y1"].map(key => $(key).value)};
+}
+function refreshTraceControls() {
+  const r = current(), issue = window.MashiReviewState.traceIssue(r, cropInputs());
+  $("trace").disabled = busy || !!issue;
+  $("trace-note").hidden = !issue || !r || generatedSelection(r);
+  if ($("trace-note").textContent !== issue) $("trace-note").textContent = issue;
+}
 function saveCropDraft() {
   const r = current();
   if (!r) return;
-  remember(cropDraftKey(), {
+  const form = cropInputs();
+  if (window.MashiReviewState.sameCrop(r, form)) {
+    clearCropDraft(); $("crop-draft-note").textContent = "";
+    refreshTraceControls(); return;
+  }
+  const stored = remember(cropDraftKey(), {
     revision: r.revision,
     image: project.image.canonical_sha256,
-    label: $("label").value,
-    box: ["x0", "y0", "x1", "y1"].map((k) => Number($(k).value)),
-    confirmed: $("confirmed").checked,
+    ...form,
   });
   $("crop-draft-note").textContent =
-    "Unsaved crop changes are stored in this browser. Save to apply them to the project.";
+    stored ? "Unsaved crop changes." : "These changes could not be kept as a draft. Save this crop before leaving.";
+  refreshTraceControls();
 }
 async function loadSavedHistory(r) {
   const id = project.id, pageId = project.page_id;
@@ -284,13 +299,14 @@ function render() {
   outlineReady = !generatedSelection(r);
   $("outline-origin").hidden = !generatedSelection(r);
   drawPage();
-  if (!r) return;
+  if (!r) {refreshTraceControls(); return;}
   if (generatedSelection(r)) {
     $("region-form").hidden = true;
     $("no-selection").hidden = false;
     $("no-selection").textContent = `Generated ${r.label}. Edit its outline below, then review it in Suggestions.`;
     $("outline-origin").textContent = `Generated ${r.label} · ${r.review_state}. This geometry was not observed in the photograph.`;
     window.MashiCompletion?.loadEditor(r);
+    refreshTraceControls();
     return;
   }
   window.MashiCompletion?.clearEditorIdentity();
@@ -309,7 +325,7 @@ function render() {
     if (Array.isArray(draft.box) && draft.box.length === 4)
       ["x0", "y0", "x1", "y1"].forEach((k, i) => ($(k).value = draft.box[i]));
     $("crop-draft-note").textContent =
-      "Recovered unsaved crop draft. Review and save to apply.";
+      "Recovered unsaved crop draft.";
   } else if (draft)
     $("crop-draft-note").textContent =
       "Older crop draft was not applied: the saved revision/image changed. Download it for review or discard it.";
@@ -371,6 +387,7 @@ function render() {
   $("svg-download").href = pageURL(`${url()}/regions/${r.id}/svg`);
     $("svg-download").download = "mashi-glyph.svg";
   }
+  refreshTraceControls();
 }
 function showCodepoints() {
   $("codepoints").textContent =
@@ -456,6 +473,7 @@ $("confirmed").onchange = saveCropDraft;
 $("crop-draft-discard").onclick = () => {
   clearCropDraft();
   render();
+  message("Saved crop restored.");
 };
 $("crop-draft-download").onclick = () => {
   const draft = cropDraft();
@@ -586,8 +604,10 @@ $("ocr").onclick = () =>
   });
 $("threshold").oninput = () =>
   ($("threshold-value").value = $("threshold").value);
-$("trace").onclick = () =>
-  work(async () => {
+$("trace").onclick = () => {
+  const issue = window.MashiReviewState.traceIssue(current(), cropInputs());
+  if (issue) {refreshTraceControls(); message(issue, true); return;}
+  return work(async () => {
     const r = current();
     message("Tracing the selected pixels…");
     await update(
@@ -599,6 +619,7 @@ $("trace").onclick = () =>
       "Ink traced. Inspect counters and curves in the outline workbench below.",
     );
   });
+};
 $("vector-form").onsubmit = (event) => {
   event.preventDefault();
   if (!outlineReady) {message("Wait for the selected generated raster to load, or select it again to retry.", true);return;}
