@@ -111,7 +111,7 @@ def create_app(root=None, *, testing=False):
     recognition_setup = threading.Lock()
     previews = PreviewCache()
     app.state.previews = previews
-    completion = CompletionService()
+    completion = CompletionService(data_root=store.root)
     app.state.completion = completion
     app.add_event_handler("shutdown", completion.unload)
     token = secrets.token_urlsafe(32)

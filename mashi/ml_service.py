@@ -48,12 +48,36 @@ def source_terms(digest):
 
 
 class CompletionService:
-    def __init__(self, path=None, digest=None):
-        self.path = (
-            Path(path or os.environ["MASHI_COMPLETION_CHECKPOINT"]).expanduser().resolve()
-            if path or os.environ.get("MASHI_COMPLETION_CHECKPOINT")
-            else None
-        )
+    def __init__(self, path=None, digest=None, *, data_root=None):
+        self.configuration_error = False
+        self.configuration_source = "environment"
+        if (
+            path is None
+            and digest is None
+            and not (
+                os.environ.get("MASHI_COMPLETION_CHECKPOINT")
+                or os.environ.get("MASHI_COMPLETION_SHA256")
+            )
+            and data_root is not None
+        ):
+            from .completion_setup import read_profile
+
+            self.configuration_source = "local-profile"
+            try:
+                profile = read_profile(data_root)
+                if profile and profile["enabled"]:
+                    path, digest = profile["checkpoint"], profile["sha256"]
+            except (ValueError, OSError, RuntimeError):
+                self.configuration_error = True
+        self.path = None
+        try:
+            candidate = path or os.environ.get("MASHI_COMPLETION_CHECKPOINT")
+            if candidate:
+                if len(str(candidate)) > 4096 or "\0" in str(candidate):
+                    raise ValueError("Invalid checkpoint path")
+                self.path = Path(candidate).expanduser().resolve()
+        except (ValueError, OSError, RuntimeError):
+            self.configuration_error = True
         self.digest = digest or os.environ.get("MASHI_COMPLETION_SHA256", "")
         self.model = None
         self.guard = threading.Lock()
@@ -61,20 +85,58 @@ class CompletionService:
         self.canceled = {}
         self.loaded_by = None
         self.epoch = 0
+        self.last_failure = None
 
     def capabilities(self):
         configured = bool(self.path and re.fullmatch("[a-f0-9]{64}", self.digest))
-        available = configured and importlib.util.find_spec("scipy") is not None
+        state, available = "unconfigured", False
+        if self.configuration_error or ((self.path or self.digest) and not configured):
+            state = "configuration-error"
+        elif configured:
+            try:
+                valid = self.path.suffix == ".npz" and self.path.is_file()
+                size = self.path.stat().st_size if valid else 0
+                state = (
+                    "checkpoint-missing"
+                    if not valid
+                    else "checkpoint-invalid"
+                    if not 0 < size <= 96 * 1024 * 1024
+                    else "off"
+                )
+            except OSError:
+                state = "checkpoint-unavailable"
+            if state == "off":
+                try:
+                    available = importlib.util.find_spec("scipy") is not None
+                except (ImportError, ValueError):
+                    available = False
+                state = (
+                    ("loaded" if self.model is not None else self.last_failure or "off")
+                    if available
+                    else "runtime-missing"
+                )
+        reasons = {
+            "unconfigured": "No local model is selected. You can capture missing forms manually.",
+            "configuration-error": "Local model settings need attention. Capture missing forms manually or review model setup.",
+            "checkpoint-missing": "The selected model file is missing. Choose it again in model setup.",
+            "checkpoint-invalid": "The selected model file is unsupported. Review model setup.",
+            "checkpoint-unavailable": "The selected model could not be read. Review model setup or capture manually.",
+            "runtime-missing": "Completion is unavailable in this installation. You can capture missing forms manually.",
+            "load-error": "The model could not load. Check model setup and try again; capture still works.",
+            "off": "Suggestions are off. Load the model to continue.",
+            "loaded": "Choose reference forms and review every generated suggestion.",
+        }
         return {
             "configured": configured,
             "available": available,
-            "loaded": self.model is not None,
-            "model": self.model,
+            "loaded": available and self.model is not None,
+            "model": self.model if available else None,
+            "state": state,
+            "runtime_checked": available and self.model is not None,
+            "configuration_source": self.configuration_source if configured else None,
             "profile": "configured-local-checkpoint" if configured else None,
             "filename": self.path.name if configured else None,
-            "reason": "Suggestions are off. Load the model to continue."
-            if available
-            else "Suggestions are unavailable. You can still capture missing forms.",
+            "reason": reasons[state],
         }
 
     def cancel(self, project_id, job_id):
@@ -168,11 +230,24 @@ class CompletionService:
 
     def load(self, project_id, job_id):
         epoch = self.epoch
-        result = self.worker("inspect", project_id, job_id)
+        try:
+            result = self.worker("inspect", project_id, job_id)
+        except ValueError as error:
+            with self.guard:
+                canceled = epoch != self.epoch or (project_id, job_id) in self.canceled
+                if not canceled and self.active is None:
+                    self.model = None
+                    self.last_failure = "load-error"
+            if canceled:
+                raise ValueError("Checkpoint load canceled") from None
+            raise ValueError(
+                "The local model could not load. Review model setup and try again; capture still works."
+            ) from error
         with self.guard:
             if epoch != self.epoch or (project_id, job_id) in self.canceled:
                 raise ValueError("Checkpoint load canceled")
             self.model = result["model"]
+            self.last_failure = None
             self.loaded_by = (project_id, job_id)
         return self.capabilities()
 
@@ -183,6 +258,7 @@ class CompletionService:
                 if self.active["process"]:
                     self.active["process"].terminate()
             self.model = None
+            self.last_failure = None
             self.loaded_by = None
             self.epoch += 1
 

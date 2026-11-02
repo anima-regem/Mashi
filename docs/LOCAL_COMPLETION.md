@@ -4,16 +4,28 @@ The studio can propose missing appearances with the existing Mashi-ML PCA model.
 
 ## Setup and use
 
-Install the optional pinned runtime once, then configure an existing checkpoint and its approved SHA-256 outside the browser:
+Install the optional pinned runtime once, then validate and save a pointer to an existing checkpoint outside the browser:
 
 ```sh
 uv sync --locked --no-editable --extra completion --python 3.12
+uv run --no-sync mashi-completion-setup --data-dir .mashi \
+  --checkpoint "/absolute/path/inference-only-v3.npz" --sha256 "your-reviewed-64-character-sha256"
+uv run --no-sync mashi
+```
+
+Setup fully checks the bounded checkpoint and actually imports the numerical runtime in an isolated worker before atomically saving `.mashi/completion/profile.json`. It copies no weights and does not enable suggestions. The file is private configuration containing the external path and hash, rather than a model or project asset. Restart the studio after configuration changes; then explicitly **Load model**. A failure retains the previous saved profile. Readiness/status never downloads, validates large arrays or writes settings. Source states distinguish no selection, malformed settings, missing/unsupported/unreadable file, missing runtime, a failed load, off and loaded. `runtime_checked` becomes true only after a successful load, rather than from package detection alone. Repairing a runtime or file permits another explicit load. A successful inspect also initializes SciPy; finding its package name alone is insufficient.
+
+The setup command without checkpoint arguments prints status without creating a data directory. `--disable` saves a disabled profile without deleting the external file. Project `.mashi.zip` backups omit this machine-specific profile and weights; a whole-data-folder recovery copy can contain the profile's private path, so review it before sharing. Imported projects do not auto-download a model. Environment configuration remains supported and takes precedence:
+
+```sh
 MASHI_COMPLETION_CHECKPOINT="/absolute/path/inference-only-v3.npz" \
 MASHI_COMPLETION_SHA256="your-approved-64-character-sha256" \
 uv run --no-sync mashi
 ```
 
-Dependency installation uses PyPI. Runtime inference stays offline. The browser cannot submit a filesystem path or upload a checkpoint; it can only load the configured profile. Nothing loads automatically. Open **Suggestions for missing forms** and press **Load model**. **Turn suggestions off**, cancellation or server restart disables inference. Saved proposals remain distinguishable from captured forms. Setup commands, checkpoint identities, engine details and the full research audit belong in these GitHub documents; the studio shows task guidance and relevant source/font-output decisions.
+Remove both environment model settings before using the saved-profile setup/disable command; it refuses to report a saved-profile change as the active configuration when an environment override would win. Dependency installation uses PyPI; model configuration and runtime inference stay offline. The browser cannot submit a filesystem path or upload a checkpoint; it can only load the configured profile. Nothing loads automatically. **Turn suggestions off**, cancellation or server restart disables inference. Saved proposals remain distinguishable from captured forms. Setup commands, checkpoint identities, engine details and the full research audit belong in these GitHub documents; the studio shows task guidance and relevant source/font-output decisions.
+
+This source setup is not a complete native onboarding flow. The `1f89cc81` development bundle lacks SciPy and predates saved profiles. A future native build must include the pinned completion runtime/notices, qualify its worker and external-file selection/retry/off/restart flow, and keep weights external unless permitted delivery is established. Native UI checks are blocked while the Mac is locked. See the [availability audit](COMPLETION_AVAILABILITY.md) and PKG-005 on the [task board](TASK_BOARD.md).
 
 1. Choose up to 20 confirmed, traced references with distinct exact labels supported by the loaded inventory. Generated forms cannot be references.
 2. Set the saved baseline and scale in the outline editor, preview the aligned reference canvases, and confirm them. Vectors are interpreted in the shared 1000-UPM font coordinate system and rasterized at 32 px/em onto 96×64 with baseline y=45. Ink is horizontally centered; width/advance remain separate metadata. Crops are never stretched to fit. Initial tracing metrics are estimates, not calibrated physical em measurements; adjust them before confirming alignment. Out-of-canvas inputs are rejected.
@@ -59,4 +71,6 @@ uv run --no-sync python -m scripts.smoke_completion \
   --sha256 APPROVED_SHA256 --output output/new-completion-smoke
 ```
 
-The output directory must be new. This runs actual inference with an original synthetic ring assigned a Malayalam label solely to test plumbing. It records every candidate, uses the first vectorizable one for a synthetic generated-font export, and preserves failures. It is not a glyph, handwriting or readability benchmark. Tests create their own tiny contract arrays; CI contains no learned checkpoint. Real-writer alignment, style fidelity and Malayalam-reader evaluation remain missing. The desktop artifact built from `1c5a8c16` predates this integration; no updated native bundle is claimed by these source/browser checks.
+Add `--saved-profile` to exercise explicit setup, startup without environment model settings, default-off state, actual inference and generated-font output. The current source smoke used the existing format-3 hash above: 698 supported sequences, actual `ഖ`, `മ`, `ഗ` candidates and a separately labeled generated font. This is software-path evidence only; [the recorded result](experiments/completion-profile-readiness.json) does not claim useful handwriting completion.
+
+The output directory must be new. This runs actual inference with an original synthetic ring assigned a Malayalam label solely to test plumbing. It records every candidate, uses the first vectorizable one for a synthetic generated-font export, and preserves failures. It is not a glyph, handwriting or readability benchmark. Tests create their own tiny contract arrays; CI contains no learned checkpoint. Real-writer alignment, style fidelity and Malayalam-reader evaluation remain missing. No new native bundle, UI qualification, training or weight distribution is claimed by these source/API checks.

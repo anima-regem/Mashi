@@ -24,6 +24,7 @@ completion = ["scipy==1.16.3"]
 [project.scripts]
 mashi = "mashi.__main__:main"
 mashi-desktop = "mashi.desktop:main"
+mashi-completion-setup = "mashi.completion_setup:main"
 
 [tool.setuptools]
 packages = ["mashi"]

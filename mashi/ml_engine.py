@@ -275,11 +275,12 @@ def infer(model, indices, fields):
 
 def run(request):
     model = checkpoint(request["checkpoint"], request["sha256"])
+    # Inspection must also prove the optional numerical runtime can initialize.
+    from scipy.ndimage import distance_transform_edt
+
     result = {"model": public_model(model)}
     if request["operation"] == "inspect":
         return result
-    from scipy.ndimage import distance_transform_edt
-
     observations, targets = request["observations"], request["targets"]
     if not 1 <= len(observations) <= 20 or not 1 <= len(targets) <= 8:
         raise ValueError("Choose 1–20 references and 1–8 missing sequences")

@@ -16,19 +16,34 @@ def main():
     parser.add_argument("--checkpoint", required=True, type=Path)
     parser.add_argument("--sha256", required=True)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument(
+        "--saved-profile",
+        action="store_true",
+        help="Validate/store a local pointer, then exercise startup without model environment variables",
+    )
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     root = (args.output / "data").resolve()
-    os.environ.update(
-        MASHI_DATA_DIR=str(root),
-        MASHI_COMPLETION_CHECKPOINT=str(args.checkpoint.resolve()),
-        MASHI_COMPLETION_SHA256=args.sha256,
-    )
+    os.environ["MASHI_DATA_DIR"] = str(root)
+    if args.saved_profile:
+        from mashi.completion_setup import configure
+
+        os.environ.pop("MASHI_COMPLETION_CHECKPOINT", None)
+        os.environ.pop("MASHI_COMPLETION_SHA256", None)
+        setup = configure(root, args.checkpoint, args.sha256)
+        assert not setup["loaded"]
+    else:
+        os.environ.update(
+            MASHI_COMPLETION_CHECKPOINT=str(args.checkpoint.resolve()),
+            MASHI_COMPLETION_SHA256=args.sha256,
+        )
     from fastapi.testclient import TestClient
     from mashi.app import create_app
 
     with TestClient(create_app(root, testing=True)) as client:
         client.headers["x-mashi-token"] = client.get("/api/session").json()["token"]
+        initial = client.get("/api/completion/capabilities").json()
+        assert not initial["loaded"]
         image = Image.new("RGB", (220, 180), "white")
         ImageDraw.Draw(image).ellipse((40, 25, 170, 155), outline="black", width=12)
         buffer = io.BytesIO()
@@ -125,6 +140,9 @@ def main():
             exported = True
         report = {
             "synthetic_only": True,
+            "setup_mode": "saved-local-profile" if args.saved_profile else "environment",
+            "setup_validation": setup if args.saved_profile else None,
+            "initially_off": not initial["loaded"],
             "fixture": "original drawn ring assigned a Malayalam label for plumbing, not glyph/handwriting accuracy",
             "project_id": doc["id"],
             "data_directory": str(root),

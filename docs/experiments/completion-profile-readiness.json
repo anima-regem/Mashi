@@ -1,0 +1,175 @@
+{
+  "synthetic_only": true,
+  "setup_mode": "saved-local-profile",
+  "setup_validation": {
+    "configured": true,
+    "loaded": false,
+    "state": "off",
+    "format_version": 3,
+    "profile": "pca-inference-v1",
+    "sequence_count": 698,
+    "sha256": "b5975fc1e9923e2ef460ebe2084c2c12e485008ddae17d5914ac06e2c7226d95",
+    "checkpoint_source_known": true,
+    "checkpoint_distribution": "unresolved; no unrestricted weight redistribution licence asserted"
+  },
+  "initially_off": true,
+  "fixture": "original drawn ring assigned a Malayalam label for plumbing, not glyph/handwriting accuracy",
+  "checkpoint_sha256": "b5975fc1e9923e2ef460ebe2084c2c12e485008ddae17d5914ac06e2c7226d95",
+  "format_version": 3,
+  "capabilities": {
+    "pca_inference": true,
+    "mean_inference": true,
+    "template_baselines": false,
+    "nearest_template_diagnostic": false
+  },
+  "template_diagnostics_used": false,
+  "suggestions": [
+    {
+      "label": "ഖ",
+      "raster_sha256": "554f34bbd4dd73275d7ecca9f69d329c158f45e0acd3fa928872b45cc0270c97",
+      "empty": false,
+      "trace_error": "",
+      "vectorized": true,
+      "provenance": "model-generated",
+      "vectorization": {
+        "method": "pixel-boundary/v1",
+        "threshold": 180,
+        "canvas": [
+          96,
+          64
+        ],
+        "canonical_to_vector": [
+          [
+            1,
+            0,
+            -35
+          ],
+          [
+            0,
+            1,
+            -26
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "ink_box": [
+          35,
+          26,
+          61,
+          45
+        ],
+        "left_bearing_estimate": 50
+      }
+    },
+    {
+      "label": "മ",
+      "raster_sha256": "0ed3faccdb6ff96df2c42a3e686ca0af074e46812dba02faae5d1cc8409b0d46",
+      "empty": false,
+      "trace_error": "",
+      "vectorized": true,
+      "provenance": "model-generated",
+      "vectorization": {
+        "method": "vtracer-0.6.12",
+        "threshold": 180,
+        "canvas": [
+          96,
+          64
+        ],
+        "canonical_to_vector": [
+          [
+            1,
+            0,
+            -41
+          ],
+          [
+            0,
+            1,
+            -26
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "ink_box": [
+          41,
+          26,
+          55,
+          45
+        ],
+        "left_bearing_estimate": 50
+      }
+    },
+    {
+      "label": "ഗ",
+      "raster_sha256": "38ebf1f42f22e7db684d4f94b3c6662a08a0b35646d421c408caeb853159dc49",
+      "empty": false,
+      "trace_error": "",
+      "vectorized": true,
+      "provenance": "model-generated",
+      "vectorization": {
+        "method": "pixel-boundary/v1",
+        "threshold": 180,
+        "canvas": [
+          96,
+          64
+        ],
+        "canonical_to_vector": [
+          [
+            1,
+            0,
+            -37
+          ],
+          [
+            0,
+            1,
+            -26
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "ink_box": [
+          37,
+          26,
+          59,
+          45
+        ],
+        "left_bearing_estimate": 50
+      }
+    }
+  ],
+  "font_exported": true,
+  "selected_for_export": "ഖ",
+  "selection_policy": "first vectorizable candidate, software smoke only; not quality selection",
+  "generated_font_license": "OFL-1.1; source notices retained",
+  "scope": "Terminal/source completion profile and actual inference; not native UI or handwriting qualification",
+  "checks": {
+    "python": 202,
+    "node": 26,
+    "lint": "passed",
+    "upstream_warnings": 5,
+    "console_entry_installation": "locked offline source reinstall passed",
+    "actual_core_only_environment": "runtime-missing; configured external profile retained, no activation"
+  },
+  "weights_copied_or_published": false,
+  "training_performed": false,
+  "native_ui_checks": "blocked; Mac locked; no unlock or security change attempted",
+  "alpha_ready": false,
+  "quality_reference": {
+    "repository": "https://github.com/anima-regem/Mashi-ML",
+    "commit": "7b3f65680fb66be27a4c57593848fef75b884e76",
+    "rendered_font_selected_macro_iou": 0.3862,
+    "rendered_font_nearest_font_macro_iou": 0.407,
+    "handwriting_evaluation": "not established",
+    "scoring_correction_disclosed": true
+  },
+  "checkpoint_distribution": "unresolved; no new distribution authorization or clearance",
+  "next": "PKG-005 frozen completion runtime/notices and external-profile headless qualification; native selection/review checks require manual unlock"
+}

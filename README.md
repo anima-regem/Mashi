@@ -6,6 +6,8 @@ A local-first, open-source Malayalam handwriting-to-font studio. Photograph a pa
 
 **This remains a research-stage studio.** It builds a real SVG/UFO/TTF subset, not a complete Malayalam text font. Optional local completion now has an explicit alignment/review workflow; it stays off until a configured checkpoint is loaded. No weights are bundled and no handwriting accuracy is established. See [local completion](docs/LOCAL_COMPLETION.md), [the preserved pilot](docs/COMPLETION.md) and [coverage limits](#font-coverage).
 
+Source completion setup can validate and save a pointer to an existing external checkpoint, with missing-runtime/error/retry states and no automatic activation. [Availability and alpha blockers](docs/COMPLETION_AVAILABILITY.md) distinguish this working source path from native setup, useful handwriting results and permitted model delivery.
+
 ## Run locally
 
 Requires [uv](https://docs.astral.sh/uv/) and Python 3.11–3.13; Python 3.12 is the tested version. The first setup downloads open-source dependencies. After setup, the core workflow works offline without API keys.
