@@ -156,7 +156,11 @@
     "lint": "passed",
     "upstream_warnings": 5,
     "console_entry_installation": "locked offline source reinstall passed",
-    "actual_core_only_environment": "runtime-missing; configured external profile retained, no activation"
+    "actual_core_only_environment": "runtime-missing; configured external profile retained, no activation",
+    "installed_package_python": 202,
+    "installed_package_node": 26,
+    "installed_package_real_inference": "passed outside checkout; all three candidate hashes match source smoke; generated font exported",
+    "runtime_import_failure_fixture": "deterministic per-worker import failure; fixed installed-package import precedence assumption"
   },
   "weights_copied_or_published": false,
   "training_performed": false,
@@ -171,5 +175,11 @@
     "scoring_correction_disclosed": true
   },
   "checkpoint_distribution": "unresolved; no new distribution authorization or clearance",
-  "next": "PKG-005 frozen completion runtime/notices and external-profile headless qualification; native selection/review checks require manual unlock"
+  "next": "PKG-005 frozen completion runtime/notices and external-profile headless qualification; native selection/review checks require manual unlock",
+  "initial_remote_check": {
+    "commit": "fff499466b46587b1a778a4f352b3c51c666489e",
+    "run_id": 41536759148,
+    "conclusion": "failure",
+    "reason": "Runtime fault fixture was not injected when worker cwd was installed site-packages; 201 tests passed. Fixed the test fixture; no product runtime change."
+  }
 }

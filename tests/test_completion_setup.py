@@ -77,8 +77,18 @@ def test_runtime_load_failure_is_not_readiness_and_retry_works(tmp_path, monkeyp
     configure(root, path, digest)
     previous = profile_path(root).read_bytes()
     broken = tmp_path / "broken-runtime"
-    (broken / "scipy").mkdir(parents=True)
-    (broken / "scipy/__init__.py").write_text("raise ImportError('synthetic-private-runtime-path')")
+    broken.mkdir()
+    # A fake scipy directory loses to cwd when the worker runs in site-packages.
+    # Inject an import failure before PathFinder so editable and installed builds
+    # exercise the same real worker error/retry boundary.
+    (broken / "sitecustomize.py").write_text(
+        "import sys\n"
+        "class BrokenRuntime:\n"
+        "    def find_spec(self, fullname, path=None, target=None):\n"
+        "        if fullname == 'scipy' or fullname.startswith('scipy.'):\n"
+        "            raise ImportError('synthetic-private-runtime-path')\n"
+        "sys.meta_path.insert(0, BrokenRuntime())\n"
+    )
     monkeypatch.setenv("PYTHONPATH", str(broken))
     service = CompletionService(data_root=root)
     with pytest.raises(ValueError, match="could not load") as failure:
