@@ -13,7 +13,7 @@ Tesseract is intended primarily for printed text. Handwriting may be missed or m
 
 ## Developer setup and diagnostics
 
-The current application source implements these controls. The core development bundle recorded at `f08fd848` predates them and excludes Tesseract/data. PKG-004 remains open until a rebuilt native application qualifies this setup and correction flow. No integrated alpha is released; see the [alpha gates](TASK_BOARD.md#one-integrated-alpha).
+The current application source implements these controls. A local development bundle from `1f89cc81` includes them and passed packaged API setup, printed recognition/correction, manual fallback, font export and reopen checks. Native UI qualification is blocked because the Mac is locked; Finder discovery, button interaction, native Save and Quit/reopen have not passed in this artifact. PKG-004 remains open. Tesseract and language data are external; no integrated alpha is released. See the [bounded package evidence](experiments/native-recognition-1f89cc81.json) and [alpha gates](TASK_BOARD.md#one-integrated-alpha).
 
 ```sh
 uv run --no-sync python -m mashi.ocr_setup

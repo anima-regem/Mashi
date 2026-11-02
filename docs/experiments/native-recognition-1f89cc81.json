@@ -1,0 +1,253 @@
+{
+  "scope": "Local development package API qualification; native UI blocked; not alpha or clean-machine qualification",
+  "artifact_commit": "1f89cc81175163db7bfdc11cc39e434dbe5a9aba",
+  "artifact_commit_ci": {
+    "run_id": 41530043669,
+    "head": "1f89cc81175163db7bfdc11cc39e434dbe5a9aba",
+    "conclusion": "success",
+    "python": 186,
+    "node": 26
+  },
+  "runtime_source_changes": false,
+  "host": {
+    "macos": "27.2",
+    "architecture": "arm64",
+    "python": "3.12.13"
+  },
+  "local_checks": {
+    "python": 186,
+    "python_upstream_warnings": 5,
+    "node": 26,
+    "ruff": "passed",
+    "packaged_smoke": {
+      "status": "passed",
+      "checks": [
+        "occupied preferred port falls back without touching its listener",
+        "duplicate launch rejected by OS lock",
+        "bundled HTML, JavaScript and CSS served from unrelated cwd",
+        "OCR without language data and absent ML model reported unavailable",
+        "synthetic PNG uploaded, labelled and vector traced",
+        "offline UFO export from bundled runtime",
+        "offline TTF export from bundled runtime",
+        "graceful close releases only the app server",
+        "reopen reuses port and preserves the saved project",
+        "forced crash leaves no orphan server",
+        "post-crash launch releases lock and preserves the saved project"
+      ],
+      "packaged": true,
+      "ocr": {
+        "available": false,
+        "state": "engine-error",
+        "reason": "Word recognition could not start. Label crops manually or see recognition help.",
+        "can_setup": false
+      },
+      "data": "temporary synthetic data only"
+    }
+  },
+  "archive": {
+    "artifact_commit": "1f89cc81175163db7bfdc11cc39e434dbe5a9aba",
+    "name": "Mashi-1f89cc81-macos-arm64-local.zip",
+    "sha256": "379b3f5bf68f61c9b9f272423385a76a47fdcb4a31a3a366e6ac018f770b6136",
+    "size_bytes": 70343237,
+    "manifest_sha256": "685696787f850ebda300c9e365ed2766838bfed419be970d780117e8db9ad9a5",
+    "regular_files_verified": 340,
+    "symlinks_verified": 197,
+    "strict_original_and_extracted_signature": "passed; ad-hoc; outside cloud sync",
+    "archive_crc_and_copied_hash": "passed",
+    "native_ui_qualification": "blocked; Mac locked; manual unlock required",
+    "alpha": false,
+    "public_binary_uploaded": false
+  },
+  "runtime_controls": {
+    "profile": "Separate fresh synthetic profiles on development host",
+    "checkout_external_python_and_cache_reads_denied": true,
+    "offline_cases": "Process-only non-loopback outbound denial; loopback allowed",
+    "explicit_data_acquisition": "One API setup POST allowed network for pinned official assets; not a UI click",
+    "external_engine": "Already installed Homebrew Tesseract 5.5.4; engine not installed/modified by task",
+    "missing_engine_control": {
+      "status": "passed",
+      "existing_engine_retained": true,
+      "missing_engine_case": "Process-only filesystem visibility; shutil.which returns None",
+      "global_engine_or_system_settings_modified": false
+    },
+    "system_security_settings_changed": false
+  },
+  "printed_fixture": {
+    "kind": "Software-rendered printed Noto Sans Malayalam; not handwriting",
+    "sha256": "05f562679854d40022f520bc5904fe495f6948f2820c7b7f2bd69e2cdce1222f",
+    "source_font": "Noto Sans Malayalam",
+    "font_commit": "6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec",
+    "font_sha256": "312e0e7c3cc15fa09eb42a8f749eeb246b593ed420e3c81aafe8d910c3a6fb56",
+    "license_notice": "docs/research-licenses/Pilot-notosansmalayalam-OFL.txt",
+    "image_and_derived_outputs_published": false
+  },
+  "packaged_api": {
+    "scope": "Packaged API only; native UI blocked by locked Mac",
+    "fixture_kind": "Software-rendered printed Noto Sans Malayalam; not handwriting",
+    "fixture_sha256": "05f562679854d40022f520bc5904fe495f6948f2820c7b7f2bd69e2cdce1222f",
+    "states": {
+      "initial": {
+        "available": false,
+        "state": "missing-data",
+        "reason": "Malayalam recognition data is missing. Label crops manually or see recognition help.",
+        "can_setup": true
+      },
+      "ready": {
+        "available": true,
+        "state": "ready",
+        "reason": "Word suggestions are ready. Review each crop and label; handwriting may be missed or misread.",
+        "can_setup": false
+      },
+      "missing_engine": {
+        "available": false,
+        "state": "missing-engine",
+        "reason": "Word recognition is not installed. Label crops manually or see recognition help.",
+        "can_setup": false
+      },
+      "corrupt_data": {
+        "available": false,
+        "state": "data-error",
+        "reason": "Word recognition could not start. Label crops manually or see recognition help.",
+        "can_setup": false
+      }
+    },
+    "native_ui_passed": false,
+    "alpha": false,
+    "setup_failure": {
+      "status": "passed",
+      "explicit_api_post": true,
+      "network_denied": true,
+      "managed_directory_not_published": true,
+      "project_and_legacy_marker_unchanged": true,
+      "retry_still_available": true
+    },
+    "data_acquisition": {
+      "status": "passed",
+      "explicit_api_post_only": true,
+      "ui_click_verified": false,
+      "engine_installed_by_task": false,
+      "license": "Apache-2.0",
+      "source": {
+        "repository": "tesseract-ocr/tessdata_fast",
+        "commit": "87416418657359cb625c412a48b6e1d6d41c29bd",
+        "license": "Apache-2.0",
+        "language": "mal",
+        "assets": [
+          {
+            "file": "mal.traineddata",
+            "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/mal.traineddata",
+            "sha256": "bd05cbf1b197e7810d2903419aedb06f9ef77bfedf50b358673c1d18d707cdb4",
+            "bytes": 5275996
+          },
+          {
+            "file": "LICENSE",
+            "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "bytes": 11358
+          }
+        ]
+      },
+      "language_data_outside_app_bundle": true
+    },
+    "recognition": {
+      "words": [
+        "മഷി",
+        "കേരളം"
+      ],
+      "isolated_ka_recognized": false,
+      "new_words_unconfirmed_and_unlabelled": true,
+      "old_crops_preserved": true,
+      "handwriting_accuracy_established": false
+    },
+    "correction": {
+      "api_only": true,
+      "raw_text_retained": "മഷി",
+      "saved_label": "മ",
+      "box": [
+        67,
+        248,
+        135,
+        318
+      ],
+      "baseline": 60.5,
+      "advance": 800
+    },
+    "ready-api-ttf": {
+      "status": "passed",
+      "exact_text": "മ മ\nമ",
+      "glyphs": {
+        "മ": {
+          "contours": 3,
+          "advance": 800
+        }
+      },
+      "archive_sha256": "3cebbbd2152e6514f36e3906ada2448d266a3d288e902cca5a91cd541c19a1f7",
+      "compiled_positions_match_export": true,
+      "source_images_in_font_archive": false
+    },
+    "backup": {
+      "status": "passed",
+      "fresh_id": true,
+      "pages_history_settings_exact": true
+    },
+    "manual-fallback-api-ttf": {
+      "status": "passed",
+      "exact_text": "ക മ",
+      "glyphs": {
+        "ക": {
+          "contours": 4,
+          "advance": 1240
+        },
+        "മ": {
+          "contours": 3,
+          "advance": 800
+        }
+      },
+      "archive_sha256": "bf7984a073ed0979bc7472d54e972ab87f94039fd5acfa171f488d0ac2d75a95",
+      "compiled_positions_match_export": true,
+      "source_images_in_font_archive": false
+    },
+    "reopen": {
+      "status": "passed",
+      "saved_document_count": 2,
+      "documents_exact": true,
+      "saved_proof": "ക മ",
+      "ocr_ready": true,
+      "completion_loaded": false
+    },
+    "status": "passed-packaged-api-native-ui-blocked"
+  },
+  "native": {
+    "status": "blocked",
+    "reason": "The Mac is locked and automatic unlock could not unlock it. Ask the user to unlock the Mac manually before continuing.",
+    "manual_unlock_requested": true,
+    "manual_unlock_confirmed": false,
+    "protection_bypassed": false,
+    "new_artifact_native_checks_passed": false,
+    "remaining": [
+      "Finder engine discovery",
+      "Readiness/setup/error/retry UI",
+      "Raw suggestion selection and manual correction UI",
+      "Native capture/edit/proof/export and Save dialog",
+      "Native Quit/reopen and saved-project recovery"
+    ],
+    "owned_gui_process_cleanup": "SIGTERM after failed UI access; not a native Quit check"
+  },
+  "board": {
+    "completed_ids": [],
+    "PKG-004": "Blocked: manual Mac unlock required for native UI checks",
+    "next": "Finish PKG-004 native checks after unlock; then PKG-005 completion setup"
+  },
+  "not_bundled": [
+    "OCR executable",
+    "Malayalam OCR data",
+    "SciPy",
+    "Completion model/checkpoint"
+  ],
+  "alpha_gate": "Blocked: native/clean-host qualification, useful reviewed inference/runtime, representative handwriting/reader evidence, permitted model delivery and native distribution clearance",
+  "real_user_projects_modified": false,
+  "historical_builds_replaced": false,
+  "other_workloads_stopped": false,
+  "public_binary_or_weights_uploaded": false,
+  "large_library_upload_retried": false
+}

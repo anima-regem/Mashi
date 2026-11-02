@@ -110,16 +110,23 @@ and permitted model delivery still need the [alpha gate](TASK_BOARD.md#one-integ
 
 ## Optional Malayalam OCR
 
-OCR is not included in the core development artifact. The current source adds
-explicit [recognition readiness, language-data setup and correction](RECOGNITION.md);
-PKG-004 still requires checking these changes in a rebuilt native bundle.
+The local `1f89cc81` development artifact includes the
+[recognition readiness, language-data setup and correction](RECOGNITION.md) UI.
+Its packaged API passed explicit verified setup, safe failure, printed recognition,
+correction, manual fallback and export/reopen checks. The Mac was locked when
+Computer Use attempted access, so native UI qualification is still blocked;
+PKG-004 remains open. [Exact evidence](experiments/native-recognition-1f89cc81.json)
+does not claim a clean Mac, native Save/Quit or handwriting quality.
+The OCR executable and language data are not bundled.
 Manual crops and labels work without it. The capability
 check requires an existing local `tesseract` executable **and** Malayalam data;
 an installed executable alone is not reported ready. Finder launches also search
 the conventional `/opt/homebrew/bin` and `/usr/local/bin` directories.
 
-If you use Homebrew, install its official `tesseract` package separately. You can
-provide reviewed local language data at
+If you use Homebrew, install its official `tesseract` package separately. The
+in-app **Add Malayalam data** action then explicitly downloads and verifies only
+the pinned official data and licence notice; readiness checks never download.
+You can also provide reviewed local language data at
 `~/Library/Application Support/Mashi/ocr/tessdata/mal.traineddata`. Alternatively,
 from a source setup, explicitly download the existing pinned official data:
 
@@ -183,6 +190,6 @@ Primary implementation references:
 
 Still needed for a public desktop release: Apple Developer signing/notarization,
 architecture/minimum-macOS qualification on clean machines, dependency licence
-clearance for binary distribution, app icon/installer and update UX, optional OCR
-installation UX, full accessibility QA, and qualification of project
+clearance for binary distribution, app icon/installer and update UX, native
+qualification of OCR setup and external-engine installation guidance, full accessibility QA, and qualification of project
 migration/backups in the exact distributed bundle.
