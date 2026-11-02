@@ -232,9 +232,13 @@ def frozen_tool_dispatch(argv):
 
 def run_window(server, root, state):
     import AppKit
+    import objc
     from PyObjCTools import AppHelper
     import webview
     from webview.menu import Menu, MenuAction
+    from webview.platforms import cocoa
+
+    from .native_dialogs import install_file_picker_guard
 
     webview.settings["ALLOW_DOWNLOADS"] = True
     window = webview.create_window(
@@ -297,6 +301,15 @@ def run_window(server, root, state):
 
     # The default macOS application menu supplies standard Quit/Hide actions.
     menu = [Menu("Help", [MenuAction("Desktop diagnostics", diagnostics)])]
+    install_file_picker_guard(
+        cocoa,
+        objc,
+        lambda: window_alert(
+            "Could not open the file chooser",
+            "Your saved projects have not changed. Try choosing the file again. "
+            "If this continues, reopen Mashi and check Help > Desktop diagnostics.",
+        ),
+    )
     webview.start(
         watch_server,
         gui="cocoa",
