@@ -11,7 +11,20 @@ GitHub Projects inspection returned `missing required scopes [read:project]`. No
 - Take one small unblocked task at a time. Record a specific blocker and continue independent work. Use isolated synthetic QA data; preserve projects/workloads. Keep photos and weights out of Git. Do not publish a binary, buy signing/services, widen credentials or change DNS as a routine task.
 - Use existing standard public runners only. Inspect a failed run before retrying; no billed runner, artifact-storage or billing changes are authorized. Keep developer commands in GitHub documentation, not ordinary studio screens.
 - **Closed iteration: GOV-001, FLOW-002, DOC-001.** Tracing now waits for the displayed crop/label/confirmation to be saved, and recovered/invalid drafts cannot trace previous pixels. The quiet precision-tool layout gains only contextual action guidance. [Iteration evidence](VALIDATION.md#task-board-and-capture-readiness). Applied [unslop-ui-design](https://github.com/anima-regem/skills/blob/5c1a365113d7f44b420cc5633c746b42cfd14707/unslop-ui-design/SKILL.md).
-- **Next: PKG-001**, followed by PKG-002. A previous native inspection stall is reported but not diagnosed; it is not a passing native check. OCR/ML remain optional, and the current learned completion model underperforms retrieval.
+- **Local checkpoint: PKG-001 and PKG-002 verified**, with [native evidence](experiments/native-package-f08fd848.json). The tested picker-boundary fix is local commit `f08fd848`; publication and its exact remote CI are blocked by approval review. This is a core development package, not an alpha. **Next integration: PKG-004**, qualify explicit local recognition setup and correction through the font workflow. The previous inspection stall is not claimed resolved.
+
+## One integrated alpha
+
+The requested alpha is one application release after the engines work together: image capture/import → local recognition and user correction → source vectorization/editing → usable missing-form inference with honest quality/provenance → review/proof → font export → reopen/recovery. A core-only package or a website gallery does not close this gate.
+
+| Gate | Remaining work |
+| --- | --- |
+| Recognition and correction | PKG-004 setup/readiness, CAP-006 frozen protocol and CAP-007 consented handwriting evaluation. The current bundle excludes OCR executable/data; printed OCR smoke is not handwriting evidence. |
+| Useful missing-form inference | PKG-005 local runtime/checkpoint setup, ML-003 protocol and ML-005 representative held-out writer/style results against retrieval/manual baselines. The learned baseline underperforms retrieval; SciPy/weights are absent from this bundle. |
+| Representative complete workflow | QA-002 first use and recovery, starter repertoire/reader review (TYPE-003/004), and PKG-003 clean-host qualification. Synthetic compilation and a fresh development-machine profile are narrower evidence. |
+| Permitted delivery | LIC-003 model/checkpoint classification and source/RFN obligations, LIC-002 native dependency clearance, and a reviewed distribution/install plan. No weights, signing purchase or security bypass is authorized by this gate. |
+
+REL-004 tracks this functional alpha gate. Signing/public distribution remain separate gates; publishing the website gallery is neither app qualification nor a dependency of engine readiness.
 
 Evidence shorthand: [C7](https://github.com/anima-regem/Mashi/commit/c7b41de3acb3075d55edaa12eb432ee215bed3a5), [C7 CI](https://github.com/anima-regem/Mashi/actions/runs/41340676872) = verified source baseline, 168 Python/20 Node tests; **V** = [validation record](VALIDATION.md). Source CI is not native/reader qualification. No real-writer corpus, clean-install evidence or signed/notarized release is established.
 
@@ -19,7 +32,7 @@ Evidence shorthand: [C7](https://github.com/anima-regem/Mashi/commit/c7b41de3acb
 
 | ID | Priority | Status | Task and acceptance checks | Depends on | Evidence / blocker |
 | --- | --- | --- | --- | --- | --- |
-| GOV-001 | P0 | Done | Publish this board and prominent README link; every task has stable ID, status, checks and dependencies; next task is explicit. | — | This file and [README link](../README.md); 70 unique IDs, valid statuses, acyclic dependencies and existing local links checked. |
+| GOV-001 | P0 | Done | Publish this board and prominent README link; every task has stable ID, status, checks and dependencies; next task is explicit. | — | This file and [README link](../README.md); 71 unique IDs, valid statuses, acyclic dependencies and existing local links checked. |
 | DOC-001 | P0 | Done | Correct stale desktop backup/proof-persistence guidance; distinguish source features from features verified in a particular bundle. | PROJ-002, TYPE-002 | [Desktop guidance](DESKTOP.md#data-recovery-and-diagnostics), [proof persistence/API](PROOFING.md), iteration evidence. |
 | DOC-002 | P1 | Todo | One short end-user font walkthrough with screenshots, exact coverage limits and recovery actions; developer setup stays separate. | FLOW-002, QA-002 | Not yet a verified first-use guide. |
 
@@ -115,20 +128,21 @@ Evidence shorthand: [C7](https://github.com/anima-regem/Mashi/commit/c7b41de3acb
 
 | ID | Priority | Status | Task and acceptance checks | Depends on | Evidence / blocker |
 | --- | --- | --- | --- | --- | --- |
-| PKG-001 | P0 | Todo | Build current pinned source locally; bundled headless capture→TTF smoke, static assets/notices/hash manifest and close/reopen pass outside checkout. | FLOW-002, DOC-001 | Build/lifecycle code exists; current artifact qualification is not established by source CI. Next task. |
-| PKG-002 | P0 | Todo | Native file picker, save dialog, edit/proof/export, window close/Quit/reopen, bounded failure recovery and no orphan worker; investigate any stall with owned-process logs. | PKG-001 | Previous native inspection stall is unconfirmed, not a pass. |
+| PKG-001 | P0 | Done | Build current pinned source locally; bundled headless capture→TTF smoke, static assets/notices/hash manifest and close/reopen pass outside checkout. | FLOW-002, DOC-001 | [Local f08fd848 artifact evidence](experiments/native-package-f08fd848.json): 11 restricted packaged checks, exact assets/notices/manifest, strict original/extracted signatures. Fix publication/remote CI remain blocked. |
+| PKG-002 | P0 | Done | Native file picker, save dialog, edit/proof/export, window close/Quit/reopen, bounded failure recovery and no orphan worker; investigate any stall with owned-process logs. | PKG-001 | [Local native qualification](VALIDATION.md#local-native-package-and-picker-boundary): capture/edit/proof/TTF/backup/recovery, window close and Quit, error feedback, active compiler cleanup. Baseline restriction-triggered picker abort investigated; a tested exception boundary contains Python delegate failures. Underlying trigger and earlier inspection stall are not claimed fully diagnosed. |
 | PKG-003 | P0 | Blocked | Clean-Mac installation without Python/uv/dev dependencies; first font and restart work offline; record OS/architecture and bundle hash. | PKG-001, PKG-002 | No clean host qualification; current development machine cannot prove it. |
 | PKG-004 | P1 | Todo | Optional OCR setup/diagnostics distinguish missing executable/data/ready; explicit user action, verified official data and manual fallback. No setup commands in normal studio. | PKG-002, CAP-002 | Desktop bundle excludes OCR executable/data. |
 | PKG-005 | P1 | Todo | Optional local completion setup accepts only reviewed external model/dependencies; clear unavailable/load/error/off states and explicit review. No automatic download or bundled weights. | PKG-002, ML-002 | Desktop bundle currently excludes ML dependencies/weights; bundling weights remains blocked by LIC-003. |
 | PKG-006 | P1 | Todo | Qualify minimum macOS and available architectures with separate manifests; document unsupported systems honestly. | PKG-003 | No cross-architecture qualification yet. |
 | PKG-007 | P0 | Blocked | Signed/notarized release from a reviewed bundle; verify identity and distribution, with no Gatekeeper bypass. | PKG-003, LIC-002, REL-001 | No signing identity/notarization authorization or paid account purchase permission. |
 | PKG-008 | P1 | Todo | Install/update/rollback UX preserves data and explains incompatible schemas; no automatic security changes. | PKG-003, PKG-007, PROJ-002 | Developer `.app` is not a polished installer/update flow. |
-| QA-001 | P0 | Done | Source lint/tests and exact published commit CI; existing regression coverage is recorded separately from native qualification. | FLOW-001 | [C7 CI]: 168 Python, 20 Node. |
+| QA-001 | P0 | Done | Source lint/tests and exact published commit CI; existing regression coverage is recorded separately from native qualification. | FLOW-001 | [Published fe15500 CI](https://github.com/anima-regem/Mashi/actions/runs/41514198237): 168 Python/22 Node. Local picker fix: 173 Python/22 Node, lint passed; exact remote CI for that fix is blocked by denied publication. |
 | QA-002 | P0 | Todo | Repeatable first-use product smoke from an empty data folder through backup/reopen/font output; include deliberate errors, keyboard and narrow layout. | FLOW-002, PROJ-002, TYPE-002 | Existing component/synthetic flows are a baseline, not a clean-install qualification. |
 | QA-003 | P1 | Todo | Expand archive/state property regressions for repeated edits, restores, selections and interrupted imports; no silent loss or generated leakage. | PROJ-002, SEC-002 | Current adversarial fixtures exist; broader state sequences are missing. |
 | REL-001 | P0 | Todo | Release checklist pins commit, exact CI, artifact hash, dependency notices, native/clean-host matrix, known limitations and rollback plan. | QA-002, PKG-003, LIC-002, TYPE-004 | No polished public release is qualified. |
 | REL-002 | P1 | Todo | Review user-facing documentation against the actual release and remove stale prototype/setup claims; link useful help from relevant failures. | DOC-002, REL-001 | Current source/build/docs and artifact states must stay distinct. |
 | REL-003 | P1 | Todo | Export support diagnostics only with reviewable contents; exclude tokens, photos, private text and environment dumps; test redaction. | SEC-004, PKG-002 | Desktop logs/diagnostics exist but a user support-export flow is missing. |
+| REL-004 | P0 | Blocked | One integrated alpha only when capture/import, recognition/correction, vector editing, useful inference, reviewed proof, export and recovery work together with representative handwriting evidence and permitted model delivery. Website/gallery progress does not qualify the app. | PKG-004, PKG-005, CAP-007, ML-005, TYPE-004, QA-002, LIC-003 | Core-only native checkpoint is not an alpha. Missing OCR/ML runtime/model availability, writer/reader evidence and checkpoint distribution clearance remain explicit blockers; see the integrated-alpha gate above. |
 
 ## Closing an iteration
 

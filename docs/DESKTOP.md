@@ -99,6 +99,15 @@ token, image contents, project text, environment dump or HTTP access log. They m
 include local folder paths and exception traces; review before sharing them.
 Native launch failures show an alert with the log location and source fallback.
 
+The locally tested picker-boundary fix cancels a failed file selection once,
+records the delegate exception and shows recovery guidance, rather than allowing
+a Python exception to abort Cocoa. The native qualification and its remaining
+limits are in [validation](VALIDATION.md#local-native-package-and-picker-boundary).
+It covers a fresh profile on a development Mac, not a clean Mac installation.
+The core-only development bundle is not the requested integrated alpha: OCR,
+completion runtime/model availability, representative handwriting/reader results
+and permitted model delivery still need the [alpha gate](TASK_BOARD.md#one-integrated-alpha).
+
 ## Optional Malayalam OCR
 
 OCR is not included. Manual crops and labels work without it. The capability

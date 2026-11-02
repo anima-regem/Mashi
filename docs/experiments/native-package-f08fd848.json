@@ -1,0 +1,58 @@
+{
+  "scope": "Local core development package; not integrated alpha or clean-machine qualification",
+  "artifact_commit": "f08fd84876b2a9b2d34650e9133fca734516109a",
+  "base_commit": "fe15500f6eee68b15e038842e1296d4201411372",
+  "base_ci": {"run_id": 41514198237, "conclusion": "success", "python": 168, "node": 22},
+  "artifact_commit_remote_ci": null,
+  "publication": "git push denied by automatic approval review; branch remains local; no PR",
+  "host": {"macos": "27.2", "architecture": "arm64", "python": "3.12.13"},
+  "local_checks": {"python": 173, "node": 22, "lint": "passed", "packaged_headless": 11},
+  "archive": {
+    "name": "Mashi-f08fd848-macos-arm64-local.zip",
+    "sha256": "397914da1e99a7865d2effbfb3fec2339acdd5f30d0cc25ce93924c066a1922e",
+    "size_bytes": 70333472,
+    "manifest_sha256": "97088ac7b0cc9415cfcc7cc834efe7f056eb2a5700203e1d65155bcfbf87dc94",
+    "regular_files_verified": 339,
+    "symlinks_verified": 197,
+    "strict_original_and_extracted_signature": "passed; ad-hoc; extracted outside cloud sync"
+  },
+  "runtime_controls": {
+    "profile": "fresh synthetic App Support folder on development host",
+    "system_only_path": true,
+    "checkout_and_external_python_cache_reads_denied": true,
+    "non_loopback_connections_denied": true,
+    "control_probes_verified": true,
+    "system_security_settings_changed": false
+  },
+  "native": {
+    "image_picker_and_invalid_input_recovery": "passed",
+    "saved_only_trace_and_recovered_draft_guard": "passed",
+    "visual_edit_counter_metrics": "passed",
+    "compiled_proof_native_ttf_parity": "passed",
+    "editable_backup_fresh_id_history_assets_settings": "passed",
+    "window_close_quit_and_reopen": "passed",
+    "post_crash_documents_unchanged": 2,
+    "active_compiler_cleanup_seconds": 0.314,
+    "orphan_owned_processes": 0,
+    "invalid_startup_target_seconds": 0.239
+  },
+  "picker_boundary": {
+    "baseline_failure": "SIGABRT under extra process restrictions: PyObjC exception crossed WebKit runOpenPanel",
+    "unrestricted_control": "passed",
+    "underlying_trigger": "unconfirmed",
+    "fix": "Complete selection once; contain/log delegate errors; cancel and show recovery guidance",
+    "regression_cases": 5,
+    "actual_objective_c_fault_callback": "passed",
+    "native_signature_and_idempotence": "passed",
+    "rebuilt_reopen_picker_sequence": "passed",
+    "older_inspection_stall_claimed_resolved": false
+  },
+  "not_bundled": ["OCR executable", "Malayalam OCR data", "SciPy", "completion checkpoint or model weights"],
+  "alpha_gate": "Blocked until recognition/correction, useful inference, vector editing, proof/export/recovery, representative handwriting/reader tests and permitted model delivery work together",
+  "next_integration_task": "PKG-004",
+  "real_user_projects_modified": false,
+  "historical_builds_replaced": false,
+  "other_workloads_stopped": false,
+  "public_binary_uploaded": false,
+  "large_library_upload_retried": false
+}
