@@ -55,7 +55,9 @@ brew install tesseract
 uv run --no-sync python -m mashi.ocr_setup
 ```
 
-The setup command verifies SHA-256 hashes and preserves the Apache 2.0 licence in `.mashi/ocr/tessdata/`. The app detects this local folder, or uses `MASHI_TESSDATA_DIR` if set, then falls back to system data when no local folder exists. `MASHI_DATA_DIR` also controls the default local OCR location. The studio never installs or downloads models automatically. Reload after setup. Standard Tesseract models work best on printed text and often fail on handwriting.
+In the studio, **Word recognition → Check again** distinguishes a missing engine, missing Malayalam data and a ready model. If only data is missing, **Add Malayalam data** explicitly fetches the pinned official assets without sending photos. **Use suggested text** copies a proposal for correction; labels remain unconfirmed until saved. See [recognition setup and correction](docs/RECOGNITION.md).
+
+The setup command verifies SHA-256 hashes and preserves the Apache 2.0 licence in `.mashi/ocr/tessdata-874164186573/`. The prior `ocr/tessdata/` folder remains readable. `MASHI_TESSDATA_DIR` overrides data discovery; `MASHI_DATA_DIR` controls the application's default folder. No automatic downloads or engine installation occur. Standard Tesseract models work best on printed text and often fail on handwriting. A rebuilt native package still needs recognition qualification.
 
 **Suggest words with OCR** runs the local CLI and adds TSV word boxes with confidence and untouched raw text. A word is not divided by character count. OCR never confirms or assigns a label automatically. Missing OCR produces an actionable message; manual selection and labeling remain available.
 

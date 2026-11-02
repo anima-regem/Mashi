@@ -1,0 +1,107 @@
+{
+  "input_kind": "software-rendered printed Noto Sans Malayalam; not handwriting",
+  "fixture_sha256": "05f562679854d40022f520bc5904fe495f6948f2820c7b7f2bd69e2cdce1222f",
+  "source_font_sha256": "312e0e7c3cc15fa09eb42a8f749eeb246b593ed420e3c81aafe8d910c3a6fb56",
+  "engine": "tesseract 5.5.4",
+  "requested_fixture_forms": [
+    "ക",
+    "മഷി",
+    "കേരളം"
+  ],
+  "recognized_words": [
+    "മഷി",
+    "കേരളം"
+  ],
+  "missed_isolated_form": "ക",
+  "handwriting_accuracy_established": false,
+  "ui": {
+    "explicit_data_setup": "passed; hashes and notice verified",
+    "copy_preserves_raw_and_clears_confirmation": true,
+    "manual_word_crop_correction": [
+      67,
+      248,
+      135,
+      318
+    ],
+    "corrected_label": "മ",
+    "keyboard_trace_node_edit_undo": true,
+    "saved_ma_advance": 800,
+    "dirty_ocr_block_and_discard": true,
+    "mobile_width": 390,
+    "mobile_document_width": 390,
+    "reopen_saved_metrics_and_proof": true,
+    "console_warning_errors_final": 0
+  },
+  "profiles": {
+    "with-recognition": {
+      "recognition_state": "ready",
+      "exact_proof": "മ",
+      "proof_supported": true,
+      "family": "Recognition QA",
+      "glyphs": {
+        "0xd2e": {
+          "contours": 3,
+          "advance": 800
+        }
+      },
+      "source_photos_in_font_archive": false,
+      "model_loaded": false,
+      "revision": 7
+    },
+    "without-engine": {
+      "recognition_state": "missing-engine",
+      "exact_proof": "ക മ",
+      "proof_supported": true,
+      "family": "Recognition QA",
+      "glyphs": {
+        "0xd15": {
+          "contours": 4,
+          "advance": 1240
+        },
+        "0xd2e": {
+          "contours": 3,
+          "advance": 800
+        }
+      },
+      "source_photos_in_font_archive": false,
+      "model_loaded": false,
+      "revision": 9
+    }
+  },
+  "data_source": {
+    "repository": "tesseract-ocr/tessdata_fast",
+    "commit": "87416418657359cb625c412a48b6e1d6d41c29bd",
+    "license": "Apache-2.0",
+    "language": "mal",
+    "assets": [
+      {
+        "file": "mal.traineddata",
+        "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/mal.traineddata",
+        "sha256": "bd05cbf1b197e7810d2903419aedb06f9ef77bfedf50b358673c1d18d707cdb4",
+        "bytes": 5275996
+      },
+      {
+        "file": "LICENSE",
+        "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/LICENSE",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "bytes": 11358
+      }
+    ]
+  },
+  "scope": "Source recognition readiness and correction; not rebuilt native or handwriting qualification",
+  "software_tests": {
+    "python": 186,
+    "node": 26,
+    "lint": "passed",
+    "upstream_warnings": 5
+  },
+  "fixture_upload": "Normal upload UI exercised with a test-only printed raster; no real handwriting or photos published",
+  "known_limits": [
+    "Tesseract missed isolated ക in this fixture; printed results are not handwriting evaluation.",
+    "Core native artifact f08fd848 predates the new recognition setup controls.",
+    "A rebuilt native application and clean host still require qualification.",
+    "No completion model was loaded; existing learned baseline underperforms retrieval.",
+    "No binary, font output, training data or weights are distributed by this evidence."
+  ],
+  "native_reader_regression": "Unresolved /tmp image alias failed in the HTTP process; passing its resolved canonical path restored OCR. Non-text native diagnostics are no longer decoded or returned."
+}

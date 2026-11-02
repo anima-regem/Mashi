@@ -6,6 +6,7 @@ import base64
 import hashlib
 import json
 import zipfile
+import threading
 from statistics import median
 from copy import deepcopy
 from pathlib import Path
@@ -20,6 +21,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.concurrency import run_in_threadpool
 
 from . import ocr
+from .ocr_setup import install_data, managed_directory
 from .exporting import export_bundle, export_preflight, preview_project, eligible
 from .font_metrics import TypographyOptions
 from .proofing import PreviewCache, bounded_diagnostics
@@ -106,6 +108,7 @@ def create_app(root=None, *, testing=False):
     app = FastAPI(title="Mashi", docs_url=None, redoc_url=None, openapi_url=None)
     store = Store(Path(root or os.environ.get("MASHI_DATA_DIR", ".mashi")))
     app.state.store = store
+    recognition_setup = threading.Lock()
     previews = PreviewCache()
     app.state.previews = previews
     completion = CompletionService()
@@ -231,10 +234,38 @@ def create_app(root=None, *, testing=False):
     def session():
         return {
             "token": token,
-            "ocr": ocr.capabilities(),
+            "ocr": ocr.capabilities(store.root),
             "version": "0.1.0",
             "features": {"multi_page": True, "editable_backup": True},
         }
+
+    @app.get("/api/ocr/status")
+    def recognition_status():
+        return ocr.capabilities(store.root)
+
+    @app.post("/api/ocr/setup")
+    def recognition_setup_data():
+        if not recognition_setup.acquire(blocking=False):
+            raise HTTPException(409, "Recognition setup is already running. Check again shortly.")
+        try:
+            status = ocr.capabilities(store.root)
+            if status["available"]:
+                return status
+            if not status["can_setup"]:
+                raise ValueError(
+                    "Recognition setup is unavailable. "
+                    "Label crops manually or see recognition help."
+                )
+            try:
+                install_data(managed_directory(store.root))
+            except (OSError, ValueError) as error:
+                raise ValueError(
+                    "Recognition data could not be installed. Check your connection and free space, "
+                    "then try again. Your photos were not sent."
+                ) from error
+            return ocr.capabilities(store.root)
+        finally:
+            recognition_setup.release()
 
     @app.get("/api/projects")
     def projects():
@@ -596,7 +627,12 @@ def create_app(root=None, *, testing=False):
         check_revision(doc, data.revision)
         if len(doc["regions"]) >= 4000:
             raise ValueError("Too many regions; use another project")
-        suggestions = ocr.recognize(image_path(doc))
+        suggestions = ocr.recognize(image_path(doc), data_root=store.root)
+        check_revision(project(project_id), data.revision)
+        if len(doc["regions"]) + len(suggestions) > 4000:
+            raise ValueError("Too many crops. Discard unused proposals or use another page.")
+        if not suggestions:
+            return doc
         for suggestion in suggestions:
             validate_box(suggestion["box"], doc["image"]["width"], doc["image"]["height"])
             doc["regions"].append(

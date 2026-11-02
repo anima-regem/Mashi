@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/static/style.css" />
     <script src="/static/review-state.js" defer></script>
     <script src="/static/app.js" defer></script>
+    <script src="/static/recognition.js" defer></script>
     <script src="/static/capture.js" defer></script>
     <script src="/static/outline-geometry.js" defer></script>
     <script src="/static/outline.js" defer></script>
@@ -66,10 +67,20 @@
           </div>
           <div class="actions">
             <button id="reload-page">Reload saved page</button>
-            <button id="new-page">Projects</button
-            ><button id="ocr">Suggest word labels</button>
+            <button id="new-page">Projects</button>
           </div>
         </div>
+        <details id="recognition-tools">
+          <summary>Word recognition</summary>
+          <p id="ocr-status" class="hint" role="status"></p>
+          <p id="ocr-setup-note" class="hint" hidden>Downloads 5.3 MB of Malayalam data. Your photos are not sent.</p>
+          <div class="actions">
+            <button id="ocr" type="button" hidden>Suggest word labels</button>
+            <button id="ocr-setup" type="button" hidden>Add Malayalam data</button>
+            <button id="ocr-check" type="button">Check again</button>
+            <a id="ocr-help" href="https://github.com/anima-regem/Mashi/blob/main/docs/RECOGNITION.md" target="_blank" rel="noreferrer">Recognition help</a>
+          </div>
+        </details>
         <div id="project-page-tools" class="page-navigation" hidden>
           <label id="page-switcher" hidden>Page<select id="project-page"></select></label>
           <form id="page-rename-form" class="name-form"><label class="sr-only" for="current-page-name">Page name</label><input id="current-page-name" maxlength="80" required /><button>Rename page</button></form>
@@ -223,6 +234,7 @@
                 ><span id="provenance">From photo</span>
               </div>
               <p id="suggestion" class="hint"></p>
+              <button id="use-suggestion" type="button" class="text-button" hidden>Use suggested text</button>
               <label class="field"
                 >Malayalam letter or sequence<input
                   id="label"
@@ -238,12 +250,14 @@
                   id="crop-draft-download"
                   class="text-button"
                   type="button"
+                  hidden
                 >
                   Download crop draft</button
                 ><button
                   id="crop-draft-discard"
                   class="text-button"
                   type="button"
+                  hidden
                 >
                   Discard crop draft
                 </button>

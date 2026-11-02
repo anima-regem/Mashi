@@ -6,7 +6,8 @@ let token = "",
   pageImage = null,
   outlineReady = false,
   busy = false,
-  features = {};
+  features = {},
+  recognitionStatus = null;
 const checked = new Set();
 const pageLoads = new window.MashiReviewState.LatestRequest();
 async function setProject(doc) {
@@ -93,6 +94,7 @@ async function work(callback) {
     window.MashiCompletion?.refreshControls();
     window.MashiProjects?.refreshControls();
     window.MashiCapture?.refreshControls();
+    window.MashiRecognition?.refreshControls();
     refreshTraceControls();
     $("restore-state").disabled = !$("saved-history").value;
   }
@@ -119,6 +121,9 @@ function refreshTraceControls() {
   $("trace").disabled = busy || !!issue;
   $("trace-note").hidden = !issue || !r || generatedSelection(r);
   if ($("trace-note").textContent !== issue) $("trace-note").textContent = issue;
+  const draft = r && !generatedSelection(r) ? cropDraft() : null;
+  $("crop-draft-download").hidden = !draft;
+  $("crop-draft-discard").hidden = !draft && (!r || window.MashiReviewState.sameCrop(r, cropInputs()));
 }
 function saveCropDraft() {
   const r = current();
@@ -293,6 +298,7 @@ function render() {
   });
   const r = current();
   $("no-selection").hidden = !!r;
+  window.MashiRecognition?.selection(r);
   $("no-selection").textContent = "Choose a crop to label and trace its ink.";
   $("region-form").hidden = !r;
   $("vectors").hidden = !r?.vector;
@@ -333,7 +339,8 @@ function render() {
   showCodepoints();
   $("split-position").value = Math.floor((r.box[0] + r.box[2]) / 2);
   $("suggestion").textContent = r.suggestion
-    ? `OCR word suggestion: ${r.suggestion.raw_text} (${Math.round(r.suggestion.confidence)}%). Copy or correct the sequence yourself; this is not a confirmed label.`
+    ? r.confirmed ? `Original word suggestion: ${r.suggestion.raw_text}`
+      : `Word suggestion: ${r.suggestion.raw_text}\nCheck the whole crop and correct the text before confirming.`
     : "Review the whole visible form. Detached marks may need merging with another crop.";
   const crop = $("crop"),
     [x0, y0, x1, y1] = r.box;
@@ -593,15 +600,6 @@ $("add-crop").onclick = () =>
     selected = project.regions.at(-1).id;
     render();
   });
-$("ocr").onclick = () =>
-  work(async () => {
-    message("Recognizing words…");
-    await update(
-      `${url()}/ocr`,
-      { method: "POST", json: {revision: project.revision} },
-      "OCR word proposals added. Their labels remain unconfirmed; review every crop.",
-    );
-  });
 $("threshold").oninput = () =>
   ($("threshold-value").value = $("threshold").value);
 $("trace").onclick = () => {
@@ -774,8 +772,8 @@ work(async () => {
   token = session.token;
   features = session.features || {};
   $("backup-import").hidden = !features.editable_backup;
-  $("ocr").hidden = !session.ocr.available;
-  $("ocr").title = session.ocr.available ? "Review suggested words before confirming them." : "Word suggestions are unavailable. Label crops manually.";
+  recognitionStatus = session.ocr;
+  window.MashiRecognition?.setStatus(recognitionStatus);
   await recent();
   message("Choose a photograph or reopen a saved page.");
   const saved = recall("mashi:last-project");

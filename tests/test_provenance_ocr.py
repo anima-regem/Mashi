@@ -68,7 +68,7 @@ def test_synthetic_fixture_survives_operations_and_requires_explicit_export(
     monkeypatch.setattr(
         ocr,
         "recognize",
-        lambda p: [
+        lambda p, **kwargs: [
             {"box": [200, 20, 300, 160], "raw_text": "മഷി", "granularity": "word", "confidence": 20}
         ],
     )
@@ -114,12 +114,12 @@ def test_local_tessdata_and_word_parser(tmp_path, monkeypatch):
     def run(args, **kwargs):
         seen.append(args)
         if "--list-langs" in args:
-            return subprocess.CompletedProcess(args, 0, "List of languages:\nmal\n", "")
+            return subprocess.CompletedProcess(args, 0, b"List of languages:\nmal\n", b"")
         return subprocess.CompletedProcess(
             args,
             0,
-            "level\tleft\ttop\twidth\theight\tconf\ttext\n5\t10\t20\t120\t40\t95\tക്ക\u200d\n",
-            "",
+            "level\tleft\ttop\twidth\theight\tconf\ttext\n5\t10\t20\t120\t40\t95\tക്ക\u200d\n".encode(),
+            b"\x89PNG non-text diagnostics",
         )
 
     monkeypatch.setattr(ocr.subprocess, "run", run)
@@ -133,6 +133,7 @@ def test_local_tessdata_and_word_parser(tmp_path, monkeypatch):
         }
     ]
     assert all(args[args.index("--tessdata-dir") + 1] == str(folder) for args in seen)
+    assert seen[-1][1] == str((tmp_path / "input with spaces.png").resolve())
 
 
 def test_missing_tsv_is_actionable(monkeypatch, tmp_path):
@@ -141,7 +142,7 @@ def test_missing_tsv_is_actionable(monkeypatch, tmp_path):
     monkeypatch.setattr(
         ocr.subprocess,
         "run",
-        lambda args, **kwargs: subprocess.CompletedProcess(args, 0, "മഷി\n", ""),
+        lambda args, **kwargs: subprocess.CompletedProcess(args, 0, "മഷി\n".encode(), b""),
     )
     with pytest.raises(ValueError, match="no usable crop positions"):
         ocr.recognize(tmp_path / "fixture.png")

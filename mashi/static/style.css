@@ -254,6 +254,7 @@ h2 {
   color: var(--muted);
   margin: 12px 0;
 }
+#suggestion {white-space: pre-wrap; overflow-wrap: anywhere;}
 details {
   font-size: 11px;
   margin: 12px 0;

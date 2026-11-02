@@ -193,7 +193,7 @@ def test_stale_image_crop_and_ocr_are_rejected_without_touching_new_pixels(clien
     ).json()
     assert fresh["image"]["canonical_sha256"] != old["image"]["canonical_sha256"]
     called = []
-    monkeypatch.setattr("mashi.ocr.recognize", lambda path: called.append(path) or [])
+    monkeypatch.setattr("mashi.ocr.recognize", lambda path, **kwargs: called.append(path) or [])
     stale_crop = client.post(
         base + "/regions", json={"box": [10, 10, 80, 80], "project_revision": old["revision"]}
     )

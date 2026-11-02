@@ -170,13 +170,14 @@ def write_diagnostics(state, root, url, completion_status=None):
         "data_directory": str(root),
         "server_url": url,
         "pid": os.getpid(),
-        "ocr": ocr.capabilities(),
+        "ocr": ocr.capabilities(root),
         "completion": completion_status
         or {
             "available": False,
             "reason": "This desktop package does not bundle an ML model or download weights.",
         },
-        "network": "Loopback only. No runtime downloads, telemetry or remote UI assets.",
+        "network": "Core processing stays local. Explicit Malayalam data setup downloads "
+        "pinned public assets. No photo uploads, telemetry or remote UI assets.",
     }
     # No session token, image metadata, project text or environment variables are recorded.
     target = state / "diagnostics.json"

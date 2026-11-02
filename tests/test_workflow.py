@@ -98,7 +98,7 @@ def test_ocr_suggestions_remain_words_and_unconfirmed(client, monkeypatch):
         "confidence": 20,
         "granularity": "word",
     }
-    monkeypatch.setattr("mashi.ocr.recognize", lambda path: [suggestion])
+    monkeypatch.setattr("mashi.ocr.recognize", lambda path, **kwargs: [suggestion])
     response = client.post(f"/api/projects/{doc['id']}/ocr", json={"revision": doc["revision"]})
     item = response.json()["regions"][-1]
     assert not item["confirmed"] and item["label"] == ""

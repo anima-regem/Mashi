@@ -110,7 +110,10 @@ and permitted model delivery still need the [alpha gate](TASK_BOARD.md#one-integ
 
 ## Optional Malayalam OCR
 
-OCR is not included. Manual crops and labels work without it. The capability
+OCR is not included in the core development artifact. The current source adds
+explicit [recognition readiness, language-data setup and correction](RECOGNITION.md);
+PKG-004 still requires checking these changes in a rebuilt native bundle.
+Manual crops and labels work without it. The capability
 check requires an existing local `tesseract` executable **and** Malayalam data;
 an installed executable alone is not reported ready. Finder launches also search
 the conventional `/opt/homebrew/bin` and `/usr/local/bin` directories.
